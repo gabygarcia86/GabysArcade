@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#111b43">
+    <meta name="description"
+      content="Swing through a bright city, collect stars, and see how far you can fly in Skyline Slinger.">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>Skyline Slinger</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body class="webswing-page">
+    <main class="web-game">
+      <header class="game-header">
+        <a class="back-link" href="../../index.html"
+          aria-label="Back to Garcia Kids Playground home">
+          <span aria-hidden="true">←</span><span class="back-label">Home</span>
+        </a>
+        <a class="game-brand" href="#game" aria-label="Skyline Slinger">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span>SKYLINE <b>SLINGER</b></span>
+        </a>
+        <div class="header-actions">
+          <button class="icon-button" id="sound-button" type="button"
+            aria-label="Sound on" aria-pressed="true" title="Sound on">
+            <span aria-hidden="true">♪</span>
+          </button>
+          <button class="icon-button" id="fullscreen-button" type="button"
+            aria-label="Enter full screen" title="Enter full screen">
+            <span aria-hidden="true">⛶</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="game-stage" id="game" aria-label="Skyline Slinger game">
+        <canvas id="game-canvas"
+          aria-label="Game: swing through the city and collect stars">
+          Your browser does not support canvas games.
+        </canvas>
+        <div id="poop-layer" aria-hidden="true"></div>
+
+        <div class="game-hud" id="game-hud" hidden>
+          <div class="hud-card distance-card">
+            <span class="hud-label">DISTANCE</span>
+            <span class="hud-value"><span
+                id="distance-value">0</span><small>m</small></span>
+          </div>
+          <div class="hud-card time-card">
+            <span class="hud-label">TIME</span>
+            <span class="hud-value"><span
+                id="time-value">60</span><small>s</small></span>
+          </div>
+          <div class="hud-card star-card">
+            <span class="hud-star" aria-hidden="true">★</span>
+            <span id="star-value">0</span>
+          </div>
+          <button class="pause-button" id="pause-button" type="button"
+            aria-label="Pause game">PAUSE</button>
+        </div>
+
+        <div class="game-overlay" id="start-screen">
+          <div class="intro-card">
+            <div class="hero-badge" aria-hidden="true">
+              <span class="badge-star">✦</span>
+              <span class="badge-hero">➤</span>
+            </div>
+            <p class="eyebrow">READY, SKYLINE EXPLORER?</p>
+            <h1>Let’s go<br><span>web-slinging!</span></h1>
+            <p class="intro-copy">Swing from rooftop to rooftop, scoop up shiny
+              stars, and see how far you can fly!</p>
+            <button class="start-button" id="start-button" type="button">
+              Start swinging <span aria-hidden="true">→</span>
+            </button>
+            <p class="control-hint"><kbd>HOLD</kbd> to shoot a web
+              <span>·</span> let go to fly</p>
+          </div>
+        </div>
+
+        <div class="game-overlay message-overlay" id="pause-screen" hidden>
+          <div class="message-card">
+            <span class="message-icon" aria-hidden="true">⏸</span>
+            <h2>Taking a break?</h2>
+            <p>Your adventure is waiting!</p>
+            <button class="start-button" id="resume-button" type="button">
+              Keep swinging <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="game-overlay message-overlay" id="gameover-screen" hidden>
+          <div class="message-card">
+            <span class="message-icon" aria-hidden="true">⭐</span>
+            <p class="eyebrow">NICE FLYING!</p>
+            <h2 id="gameover-title">What a ride!</h2>
+            <p>You flew <strong id="final-distance">0</strong> meters and found
+              <strong id="final-stars">0</strong> stars.</p>
+            <button class="start-button" id="play-again-button" type="button">
+              Fly again <span aria-hidden="true">↻</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="touch-control" id="touch-control" hidden>
+          <button class="swing-button" id="swing-button" type="button">
+            <span aria-hidden="true">🕸️</span> HOLD TO SWING
+          </button>
+        </div>
+
+        <div class="game-toast" id="game-toast" role="status"
+          aria-live="polite" hidden></div>
+      </section>
+
+      <footer class="game-footer">
+        <p class="desktop-instructions"><span class="key-icon">SPACE</span> Hold
+          to attach a web <span class="instruction-dot">·</span> Release to
+          swing free <span class="instruction-dot">·</span> Collect the
+          stars!</p>
+        <p class="mobile-instructions">Press and hold the swing button to attach
+          a web. Let go to fly!</p>
+        <p class="made-for-fun">Made for fun <span
+            aria-hidden="true">✦</span></p>
+      </footer>
+    </main>
+  </body>
+</html>

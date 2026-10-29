@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#fff8eb">
+    <meta name="description"
+      content="Make a colorful picture with the Garcia Kids Playground drawing studio.">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16"
+      href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+      href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>Drawing Studio | Garcia Kids Playground</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body class="drawing-page">
+    <main class="drawing-app">
+      <header class="drawing-header">
+        <a class="home-link" href="../../index.html"
+          aria-label="Back to Garcia Kids Playground home">←
+          <span>Home</span></a>
+        <div class="drawing-title">
+          <span class="title-sparkle" aria-hidden="true">✦</span>
+          <div>
+            <h1>Drawing Studio</h1>
+            <p>Big ideas start with little doodles!</p>
+          </div>
+        </div>
+        <button class="save-button" id="save-button" type="button">
+          <span aria-hidden="true">⬇</span> Save picture
+        </button>
+      </header>
+
+      <section class="studio" aria-label="Drawing studio">
+        <aside class="toolbox" aria-label="Drawing tools">
+          <div class="tool-group">
+            <h2>Make a mark</h2>
+            <div class="tool-buttons">
+              <button class="tool-button is-active" type="button"
+                data-tool="pencil" aria-pressed="true">
+                <span aria-hidden="true">✏️</span><span>Draw</span>
+              </button>
+              <button class="tool-button" type="button" data-tool="fill"
+                aria-pressed="false">
+                <span aria-hidden="true">🪣</span><span>Fill</span>
+              </button>
+              <button class="tool-button" type="button" data-tool="eraser"
+                aria-pressed="false">
+                <span aria-hidden="true">🧽</span><span>Eraser</span>
+              </button>
+              <button class="tool-button" type="button" data-tool="hand"
+                aria-pressed="false">
+                <span aria-hidden="true">✋</span><span>Hand</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="tool-group brush-group">
+            <label for="brush-size">Brush size <span
+                id="brush-size-value">8</span></label>
+            <input id="brush-size" type="range" min="2" max="32" value="8">
+          </div>
+
+          <div class="tool-group-pair">
+            <div class="tool-group">
+              <h2>Pick a color</h2>
+              <div class="color-palette" aria-label="Color palette">
+                <button class="color-swatch is-selected" type="button"
+                  data-color="#27324b" style="--swatch: #27324b"
+                  aria-label="Dark blue" aria-pressed="true"></button>
+                <button class="color-swatch" type="button" data-color="#ff5e73"
+                  style="--swatch: #ff5e73" aria-label="Pink"
+                  aria-pressed="false"></button>
+                <button class="color-swatch" type="button" data-color="#ffad38"
+                  style="--swatch: #ffad38" aria-label="Orange"
+                  aria-pressed="false"></button>
+                <button class="color-swatch" type="button" data-color="#f6d64a"
+                  style="--swatch: #f6d64a" aria-label="Yellow"
+                  aria-pressed="false"></button>
+                <button class="color-swatch" type="button" data-color="#49c985"
+                  style="--swatch: #49c985" aria-label="Green"
+                  aria-pressed="false"></button>
+                <button class="color-swatch" type="button" data-color="#40a9ed"
+                  style="--swatch: #40a9ed" aria-label="Blue"
+                  aria-pressed="false"></button>
+                <button class="color-swatch" type="button" data-color="#9b79e8"
+                  style="--swatch: #9b79e8" aria-label="Purple"
+                  aria-pressed="false"></button>
+                <label class="custom-color" aria-label="Choose another color">
+                  <span aria-hidden="true">＋</span>
+                  <input id="custom-color" type="color" value="#27324b"
+                    aria-label="Choose another color">
+                </label>
+              </div>
+            </div>
+
+            <div class="tool-group">
+              <h2>Add a friend</h2>
+              <p class="sticker-hint">Choose one, then tap your picture!</p>
+              <div class="sticker-list" aria-label="Stickers">
+                <button class="sticker-button is-selected" type="button"
+                  data-sticker="none" aria-label="No sticker, draw instead"
+                  aria-pressed="true">✏️</button>
+                <button class="sticker-button" type="button" data-sticker="☀️"
+                  aria-label="Sun sticker" aria-pressed="false">☀️</button>
+                <button class="sticker-button" type="button" data-sticker="🌈"
+                  aria-label="Rainbow sticker" aria-pressed="false">🌈</button>
+                <button class="sticker-button" type="button" data-sticker="⭐"
+                  aria-label="Star sticker" aria-pressed="false">⭐</button>
+                <button class="sticker-button" type="button" data-sticker="🌸"
+                  aria-label="Flower sticker" aria-pressed="false">🌸</button>
+                <button class="sticker-button" type="button" data-sticker="🦋"
+                  aria-label="Butterfly sticker"
+                  aria-pressed="false">🦋</button>
+                <button class="sticker-button" type="button" data-sticker="🐱"
+                  aria-label="Cat sticker" aria-pressed="false">🐱</button>
+                <button class="sticker-button" type="button" data-sticker="🚀"
+                  aria-label="Rocket sticker" aria-pressed="false">🚀</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tool-group shape-group">
+            <h2>Create a shape</h2>
+            <div class="shape-style" role="group" aria-label="Shape style">
+              <button class="shape-style-button is-selected" type="button"
+                data-shape-style="stroke" aria-pressed="true">Stroke</button>
+              <button class="shape-style-button" type="button"
+                data-shape-style="fill" aria-pressed="false">Fill</button>
+            </div>
+            <p class="sticker-hint">Choose a shape, then drag on your
+              picture!</p>
+            <div class="shape-list" aria-label="Shapes">
+              <button class="shape-button" type="button" data-shape="square"
+                aria-label="Square" title="Square" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <rect x="5" y="5" width="22" height="22" rx="2" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="rectangle"
+                aria-label="Rectangle" title="Rectangle" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <rect x="3" y="8" width="26" height="16" rx="2" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="triangle"
+                aria-label="Triangle" title="Triangle" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M16 4 29 27H3Z" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="star"
+                aria-label="Star" title="Star" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="m16 3 4 9 9 1-7 6 2 10-8-5-8 5 2-10-7-6 9-1Z" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="circle"
+                aria-label="Circle" title="Circle" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <circle cx="16" cy="16" r="12" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="hexagon"
+                aria-label="Hexagon" title="Hexagon" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="m9 4 14 0 7 12-7 12H9L2 16Z" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="octagon"
+                aria-label="Octagon" title="Octagon" aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M10 3h12l7 7v12l-7 7H10l-7-7V10Z" />
+                </svg>
+              </button>
+              <button class="shape-button" type="button" data-shape="line"
+                aria-label="Straight line" title="Straight line"
+                aria-pressed="false">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M4 25 28 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </aside>
+
+        <div class="canvas-area">
+          <div class="canvas-toolbar">
+            <span class="canvas-prompt"><span aria-hidden="true">🖍️</span>
+              Your paper</span>
+            <div class="history-buttons">
+              <button class="history-button" id="zoom-out-button" type="button"
+                aria-label="Zoom out" title="Zoom out">−</button>
+              <span class="zoom-value" id="zoom-value"
+                aria-live="polite">100%</span>
+              <button class="history-button" id="zoom-in-button" type="button"
+                aria-label="Zoom in" title="Zoom in">+</button>
+              <span class="toolbar-divider" aria-hidden="true"></span>
+              <button class="history-button" id="undo-button" type="button"
+                aria-label="Undo" title="Undo" disabled>↶</button>
+              <button class="history-button" id="redo-button" type="button"
+                aria-label="Redo" title="Redo" disabled>↷</button>
+              <span class="toolbar-divider" aria-hidden="true"></span>
+              <button class="clear-button" id="clear-button" type="button">
+                Start over
+              </button>
+            </div>
+          </div>
+          <div class="paper-wrap">
+            <canvas id="drawing-canvas" aria-label="Drawing canvas"
+              role="img">Your browser does not support the drawing
+              canvas.</canvas>
+          </div>
+          <p class="canvas-tip">Tip: use your finger, mouse, or a stylus to
+            draw!</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer"></footer>
+    <div class="notice" id="notice" role="status" aria-live="polite"
+      hidden></div>
+  </body>
+</html>

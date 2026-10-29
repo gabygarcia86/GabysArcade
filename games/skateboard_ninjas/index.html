@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#1a1033">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="description"
+      content="Skateboard Ninjas: a 60-second side-scrolling skateboarding arcade game. Ollie, flip, grab, grind and dodge angry Karens.">
+    <title>Skateboard Ninjas</title>
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="game-canvas"
+        aria-label="Skateboard Ninjas game view"></canvas>
+
+      <!-- In-run HUD -->
+      <div id="hud" class="hud off">
+        <div class="hud-box hud-time" id="hud-time-box">
+          <span class="hud-label">TIME</span>
+          <span id="hud-time" class="hud-value">01:00</span>
+        </div>
+
+        <div id="combo" class="combo" data-state="idle">
+          <div id="combo-chain" class="combo-chain"></div>
+          <div class="combo-total">
+            <span id="combo-points">0</span>
+            <span class="combo-x">&times;<span id="combo-mult">1.0</span></span>
+          </div>
+          <div class="combo-bar"><div id="combo-bar-fill"
+              class="combo-bar-fill"></div></div>
+        </div>
+
+        <div class="hud-right">
+          <div class="hud-box">
+            <span class="hud-label">SCORE</span>
+            <span id="hud-score" class="hud-value">0</span>
+          </div>
+          <div class="hud-box hud-best">
+            <span class="hud-label">BEST</span>
+            <span id="hud-best" class="hud-value">0</span>
+          </div>
+          <button id="pause-btn" class="pause-btn" type="button"
+            aria-label="Pause"></button>
+        </div>
+      </div>
+
+      <div id="announce" class="announce" aria-live="polite">
+        <span class="announce-name"></span>
+        <span class="announce-pts"></span>
+      </div>
+
+      <!-- Touch / mouse controls -->
+      <div id="controls" class="controls off">
+        <div class="left-buttons">
+          <button id="ollie-btn" class="ollie-btn" type="button"
+            aria-label="Ollie">
+            <span class="ollie-word">OLLIE</span>
+            <span class="key-hint">SPACE</span>
+          </button>
+          <button id="backflip-btn" class="mini-btn backflip-btn" type="button"
+            aria-label="Backflip">
+            <svg class="mini-icon" viewBox="-50 -50 100 100" aria-hidden="true">
+              <path d="M28-24A36 36 0 1 0 36 6" fill="none" stroke="#0c0d1f"
+                stroke-width="17" stroke-linecap="round" />
+              <path d="M28-24A36 36 0 1 0 36 6" fill="none" stroke="#3de1ff"
+                stroke-width="9" stroke-linecap="round" />
+              <path d="M14-40 44-34 32-8Z" fill="#3de1ff" stroke="#0c0d1f"
+                stroke-width="5" stroke-linejoin="round" />
+            </svg>
+            <span class="mini-word">BACKFLIP</span>
+            <span class="key-hint">Q</span>
+          </button>
+        </div>
+
+        <div class="sticks">
+          <div class="stick" id="flip-stick" data-kind="flip"
+            aria-label="Flip trick joystick">
+            <div class="stick-base">
+              <span class="stick-dir d-up" data-dir="up">KICK</span>
+              <span class="stick-dir d-down" data-dir="down">HEEL</span>
+              <span class="stick-dir d-left" data-dir="left">SHOVE</span>
+              <span class="stick-dir d-right" data-dir="right">360</span>
+              <div class="stick-knob"><span>FLIP</span></div>
+            </div>
+            <span class="key-hint">ARROWS</span>
+          </div>
+          <div class="stick-col">
+            <button id="star-btn" class="mini-btn star-btn" type="button"
+              aria-label="Throw ninja star">
+              <svg class="mini-icon star-icon" viewBox="-50 -50 100 100"
+                aria-hidden="true">
+                <path
+                  d="M0-46 12-12 46 0 12 12 0 46-12 12-46 0-12-12ZM0-8A8 8 0 1 0 0 8 8 8 0 1 0 0-8Z"
+                  fill-rule="evenodd" fill="url(#star-steel)" stroke="#0c0d1f"
+                  stroke-width="5" stroke-linejoin="round" />
+                <circle r="12" fill="none" stroke="#ff2e55" stroke-width="4" />
+                <defs>
+                  <lineargradient id="star-steel" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#ffffff" />
+                    <stop offset="0.5" stop-color="#c3cadc" />
+                    <stop offset="1" stop-color="#7d869e" />
+                  </lineargradient>
+                </defs>
+              </svg>
+              <span class="key-hint">E</span>
+            </button>
+            <div class="stick" id="grab-stick" data-kind="grab"
+              aria-label="Grab trick joystick">
+              <div class="stick-base">
+                <span class="stick-dir d-up" data-dir="up">INDY</span>
+                <span class="stick-dir d-down" data-dir="down">TAIL</span>
+                <span class="stick-dir d-left" data-dir="left">MELON</span>
+                <span class="stick-dir d-right" data-dir="right">NOSE</span>
+                <div class="stick-knob"><span>GRAB</span></div>
+              </div>
+              <span class="key-hint">WASD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <section id="title-screen" class="screen">
+        <div class="panel title-panel">
+          <div class="title-main">
+            <h1 class="logo">
+              <span class="logo-top">SKATEBOARD</span>
+              <span class="logo-bottom">NINJAS</span>
+            </h1>
+            <p class="tagline">60 seconds. One ninja. Way too many Karens.</p>
+            <div class="menu-buttons">
+              <button id="play-btn" class="btn btn-primary"
+                type="button">PLAY</button>
+              <button id="daily-btn" class="btn btn-secondary"
+                type="button">DAILY CHALLENGE</button>
+              <button id="customize-btn" class="btn btn-pink"
+                type="button">CUSTOMIZE</button>
+              <button id="leaderboard-btn" class="btn btn-green"
+                type="button">VIEW LEADERBOARD</button>
+            </div>
+            <p class="best-row">BEST <strong id="title-best">0</strong> <span
+                class="dot">&bull;</span> TODAY'S DAILY <strong
+                id="title-daily">&mdash;</strong></p>
+            <div class="toggles">
+              <button id="sfx-toggle" class="chip" type="button"
+                aria-pressed="true">SFX ON</button>
+              <button id="music-toggle" class="chip" type="button"
+                aria-pressed="true">MUSIC ON</button>
+              <button id="fullscreen-btn" class="chip"
+                type="button">FULLSCREEN</button>
+            </div>
+          </div>
+
+          <details class="howto" id="howto">
+            <summary>HOW TO PLAY</summary>
+            <p class="howto-lead">Your ninja skates on their own. Jump, trick,
+              grind and land clean to bank points before time runs out.</p>
+            <div class="howto-grid">
+              <div>
+                <h3>Touch / Mouse</h3>
+                <ul>
+                  <li><b>OLLIE</b> button (or tap the left half of the
+                    screen)</li>
+                  <li><b>FLIP</b> stick: flick a direction in the air</li>
+                  <li><b>GRAB</b> stick: flick and hold to keep grabbing</li>
+                  <li><b>BACKFLIP</b> button: flip your whole body in the air
+                    (start it early!)</li>
+                  <li><b>Ninja star</b> button: throw a star that blows up
+                    Karens and evil ninjas</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Keyboard</h3>
+                <ul>
+                  <li><b>Space</b>: Ollie (also pops off rails)</li>
+                  <li><b>Arrows</b>: Flip tricks</li>
+                  <li><b>W A S D</b>: Grab tricks (hold to keep grabbing)</li>
+                  <li><b>Q</b>: Backflip &nbsp; <b>E</b>: Throw a ninja
+                    star</li>
+                  <li><b>Esc / P</b>: Pause &nbsp; <b>M</b>: Mute</li>
+                </ul>
+              </div>
+            </div>
+            <table class="trick-table">
+              <thead><tr><th></th><th>Flip</th><th>Grab</th></tr></thead>
+              <tbody>
+                <tr><th>&uarr;</th><td>Kickflip</td><td>Indy</td></tr>
+                <tr><th>&darr;</th><td>Heelflip</td><td>Tail Grab</td></tr>
+                <tr><th>&larr;</th><td>Pop Shove-it</td><td>Melon</td></tr>
+                <tr><th>&rarr;</th><td>360 Shove-it</td><td>Nose Grab</td></tr>
+                <tr><th>&#8599;&#8598;&#8600;&#8601;</th><td>360 Flip, Varials,
+                    Hardflip</td><td>Stalefish, Method, Shadow, Japan</td></tr>
+              </tbody>
+            </table>
+            <ul class="tips">
+              <li>Land on a rail, bench or ledge to grind automatically. Press
+                Ollie to pop off.</li>
+              <li>Flip + grab in one jump = combo bonus. Chain jumps within the
+                gold link bar to grow your multiplier.</li>
+              <li>Land mid-flip and you bail. A bail loses the unbanked
+                combo.</li>
+              <li>Ramps launch you on their own. Ollie at the lip to go
+                bigger.</li>
+            </ul>
+          </details>
+          <a class="back-link" href="../../index.html">&larr; Back</a>
+        </div>
+        <p id="rotate-hint" class="rotate-hint">Tip: turn your phone sideways
+          for the best view.</p>
+      </section>
+
+      <!-- Customize -->
+      <section id="customize-screen" class="screen off">
+        <div class="panel custom-panel">
+          <h2>CUSTOMIZE</h2>
+          <div class="custom-body">
+            <canvas id="custom-preview" class="custom-preview"
+              aria-label="Preview of your ninja and skateboard"></canvas>
+            <div class="custom-options">
+              <div class="custom-tabs" role="tablist">
+                <button id="tab-ninja" class="chip cz-chip on" type="button"
+                  role="tab" aria-selected="true"
+                  aria-controls="custom-ninja">NINJA</button>
+                <button id="tab-board" class="chip cz-chip" type="button"
+                  role="tab" aria-selected="false"
+                  aria-controls="custom-board">BOARD</button>
+              </div>
+              <div id="custom-ninja" class="custom-group" role="tabpanel"
+                aria-labelledby="tab-ninja">
+                <div class="cz-row" data-key="gi" data-label="Clothes"></div>
+                <div class="cz-row" data-key="band" data-label="Headband"></div>
+                <div class="cz-row" data-key="belt" data-label="Belt"></div>
+                <div class="cz-row" data-key="shoe" data-label="Shoes"></div>
+                <div class="cz-row" data-key="hand" data-label="Hands"></div>
+              </div>
+              <div id="custom-board" class="custom-group" role="tabpanel"
+                aria-labelledby="tab-board" hidden>
+                <div class="cz-row">
+                  <span class="cz-label">Type</span>
+                  <div class="cz-options">
+                    <button class="chip cz-chip" type="button"
+                      data-board="skate"
+                      aria-pressed="false">SKATEBOARD</button>
+                    <button class="chip cz-chip" type="button"
+                      data-board="hover"
+                      aria-pressed="false">HOVERBOARD</button>
+                  </div>
+                </div>
+                <div class="cz-row" data-key="wheel" data-label="Wheels"></div>
+                <div class="cz-row" data-key="pulse" data-label="Pulse"></div>
+                <div class="cz-row" data-key="side" data-label="Side"></div>
+                <div class="cz-row" data-key="top" data-label="Top"></div>
+                <h3 class="cz-heading">Bottom</h3>
+                <div class="cz-row">
+                  <span class="cz-label">Style</span>
+                  <div class="cz-options">
+                    <button class="chip cz-chip" type="button" data-mode="solid"
+                      aria-pressed="false">ONE COLOR</button>
+                    <button class="chip cz-chip" type="button"
+                      data-mode="gradient"
+                      aria-pressed="false">GRADIENT</button>
+                  </div>
+                </div>
+                <div class="cz-row" data-key="bottom1"
+                  data-label="Color 1"></div>
+                <div class="cz-row" data-key="bottom2"
+                  data-label="Color 2"></div>
+                <div class="cz-row">
+                  <span class="cz-label">Sticker</span>
+                  <div id="cz-stickers" class="cz-options cz-stickers"
+                    role="radiogroup" aria-label="Sticker"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="menu-buttons">
+            <button id="custom-done-btn" class="btn btn-primary"
+              type="button">DONE</button>
+            <button id="custom-reset-btn" class="btn btn-ghost"
+              type="button">RESET</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Countdown -->
+      <section id="countdown-screen" class="screen countdown off"
+        aria-live="assertive">
+        <div id="countdown-num" class="countdown-num">3</div>
+      </section>
+
+      <!-- Pause -->
+      <section id="pause-screen" class="screen off">
+        <div class="panel small-panel">
+          <h2>PAUSED</h2>
+          <div class="menu-buttons vertical">
+            <button id="resume-btn" class="btn btn-primary"
+              type="button">RESUME</button>
+            <button id="restart-btn" class="btn btn-secondary"
+              type="button">RESTART</button>
+            <button id="pause-title-btn" class="btn btn-ghost"
+              type="button">TITLE</button>
+          </div>
+          <div class="toggles">
+            <button id="pause-sfx-toggle" class="chip" type="button"
+              aria-pressed="true">SFX ON</button>
+            <button id="pause-music-toggle" class="chip" type="button"
+              aria-pressed="true">MUSIC ON</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section id="results-screen" class="screen off">
+        <div class="panel results-panel">
+          <h2>TIME'S UP!</h2>
+          <div id="new-best" class="new-best" hidden>NEW PERSONAL BEST!</div>
+          <div class="final-score">
+            <span>FINAL SCORE</span>
+            <strong id="res-score">0</strong>
+          </div>
+          <dl class="stats">
+            <div><dt>Best combo</dt><dd id="res-combo">0</dd></div>
+            <div><dt>Top multiplier</dt><dd id="res-mult">&times;1.0</dd></div>
+            <div><dt>Distance</dt><dd id="res-distance">0 m</dd></div>
+            <div><dt>Tricks</dt><dd id="res-tricks">0</dd></div>
+            <div><dt>Grind time</dt><dd id="res-grind">0.0 s</dd></div>
+            <div><dt>Foes dodged</dt><dd id="res-karens">0</dd></div>
+            <div><dt>Near misses</dt><dd id="res-near">0</dd></div>
+            <div><dt>Wipeouts</dt><dd id="res-wipeouts">0</dd></div>
+          </dl>
+          <div class="results-actions">
+            <div class="menu-buttons">
+              <button id="again-btn" class="btn btn-primary" type="button">PLAY
+                AGAIN</button>
+              <button id="results-title-btn" class="btn btn-secondary"
+                type="button">TITLE</button>
+            </div>
+            <div class="menu-buttons results-online">
+              <button id="submit-btn" class="btn btn-pink" type="button">SUBMIT
+                HIGH SCORE</button>
+              <button id="results-board-btn" class="btn btn-green"
+                type="button">VIEW LEADERBOARD</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Submit score -->
+      <section id="submit-screen" class="screen off">
+        <form id="submit-form" class="panel small-panel submit-panel"
+          novalidate>
+          <h2>SUBMIT SCORE</h2>
+          <div class="final-score">
+            <span>YOUR SCORE</span>
+            <strong id="submit-score">0</strong>
+          </div>
+          <label class="submit-label" for="submit-name">ENTER YOUR NAME</label>
+          <input id="submit-name" class="name-input" type="text" maxlength="16"
+            autocomplete="nickname" autocapitalize="words" spellcheck="false"
+            enterkeyhint="send" placeholder="Ninja name">
+          <p id="submit-msg" class="board-msg" role="status"
+            aria-live="polite"></p>
+          <div class="menu-buttons">
+            <button id="submit-send-btn" class="btn btn-primary"
+              type="submit">SUBMIT</button>
+            <button id="submit-cancel-btn" class="btn btn-ghost"
+              type="button">CANCEL</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Leaderboard -->
+      <section id="leaderboard-screen" class="screen off">
+        <div class="panel small-panel board-panel">
+          <h2>LEADERBOARD</h2>
+          <p class="board-sub">TOP 10 NINJAS</p>
+          <ol id="board-list" class="board-list"></ol>
+          <p id="board-msg" class="board-msg" role="status"
+            aria-live="polite"></p>
+          <button id="board-back-btn" class="btn btn-primary"
+            type="button">BACK</button>
+        </div>
+      </section>
+
+      <noscript><p class="noscript">Skateboard Ninjas needs JavaScript
+          enabled.</p></noscript>
+    </main>
+  </body>
+</html>
