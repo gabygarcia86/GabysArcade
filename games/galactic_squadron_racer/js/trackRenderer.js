@@ -17,7 +17,7 @@
 import { getTheme, DECOR, SECTION_STYLE } from './scenery.js';
 import { makeCanvas, rngFor, glow, softGlow, makePattern, radial, silhouette } from './gfx.js';
 import { buildZones } from './race.js';
-import { getSprites } from '../../galactic_squadron/js/sprites.js';
+import { getSprites } from './sprites.js';
 import { TAU, wrapLen, mulberry32 } from './utils.js';
 
 const CELL = 512;

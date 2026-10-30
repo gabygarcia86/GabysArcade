@@ -10,7 +10,7 @@
  */
 import { hazardHit } from './collision.js';
 import { getProbeSprite } from './shipRoster.js';
-import { getGlow } from '../../galactic_squadron/js/sprites.js';
+import { getGlow } from './sprites.js';
 import { clamp, wrapLen, mulberry32, TAU } from './utils.js';
 
 let nextId = 1;

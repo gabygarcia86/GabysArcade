@@ -11,7 +11,7 @@
  */
 import { TAU } from './utils.js';
 import { blob, radial, linearG, speckle, wrapDraw, glow, roundRect, rngFor } from './gfx.js';
-import { getSprites } from '../../galactic_squadron/js/sprites.js';
+import { getSprites } from './sprites.js';
 
 const SH = 'rgba(0,0,0,0.32)';
 

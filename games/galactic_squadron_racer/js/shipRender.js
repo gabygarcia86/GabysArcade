@@ -3,7 +3,7 @@
  * brighter on boost), banking into turns, and a white hit flash. Used in races,
  * the hangar preview and the title screen.
  */
-import { getSprites } from '../../galactic_squadron/js/sprites.js';
+import { getSprites } from './sprites.js';
 import { glow, silhouette } from './gfx.js';
 
 /**

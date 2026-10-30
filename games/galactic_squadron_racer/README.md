@@ -6,14 +6,14 @@ Built with HTML5 Canvas 2D and vanilla JavaScript (ES modules). There is no buil
 
 ## Running locally
 
-ES modules don't load from `file://`, so serve the files over HTTP. The racer imports its ship artwork straight from `../galactic_squadron/js/`, so **serve the repository root** (not just this folder):
+ES modules don't load from `file://`, so serve the folder over HTTP. Any static server works:
 
 ```bash
-# from the repository root
+# from this folder
 python -m http.server 8000
 ```
 
-Then open `http://localhost:8000/games/galactic_squadron_racer/`. On GitHub Pages it works as is, because the whole repository is published together.
+Then open `http://localhost:8000/`. All paths are relative, so it also works from the repository root or on GitHub Pages at any URL depth.
 
 ## Controls
 
@@ -41,7 +41,7 @@ Settings let you limit the keyboard to **WASD + Space** or **arrows + Shift**, p
 
 ## Ships
 
-All 18 ships come from Galactic Squadron: the 14 hangar ships, the three enemy fighters (T-Fighter, T-Interceptor, T-Bomber) and the Falcon. Each has six stats from 1 to 10 (Top Speed, Acceleration, Handling, Boost Power, Boost Capacity, Weight / Stability). Every ship's stats add up to 36, so no ship is best at everything. Stats live in `js/shipRoster.js` (`HANGAR` and `EXTRA`), and `deriveHandling()` turns them into physics values. A ship added to Galactic Squadron's `SHIPS` list shows up here automatically with balanced default stats.
+All 18 ships come from Galactic Squadron: the 14 hangar ships, the three enemy fighters (T-Fighter, T-Interceptor, T-Bomber) and the Falcon. Each has six stats from 1 to 10 (Top Speed, Acceleration, Handling, Boost Power, Boost Capacity, Weight / Stability). Every ship's stats add up to 36, so no ship is best at everything. The ship artwork lives in this game's own copies of Galactic Squadron's `js/ships.js` and `js/sprites.js`, so ships can be changed here without affecting the original game. Stats live in `js/shipRoster.js` (`HANGAR` and `EXTRA`), and `deriveHandling()` turns them into physics values. A ship added to `SHIPS` in `js/ships.js` shows up in the hangar automatically with balanced default stats.
 
 The **Probe-Fighter** is not a racer. It patrols sections of every track as a hazard, and its red scanning beam shows where it's heading.
 
@@ -90,7 +90,9 @@ galactic_squadron_racer/
     collision.js      walls, racer bumps, hazard hits
     aiRacer.js        racing line, speed profiles, AI driver
     trackHazards.js   probes, barriers, shock gates, rocks, asteroids, debris, vents, sandstorm
-    shipRoster.js     the 18 racers and their stats (art from Galactic Squadron)
+    shipRoster.js     the 18 racers and their stats
+    ships.js          hangar ship artwork (copied from Galactic Squadron)
+    sprites.js        enemy, Falcon and Probe-Fighter artwork, flames (copied from Galactic Squadron)
     shipRender.js     ship drawing: flames, boost, banking, shadow
     scenery.js        environment art: textures, decorations, per-theme settings
     trackRenderer.js  track drawing, decoration placement, backdrops and overhead layers
@@ -106,7 +108,7 @@ galactic_squadron_racer/
     titleScene.js     animated title backdrop
     gfx.js            drawing helpers
     storage.js        localStorage wrapper that never throws
-    utils.js          math helpers (shares Galactic Squadron's utils)
+    utils.js          math helpers (base set copied from Galactic Squadron)
 ```
 
 The simulation (`race.js` and everything it imports) has no DOM access, so whole races can be simulated headlessly in Node for balancing.

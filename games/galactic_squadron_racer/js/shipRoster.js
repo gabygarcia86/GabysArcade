@@ -1,14 +1,14 @@
 /**
- * Racing roster. Every ship comes straight from Galactic Squadron: the 14
- * hangar ships (ships.js), the three enemy fighters and the allied Falcon
- * (sprites.js). Only the Probe-Fighter is left out: it patrols the tracks as a
- * hazard instead (see trackHazards.js).
+ * Racing roster. Every ship comes from Galactic Squadron (this game keeps its
+ * own copies of ships.js and sprites.js): the 14 hangar ships, the three
+ * enemy fighters and the allied Falcon. Only the Probe-Fighter is left out:
+ * it patrols the tracks as a hazard instead (see trackHazards.js).
  *
  * Stats are 1–10 and every ship's six stats add up to 36, so each one buys its
  * strengths with weaknesses. deriveHandling() turns them into physics values.
  */
-import { SHIPS, getShipSprite } from '../../galactic_squadron/js/ships.js';
-import { getSprites } from '../../galactic_squadron/js/sprites.js';
+import { SHIPS, getShipSprite } from './ships.js';
+import { getSprites } from './sprites.js';
 
 export const STAT_KEYS = ['topSpeed', 'accel', 'handling', 'boostPower', 'boostCapacity', 'weight'];
 export const STAT_LABELS = {

@@ -2,8 +2,8 @@
  * Small drawing helpers shared by the scenery, track and ship renderers.
  */
 import { TAU, mulberry32 } from './utils.js';
-export { getGlow } from '../../galactic_squadron/js/sprites.js';
-import { getGlow } from '../../galactic_squadron/js/sprites.js';
+export { getGlow } from './sprites.js';
+import { getGlow } from './sprites.js';
 
 export function makeCanvas(w, h) {
   const c = document.createElement('canvas');
