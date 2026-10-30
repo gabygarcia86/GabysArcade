@@ -6,7 +6,7 @@
  * backdrop; during a race the canvas shows the RaceView. Frames use
  * requestAnimationFrame; the race splits each frame into fixed substeps.
  *
- * Flow: a mode (grandprix, quick, timetrial, browse) decides where the ship
+ * Flow: a mode (grandprix, quick, timetrial) decides where the ship
  * and track screens lead next.
  */
 import { CONFIG } from './config.js';
@@ -202,14 +202,6 @@ export class Game {
         this.flow = { mode: 'timetrial' };
         this.go('ships');
         break;
-      case 'browse-ships':
-        this.flow = { mode: 'browse' };
-        this.go('ships');
-        break;
-      case 'browse-tracks':
-        this.flow = { mode: 'browse' };
-        this.go('tracks');
-        break;
 
       case 'pick-cup':
         this.cupId = el.dataset.id;
@@ -237,7 +229,6 @@ export class Game {
       case 'ship-confirm':
         this.saveSettings();
         if (this.flow.mode === 'grandprix') this.startChampionship();
-        else if (this.flow.mode === 'browse') this.back();
         else this.go('tracks');
         break;
       case 'pick-track':
@@ -247,7 +238,6 @@ export class Game {
         this.saveSettings();
         break;
       case 'track-confirm':
-        if (this.flow.mode === 'browse') this.flow = { mode: 'quick' };
         this.startRace();
         break;
 

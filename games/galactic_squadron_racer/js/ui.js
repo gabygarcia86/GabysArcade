@@ -372,7 +372,7 @@ export class UI {
 
   buildTracks(mode, selectedId) {
     this.trackMode = mode;
-    this.el('#tracks-title').textContent = mode === 'timetrial' ? 'TIME TRIAL · CHOOSE TRACK' : mode === 'browse' ? 'TRACK SELECTION' : 'QUICK RACE · CHOOSE TRACK';
+    this.el('#tracks-title').textContent = mode === 'timetrial' ? 'TIME TRIAL · CHOOSE TRACK' : 'QUICK RACE · CHOOSE TRACK';
     this.el('#track-diff-row').hidden = mode === 'timetrial';
     this.el('[data-action="track-confirm"]').textContent = mode === 'timetrial' ? 'START TRIAL ›' : 'RACE ›';
     const grid = this.el('#track-grid');
