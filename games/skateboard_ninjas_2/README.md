@@ -309,3 +309,5 @@ licensed (`vendor/LICENSE-three.txt`). Music is from `assets/music/`.
 ## TODO
 
 - Add leaderboard
+- back flip is actually a front flip
+- Customization, move hats to ninja section
