@@ -129,3 +129,10 @@ The simulation runs at a fixed 120 Hz step, rendered with `requestAnimationFrame
 
 - `?stage=7` starts a new game at that stage (7 is the first boss).
 - `?debug=1` exposes the running game as `window.galacticSquadron` in the console.
+
+## TODO
+
+- Custom sound fx, ships come in, light speed, explosions, lasers, boss battle
+- Music updates
+- Add leaderboard system
+- Fix sound on Apple Safari

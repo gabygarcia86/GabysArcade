@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+        <meta name="theme-color" content="#03050d">
+        <meta name="description"
+            content="Galactic Squadron Racer — top-down arcade racing with the Galactic Squadron fleet across ten tracks.">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent">
+        <meta name="format-detection" content="telephone=no">
+        <title>Galactic Squadron Racer</title>
+        <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+        <link rel="icon" type="image/png" sizes="128x128"
+            href="icon/icon-128.png">
+        <link rel="icon" type="image/png" sizes="256x256"
+            href="icon/icon-256.png">
+        <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <div id="app">
+            <canvas id="game" role="img"
+                aria-label="Galactic Squadron Racer"></canvas>
+
+            <div id="hud-buttons" hidden>
+                <button class="hud-btn" data-action="mute"
+                    aria-label="Mute sound" aria-pressed="false">
+                    <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path
+                            d="M4 9v6h4l5 4V5L8 9H4z" /><path
+                            d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"
+                            fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" /></svg>
+                    <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path
+                            d="M4 9v6h4l5 4V5L8 9H4z" /><path
+                            d="M16 9l6 6M22 9l-6 6" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" /></svg>
+                </button>
+                <button class="hud-btn" data-action="pause" aria-label="Pause">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5"
+                            width="4" height="14" rx="1" /><rect x="14" y="5"
+                            width="4" height="14" rx="1" /></svg>
+                </button>
+            </div>
+
+            <!-- ============================== TITLE -->
+            <section id="screen-title" class="screen" aria-label="Title screen" hidden>
+                <div class="title-wrap">
+                    <p class="kicker">A GALACTIC SQUADRON SPIN-OFF</p>
+                    <h1 class="logo"><span class="w1">GALACTIC</span><span
+                            class="w2">SQUADRON</span><span
+                            class="w3">RACER</span></h1>
+                    <div class="title-buttons">
+                        <button class="btn primary big" data-action="play">PLAY</button>
+                        <div class="btn-row">
+                            <button class="btn" data-action="help">HOW TO PLAY</button>
+                            <button class="btn" data-action="settings">SETTINGS</button>
+                        </div>
+                    </div>
+                    <p class="controls-hint kb-only"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+                        or arrows drive · <kbd>Space</kbd> boost · <kbd>Esc</kbd> pause</p>
+                    <p class="controls-hint touch-only">Stick to steer · ACCEL, BRAKE and BOOST on the right</p>
+                </div>
+                <a class="back-link" href="../../index.html">‹ ARCADE</a>
+            </section>
+
+            <!-- ============================== MAIN MENU -->
+            <section id="screen-menu" class="screen" aria-label="Main menu" hidden>
+                <div class="panel">
+                    <h2>MAIN MENU</h2>
+                    <div class="menu-grid">
+                        <button class="menu-card" data-action="mode-grandprix">
+                            <span class="mc-title">GRAND PRIX</span>
+                            <span class="mc-sub">Championship cups · points · trophy</span>
+                        </button>
+                        <button class="menu-card" data-action="mode-quick">
+                            <span class="mc-title">QUICK RACE</span>
+                            <span class="mc-sub">Any track · any ship · 3 rivals</span>
+                        </button>
+                        <button class="menu-card" data-action="mode-timetrial">
+                            <span class="mc-title">TIME TRIAL</span>
+                            <span class="mc-sub">Solo · records · ghost of your best lap</span>
+                        </button>
+                        <button class="menu-card" data-action="browse-ships">
+                            <span class="mc-title">SHIP SELECTION</span>
+                            <span class="mc-sub">The whole squadron hangar</span>
+                        </button>
+                        <button class="menu-card" data-action="browse-tracks">
+                            <span class="mc-title">TRACK SELECTION</span>
+                            <span class="mc-sub">Ten circuits and their records</span>
+                        </button>
+                        <button class="menu-card" data-action="settings">
+                            <span class="mc-title">SETTINGS</span>
+                            <span class="mc-sub">Audio · controls · effects</span>
+                        </button>
+                    </div>
+                    <button class="btn" data-action="back">BACK</button>
+                </div>
+            </section>
+
+            <!-- ============================== CUPS -->
+            <section id="screen-cups" class="screen" aria-label="Grand Prix" hidden>
+                <div class="panel wide">
+                    <h2>GRAND PRIX</h2>
+                    <div id="cup-list" class="cup-list" role="radiogroup" aria-label="Cups"></div>
+                    <div class="row-inline">
+                        <span class="label">AI DIFFICULTY</span>
+                        <div class="seg" data-seg="difficulty" role="radiogroup" aria-label="AI difficulty">
+                            <button data-value="easy">EASY</button>
+                            <button data-value="normal">NORMAL</button>
+                            <button data-value="hard">HARD</button>
+                        </div>
+                    </div>
+                    <p class="note">Points: 1st 15 · 2nd 12 · 3rd 10 · 4th 8. The leader starts each race from the back.</p>
+                    <div class="btn-row">
+                        <button class="btn" data-action="back">BACK</button>
+                        <button class="btn primary" data-action="cup-next">CHOOSE SHIP ›</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== SHIP SELECT -->
+            <section id="screen-ships" class="screen" aria-label="Choose your ship" hidden>
+                <div class="panel wide hangar">
+                    <h2>HANGAR</h2>
+                    <div class="hangar-body">
+                        <div class="ship-detail">
+                            <div class="preview-box">
+                                <canvas id="ship-preview" aria-hidden="true"></canvas>
+                                <div class="preview-tools">
+                                    <button class="icon-btn" data-action="rot-left" aria-label="Rotate left">⟲</button>
+                                    <button class="icon-btn" data-action="rot-auto" aria-label="Auto rotate" aria-pressed="true">AUTO</button>
+                                    <button class="icon-btn" data-action="test-boost" aria-label="Test boost">BOOST</button>
+                                    <button class="icon-btn" data-action="rot-right" aria-label="Rotate right">⟳</button>
+                                </div>
+                            </div>
+                            <p id="ship-name" class="ship-name">X-SHIP</p>
+                            <p id="ship-class" class="ship-class">ELITE FIGHTER</p>
+                            <p id="ship-desc" class="ship-desc"></p>
+                            <dl id="ship-stats" class="stats-bars"></dl>
+                        </div>
+                        <div id="ship-grid" class="ship-grid" role="radiogroup" aria-label="Ships"></div>
+                    </div>
+                    <p class="note">Every ship is from the Galactic Squadron fleet. Stats always total the same: pick the strengths you like.</p>
+                    <div class="btn-row sticky">
+                        <button class="btn" data-action="back">BACK</button>
+                        <button class="btn primary" data-action="ship-confirm">CONFIRM SHIP</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== TRACK SELECT -->
+            <section id="screen-tracks" class="screen" aria-label="Choose a track" hidden>
+                <div class="panel wide tracks">
+                    <h2 id="tracks-title">TRACKS</h2>
+                    <div class="tracks-body">
+                        <div class="track-detail">
+                            <canvas id="track-preview" aria-hidden="true"></canvas>
+                            <p id="track-name" class="ship-name"></p>
+                            <p id="track-meta" class="ship-class"></p>
+                            <p id="track-desc" class="ship-desc"></p>
+                            <p id="track-record" class="track-record"></p>
+                        </div>
+                        <div id="track-grid" class="track-grid" role="radiogroup" aria-label="Tracks"></div>
+                    </div>
+                    <div class="row-inline" id="track-diff-row">
+                        <span class="label">AI DIFFICULTY</span>
+                        <div class="seg" data-seg="difficulty" role="radiogroup" aria-label="AI difficulty">
+                            <button data-value="easy">EASY</button>
+                            <button data-value="normal">NORMAL</button>
+                            <button data-value="hard">HARD</button>
+                        </div>
+                    </div>
+                    <div class="btn-row sticky">
+                        <button class="btn" data-action="back">BACK</button>
+                        <button class="btn primary" data-action="track-confirm">RACE ›</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== RACE INTRO -->
+            <section id="screen-intro" class="screen clear" aria-label="Race intro" hidden>
+                <div class="intro-card">
+                    <p id="intro-kicker" class="kicker"></p>
+                    <h2 id="intro-track" class="intro-track"></h2>
+                    <p id="intro-desc" class="intro-desc"></p>
+                    <div id="intro-lineup" class="lineup"></div>
+                    <button class="btn primary" data-action="intro-go">START <span class="kb-only">(Enter)</span></button>
+                </div>
+            </section>
+
+            <!-- ============================== PAUSE -->
+            <section id="screen-pause" class="screen" aria-label="Paused" hidden>
+                <div class="panel narrow">
+                    <h2>PAUSED</h2>
+                    <button class="btn primary" data-action="resume">RESUME</button>
+                    <button class="btn" data-action="restart">RESTART RACE</button>
+                    <button class="btn" data-action="settings">SETTINGS</button>
+                    <button class="btn" data-action="quit">QUIT TO MAIN MENU</button>
+                </div>
+            </section>
+
+            <!-- ============================== RESULTS -->
+            <section id="screen-results" class="screen" aria-label="Race results" hidden>
+                <div class="panel wide">
+                    <h2 id="results-title">RESULTS</h2>
+                    <p id="results-sub" class="results-sub"></p>
+                    <div id="results-summary" class="summary"></div>
+                    <table id="results-table" class="table"></table>
+                    <div class="btn-row" id="results-buttons">
+                        <button class="btn" data-action="quit">MAIN MENU</button>
+                        <button class="btn" data-action="change-track">CHANGE TRACK</button>
+                        <button class="btn" data-action="restart">RETRY</button>
+                        <button class="btn primary" data-action="gp-standings">STANDINGS ›</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== STANDINGS -->
+            <section id="screen-standings" class="screen" aria-label="Championship standings" hidden>
+                <div class="panel wide">
+                    <h2>CHAMPIONSHIP</h2>
+                    <p id="standings-sub" class="results-sub"></p>
+                    <table id="standings-table" class="table"></table>
+                    <div class="btn-row">
+                        <button class="btn" data-action="quit">QUIT CUP</button>
+                        <button class="btn primary" data-action="gp-next">NEXT RACE ›</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== CHAMPION -->
+            <section id="screen-champion" class="screen" aria-label="Championship result" hidden>
+                <div class="panel wide">
+                    <canvas id="trophy" aria-hidden="true"></canvas>
+                    <h2 id="champ-title">CHAMPION!</h2>
+                    <p id="champ-sub" class="results-sub"></p>
+                    <div id="champ-summary" class="summary"></div>
+                    <table id="champ-table" class="table"></table>
+                    <div class="btn-row">
+                        <button class="btn primary" data-action="quit">MAIN MENU</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================== SETTINGS -->
+            <section id="screen-settings" class="screen" aria-label="Settings" hidden>
+                <div class="panel">
+                    <h2>SETTINGS</h2>
+                    <h3>AUDIO</h3>
+                    <label class="row"><span>Master volume</span><input type="range" data-setting="master" min="0" max="1" step="0.05"></label>
+                    <label class="row"><span>Music</span><input type="range" data-setting="music" min="0" max="1" step="0.05"></label>
+                    <label class="row"><span>Sound effects</span><input type="range" data-setting="sfx" min="0" max="1" step="0.05"></label>
+                    <label class="row"><span>Mute all</span><input type="checkbox" class="switch" data-setting="muted"></label>
+
+                    <h3>CONTROLS</h3>
+                    <label class="row"><span>Steering sensitivity</span><input type="range" data-setting="steering" min="0.6" max="1.4" step="0.05"></label>
+                    <label class="row"><span>Keyboard</span>
+                        <select data-setting="keyboard">
+                            <option value="both">WASD or arrows · Space/Shift boost</option>
+                            <option value="wasd">WASD · Space boost</option>
+                            <option value="arrows">Arrows · Shift boost</option>
+                        </select></label>
+                    <label class="row"><span>Touch steering</span>
+                        <select data-setting="touchSteer">
+                            <option value="stick">Virtual stick</option>
+                            <option value="buttons">◀ ▶ buttons</option>
+                        </select></label>
+                    <label class="row"><span>Touch auto-accelerate</span><input type="checkbox" class="switch" data-setting="autoAccel"></label>
+
+                    <h3>GAMEPLAY &amp; DISPLAY</h3>
+                    <label class="row"><span>AI difficulty</span>
+                        <select data-setting="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="normal">Normal</option>
+                            <option value="hard">Hard</option>
+                        </select></label>
+                    <label class="row"><span>Screen shake</span><input type="checkbox" class="switch" data-setting="screenShake"></label>
+                    <label class="row"><span>Visual effects</span><input type="checkbox" class="switch" data-setting="effects"></label>
+                    <div class="row"><span>Fullscreen</span><button class="btn small toggle-btn" data-action="fullscreen">TOGGLE</button></div>
+
+                    <button class="btn small danger" data-action="reset-records">RESET TIME TRIAL RECORDS</button>
+                    <button class="btn primary" data-action="back">BACK</button>
+                </div>
+            </section>
+
+            <!-- ============================== HOW TO PLAY -->
+            <section id="screen-help" class="screen" aria-label="How to play" hidden>
+                <div class="panel">
+                    <h2>HOW TO PLAY</h2>
+                    <p class="lead">Three laps, four racers. Drive through every checkpoint gate in order. Cutting across doesn't count.</p>
+                    <h3>CONTROLS</h3>
+                    <dl class="keys">
+                        <dt><kbd>W</kbd> / <kbd>↑</kbd></dt><dd>Accelerate</dd>
+                        <dt><kbd>S</kbd> / <kbd>↓</kbd></dt><dd>Brake, then reverse</dd>
+                        <dt><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd></dt><dd>Steer (tap for small corrections)</dd>
+                        <dt><kbd>Space</kbd> / <kbd>Shift</kbd></dt><dd>Boost (uses the boost tank)</dd>
+                        <dt><kbd>R</kbd></dt><dd>Back on track if you're stuck</dd>
+                        <dt><kbd>Esc</kbd> / <kbd>P</kbd></dt><dd>Pause</dd>
+                        <dt>Gamepad</dt><dd>Stick steers, RT/A accelerate, LT/B brake, X/RB boost</dd>
+                        <dt>Touch</dt><dd>Stick (or ◀ ▶) on the left; ACCEL, BRAKE, BOOST on the right</dd>
+                    </dl>
+                    <h3>TECHNIQUE</h3>
+                    <ul class="tips">
+                        <li><b>Turning</b> is tightest at low and medium speed. Flat out, the turning circle widens, so brake before tight corners.</li>
+                        <li><b>Power-slide</b>: hold brake while steering at speed. The tail swings out and you carve tighter.</li>
+                        <li><b>Drift boost</b>: hold a slide until the sparks turn blue, orange, then purple. Let go to cash it in for boost energy and a burst of speed.</li>
+                        <li><b>Boost</b> recharges when you're not using it. Blue chevron pads give a free kick.</li>
+                        <li><b>Rocket start</b>: hit the throttle while the "1" is showing. Too early and the engine overheats.</li>
+                        <li>Off the track (sand, snow, lava…) you lose speed. Lava is worst: you'll be lifted out, slowly.</li>
+                    </ul>
+                    <h3>HAZARDS</h3>
+                    <ul class="tips">
+                        <li><b>Probe-Fighters</b> patrol sections of track. Their red scanning beam shows where they're heading.</li>
+                        <li>Shock gates crackle before they fire, and only ever block half the track. Lava vents glow before erupting. Falling rocks cast a growing shadow. Asteroids are announced by blinking chevrons.</li>
+                    </ul>
+                    <button class="btn primary" data-action="back">BACK</button>
+                </div>
+            </section>
+
+            <!-- ============================== TOUCH CONTROLS -->
+            <div id="touch-controls" hidden>
+                <div id="stick-zone" aria-hidden="true">
+                    <div id="stick-base"><div id="stick-knob"></div></div>
+                    <button id="btn-left" class="tbtn" type="button" tabindex="-1">◀</button>
+                    <button id="btn-right" class="tbtn" type="button" tabindex="-1">▶</button>
+                </div>
+                <div id="pedals">
+                    <button id="btn-reset" class="tbtn small" type="button" tabindex="-1" hidden>⟲</button>
+                    <button id="btn-boost" class="tbtn boost" type="button" tabindex="-1">BOOST</button>
+                    <button id="btn-brake" class="tbtn brake" type="button" tabindex="-1">BRAKE</button>
+                    <button id="btn-accel" class="tbtn accel" type="button" tabindex="-1">ACCEL</button>
+                </div>
+            </div>
+        </div>
+        <noscript><p class="noscript">Galactic Squadron Racer needs JavaScript enabled.</p></noscript>
+        <script type="module" src="js/main.js"></script>
+    </body>
+</html>

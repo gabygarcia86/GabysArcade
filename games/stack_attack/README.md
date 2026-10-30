@@ -244,3 +244,8 @@ A single `requestAnimationFrame` loop drives everything. Listeners are attached 
 
 - Key bindings are fixed (only timing is configurable).
 - T-spins are not detected or scored separately.
+
+## TODO
+
+- Create all new music for each theme
+- Improve theme graphics
