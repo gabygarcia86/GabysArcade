@@ -45,6 +45,14 @@ export class Minimap {
     this.size = 0;
   }
 
+  /** Panel height for a given width: trimmed to the track's shape, never taller than wide. */
+  heightFor(size) {
+    const b = this.geo.bounds;
+    const pad = 0.08;
+    const scale = (size * (1 - pad * 2)) / Math.max(b.w, b.h);
+    return Math.min(size, b.h * scale + size * pad * 2);
+  }
+
   /** (Re)renders the track outline when the minimap size changes. */
   prepare(size, dpr) {
     const px = Math.round(size * dpr);
@@ -54,10 +62,11 @@ export class Minimap {
     const g = this.geo;
     const b = g.bounds;
     const pad = 0.08;
+    const pyH = Math.round(this.heightFor(size) * dpr);
     this.scale = (size * dpr * (1 - pad * 2)) / Math.max(b.w, b.h);
     this.ox = (px - b.w * this.scale) / 2 - b.x0 * this.scale;
-    this.oy = (px - b.h * this.scale) / 2 - b.y0 * this.scale;
-    const { c, g: m } = makeCanvas(px, px);
+    this.oy = (pyH - b.h * this.scale) / 2 - b.y0 * this.scale;
+    const { c, g: m } = makeCanvas(px, pyH);
     m.lineJoin = 'round';
     m.lineCap = 'round';
     const path = new Path2D();
@@ -94,8 +103,9 @@ export class Minimap {
 
   draw(ctx, x, y, size, dpr, race, ghost) {
     this.prepare(size, dpr);
-    panel(ctx, x - 6, y - 6, size + 12, size + 12, 12);
-    ctx.drawImage(this.canvas, x, y, size, size);
+    const h = this.heightFor(size);
+    panel(ctx, x - 6, y - 6, size + 12, h + 12, 12);
+    ctx.drawImage(this.canvas, x, y, size, h);
     const k = this.scale / dpr;
     const ox = this.ox / dpr;
     const oy = this.oy / dpr;
@@ -252,7 +262,7 @@ export function drawHud(ctx, rv, W, H, dpr) {
   /* ---- minimap */
   let ms = clamp(Math.min(W, H) * (touch ? 0.24 : 0.26), 96, 230);
   let mx = W - m - ms - 6 - (touch ? 52 : 0); // clear of the pause/mute column on touch screens
-  let my = H - m - ms - 6 - inset;
+  let my = H - m - rv.minimap.heightFor(ms) - 6 - inset;
   if (touch && H > W) {
     // portrait: tuck it under the time panel, same width, clear of the pedals
     ms = tw - 12;

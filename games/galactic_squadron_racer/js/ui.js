@@ -187,9 +187,12 @@ export class UI {
       // left side: the stick floats under the thumb, so only clear the ◀ ▶ buttons when they're used
       const lb = this.el('#btn-left').getBoundingClientRect();
       this.insetLeft = this.settings.touchSteer === 'buttons' && lb.height ? window.innerHeight - lb.top + 6 : Math.min(this.insetValue, 110);
-      // on skinny screens the brake reaches into the left half: clear it too
+      // on skinny screens the brake can reach under the speed panel: only then clear it too
+      const s = clamp(Math.min(window.innerWidth, window.innerHeight) / 720, 0.62, 1.35); // same scale as hud.js
+      const panelRight = 14 * s + 220 * s + 6;
+      const panelTop = window.innerHeight - this.insetLeft - 14 * s - 96 * s;
       const br = this.el('#btn-brake').getBoundingClientRect();
-      if (br.height && br.left < 240) this.insetLeft = Math.max(this.insetLeft, window.innerHeight - br.top + 6);
+      if (br.height && br.left < panelRight && br.bottom > panelTop) this.insetLeft = Math.max(this.insetLeft, window.innerHeight - br.top + 6);
     }
     return this.insetValue;
   }
