@@ -127,4 +127,3 @@ A layout is a clockwise list of corners `[x, y, radius]`. Each corner is rounded
 
 - Custom sound
 - Theme music
-- Update names of enemy racers
