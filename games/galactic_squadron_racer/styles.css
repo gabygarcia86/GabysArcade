@@ -1152,6 +1152,42 @@ select:focus-visible {
   border-color: rgba(255, 211, 74, 0.8);
 }
 
+/* skinny portrait phones: smaller, tighter arrows and the brake lifted above them */
+@media (orientation: portrait) and (max-width: 480px) {
+  #btn-left,
+  #btn-right {
+    width: 66px;
+    height: 66px;
+    font-size: 1.3em;
+  }
+
+  #btn-left {
+    left: max(12px, env(safe-area-inset-left));
+  }
+
+  #btn-right {
+    left: calc(max(12px, env(safe-area-inset-left)) + 72px);
+  }
+
+  #btn-brake {
+    right: calc(max(18px, env(safe-area-inset-right)) + 104px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 92px);
+    width: 66px;
+    height: 66px;
+  }
+
+  #btn-reset {
+    right: calc(max(18px, env(safe-area-inset-right)) + 104px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 168px);
+    width: 48px;
+    height: 48px;
+  }
+
+  #touch-controls {
+    height: min(46vh, 260px);
+  }
+}
+
 /* --------------------------------------------------------------- responsive */
 
 @media (max-width: 760px) {
