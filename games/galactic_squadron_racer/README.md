@@ -22,7 +22,7 @@ Then open `http://localhost:8000/`. All paths are relative, so it also works fro
 | Accelerate | W / â†‘ | RT or A | **ACCEL** |
 | Brake, then reverse | S / â†“ | LT or B | **BRAKE** |
 | Steer | A D / â† â†’ (tap for small corrections) | Left stick | Floating stick, or â—€ â–¶ buttons |
-| Boost | Space / Shift | X or RB | **BOOST** |
+| Boost | Space / Shift | X or RB | **BOOST** (also accelerates) |
 | Back on track | R | | âŸ² (appears when you're stuck) |
 | Pause | Esc / P | Start | Pause button |
 | Mute | M | | Speaker button |
@@ -127,3 +127,4 @@ A layout is a clockwise list of corners `[x, y, radius]`. Each corner is rounded
 
 - Custom sound
 - Theme music
+- Update names of enemy racers

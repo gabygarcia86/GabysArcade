@@ -163,7 +163,8 @@ export function drawHud(ctx, rv, W, H, dpr) {
 
   /* ---- top right: times */
   const tw = 210 * s;
-  const tx = W - m - tw - (touch ? 56 * s : 50 * s);
+  // clear the mute/pause column (42px buttons, 10px from the edge; not scaled with the HUD)
+  const tx = W - tw - 62;
   panel(ctx, tx, m, tw, 92 * s);
   text(ctx, 'TIME', tx + 12 * s, m + 22 * s, 13 * s, '#8fa3d9');
   const raceTime = race.state === 'countdown' ? 0 : p.finished ? p.finishTime : race.time;
@@ -249,9 +250,15 @@ export function drawHud(ctx, rv, W, H, dpr) {
   }
 
   /* ---- minimap */
-  const ms = clamp(Math.min(W, H) * (touch ? 0.24 : 0.26), 96, 230);
-  const mx = W - m - ms - 6 - (touch ? 52 : 0); // clear of the pause/mute column on touch screens
-  const my = H - m - ms - 6 - inset;
+  let ms = clamp(Math.min(W, H) * (touch ? 0.24 : 0.26), 96, 230);
+  let mx = W - m - ms - 6 - (touch ? 52 : 0); // clear of the pause/mute column on touch screens
+  let my = H - m - ms - 6 - inset;
+  if (touch && H > W) {
+    // portrait: tuck it under the time panel, same width, clear of the pedals
+    ms = tw - 12;
+    mx = tx + 6;
+    my = m + (race.mode === 'timetrial' ? 130 : 92) * s + 12;
+  }
   rv.minimap.draw(ctx, mx, my, ms, dpr, race, race.ghostPos);
 
   /* ---- center notices */

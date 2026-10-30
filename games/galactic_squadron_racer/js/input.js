@@ -184,6 +184,8 @@ export class Input {
 
     if (this.stick.active) steer = this.stick.value;
     if (this.usingTouch && settings.autoAccel && !brake) throttle = 1;
+    // the touch BOOST button also accelerates: one thumb can't hold ACCEL and BOOST together
+    if (this.held.boost.size > 0) throttle = 1;
 
     // gamepad
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
