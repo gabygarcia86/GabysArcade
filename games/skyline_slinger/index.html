@@ -16,8 +16,9 @@
       href="icon/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
     <title>Skyline Slinger</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <script src="leaderboard.js?v=2" defer></script>
+    <script src="script.js?v=2" defer></script>
   </head>
   <body class="webswing-page">
     <main class="web-game">
@@ -81,6 +82,7 @@
             <button class="start-button" id="start-button" type="button">
               Start swinging <span aria-hidden="true">→</span>
             </button>
+            <button class="start-button board-button" id="start-board-button" type="button">Leaderboard</button>
             <p class="control-hint"><kbd>HOLD</kbd> to shoot a web
               <span>·</span> let go to fly</p>
           </div>
@@ -104,9 +106,27 @@
             <h2 id="gameover-title">What a ride!</h2>
             <p>You flew <strong id="final-distance">0</strong> meters and found
               <strong id="final-stars">0</strong> stars.</p>
+            <form class="score-form" id="score-form" novalidate hidden>
+              <label for="score-name">Your name</label>
+              <input id="score-name" type="text" autocomplete="nickname"
+                enterkeyhint="send" spellcheck="false">
+              <button class="start-button board-button" type="submit">Submit score</button>
+            </form>
+            <p class="score-message" id="score-message" role="status" hidden></p>
             <button class="start-button" id="play-again-button" type="button">
               Fly again <span aria-hidden="true">↻</span>
             </button>
+            <button class="start-button board-button" id="over-board-button" type="button">View leaderboard</button>
+          </div>
+        </div>
+
+        <div class="game-overlay message-overlay" id="leaderboard-screen" hidden>
+          <div class="message-card board-card">
+            <h2>Leaderboard</h2>
+            <p class="eyebrow">TOP 10 FARTHEST FLYERS</p>
+            <ol class="board-list" id="board-list"></ol>
+            <p class="board-status" id="board-status" role="status"></p>
+            <button class="start-button" id="board-back-button" type="button">Back</button>
           </div>
         </div>
 

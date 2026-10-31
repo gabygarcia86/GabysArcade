@@ -158,7 +158,7 @@ window.ARCADE_CATALOG = {
       description:
         "Swing from rooftop to rooftop through a bright city, scoop up stars, and see how far you can fly.",
       category: "Arcade",
-      tags: ["swinging", "city", "web-slinging", "timed", "touch"],
+      tags: ["swinging", "city", "web-slinging", "timed", "leaderboard", "touch"],
       added: "",
     },
     {

@@ -700,3 +700,148 @@ body.webswing-page {
     transition-duration: .01ms !important;
   }
 }
+
+/* Leaderboard */
+#gameover-screen,
+#leaderboard-screen,
+#start-screen {
+  /* Keeps taller cards reachable in a short play area, like a landscape phone. */
+  overflow-y: auto;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: safe center;
+}
+
+/* This page sizes boxes without their padding, which overflows on phones. */
+#gameover-screen .message-card,
+.board-card,
+.score-form .board-button,
+.score-form input {
+  box-sizing: border-box;
+}
+
+/* Same look as .start-button, on its own line under the main action. */
+.board-button {
+  display: flex;
+  width: fit-content;
+  margin: 14px auto 0;
+}
+
+.board-button:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+.score-form .board-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.score-form {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.score-form label {
+  display: block;
+  margin-bottom: 4px;
+  color: #293655;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.score-form input {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #b9bfd6;
+  border-radius: 12px;
+  background: #fff;
+  color: #293655;
+  /* 16px stops iOS Safari zooming the page when the field gets focus */
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.score-form input:focus-visible {
+  outline: 3px solid #6659d0;
+  outline-offset: 1px;
+}
+
+.message-card > .score-message {
+  margin: 0 0 14px;
+  color: #3b8a5f;
+  font-weight: 800;
+}
+
+.message-card > .score-message.is-error {
+  color: #c43b4b;
+}
+
+.board-card {
+  width: min(100%, 390px);
+  padding: 20px 20px 22px;
+}
+
+.board-list {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  counter-reset: board;
+}
+
+/* In a narrow play area the result wraps under the name instead of hiding it. */
+.board-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid #e3e5ef;
+  color: #293655;
+  font-size: .9rem;
+  counter-increment: board;
+}
+
+.board-list li::before {
+  content: counter(board);
+  flex: none;
+  width: 22px;
+  color: #747c94;
+  font-weight: 800;
+}
+
+.board-list span {
+  flex: 1 1 6em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-list b {
+  margin-left: auto;
+  color: #5d58c9;
+}
+
+.board-list small {
+  flex: none;
+  min-width: 42px;
+  color: #b0781a;
+  font-weight: 700;
+  text-align: right;
+}
+
+.board-list li.is-own {
+  border-radius: 8px;
+  background: #ece9ff;
+}
+
+.message-card > .board-status {
+  margin: 12px 0;
+}
+
+.message-card > .board-status:empty {
+  display: none;
+}

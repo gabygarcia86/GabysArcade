@@ -5,6 +5,7 @@
   const startScreen = document.getElementById("start-screen");
   const pauseScreen = document.getElementById("pause-screen");
   const gameoverScreen = document.getElementById("gameover-screen");
+  const leaderboardScreen = document.getElementById("leaderboard-screen");
   const gameHud = document.getElementById("game-hud");
   const touchControl = document.getElementById("touch-control");
   const swingButton = document.getElementById("swing-button");
@@ -44,6 +45,12 @@
   let lastHudTime = -1;
   let timeOfDay = "day";
   const poopLayer = document.getElementById("poop-layer");
+  const board = window.SkylineLeaderboard;
+  let pendingRun = null;
+  let overRun = 0;
+  let submitting = false;
+  let boardRequest = 0;
+  let boardReturn = startScreen;
 
   function seededRandom() {
     worldSeed = (worldSeed * 1664525 + 1013904223) >>> 0;
@@ -139,6 +146,7 @@
     startScreen.hidden = true;
     pauseScreen.hidden = true;
     gameoverScreen.hidden = true;
+    leaderboardScreen.hidden = true;
     gameHud.hidden = false;
     touchControl.hidden = !isTouchDevice();
     swingButton.classList.remove("is-held");
@@ -236,9 +244,11 @@
       });
       if (attachedAnchor) ropeLength *= scale;
     } else if (state === "ready") {
+      const boardOpen = !leaderboardScreen.hidden;
       resetRun();
       state = "ready";
-      startScreen.hidden = false;
+      startScreen.hidden = boardOpen;
+      leaderboardScreen.hidden = !boardOpen;
       gameHud.hidden = true;
       touchControl.hidden = true;
     }
@@ -317,9 +327,130 @@
       distance / 10,
     );
     document.getElementById("final-stars").textContent = collectedStars;
+    const finalDistance = Math.floor(distance / 10);
+    pendingRun =
+      finalDistance > 0
+        ? { distance: finalDistance, stars: collectedStars }
+        : null;
+    overRun += 1;
+    document.getElementById("score-form").hidden = !pendingRun;
+    document.getElementById("score-name").value = board.loadName();
+    setScoreMessage("");
     gameoverScreen.hidden = false;
     startPoopStorm();
     playTone(240, 0.22);
+  }
+
+  function setScoreMessage(text, isError = false) {
+    const message = document.getElementById("score-message");
+    message.textContent = text;
+    message.hidden = !text;
+    message.classList.toggle("is-error", isError);
+  }
+
+  async function submitScore() {
+    if (submitting || !pendingRun) return;
+    const input = document.getElementById("score-name");
+    const name = board.cleanName(input.value);
+    if (!name) {
+      setScoreMessage("Enter a name first", true);
+      input.focus();
+      return;
+    }
+
+    const run = pendingRun;
+    const runId = overRun;
+    const button = document.querySelector("#score-form button");
+    const label = button.textContent;
+    submitting = true;
+    button.disabled = true;
+    button.textContent = "Sending…";
+    setScoreMessage("");
+    board.saveName(name);
+
+    let sent = true;
+    try {
+      await board.submit(name, run.distance, run.stars);
+    } catch {
+      sent = false;
+    }
+
+    submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (runId !== overRun) return;
+
+    if (!sent) {
+      setScoreMessage("Score not sent. Check your connection and try again.", true);
+      return;
+    }
+    pendingRun = null;
+    document.getElementById("score-form").hidden = true;
+    setScoreMessage("Score submitted!");
+    if (state === "over" && !gameoverScreen.hidden) {
+      openLeaderboard(gameoverScreen, { name, ...run });
+    }
+  }
+
+  // `own` ({ name, distance, stars }) highlights a score just submitted.
+  async function openLeaderboard(returnTo, own = null) {
+    boardReturn = returnTo;
+    returnTo.hidden = true;
+    leaderboardScreen.hidden = false;
+    document.getElementById("board-back-button").focus({ preventScroll: true });
+    const list = document.getElementById("board-list");
+    const status = document.getElementById("board-status");
+    const request = ++boardRequest;
+    list.replaceChildren();
+    status.textContent = "Loading…";
+
+    let rows = null;
+    try {
+      rows = await board.top();
+    } catch {
+      rows = null;
+    }
+    if (request !== boardRequest) return;
+
+    if (!rows) {
+      status.textContent =
+        "Leaderboard unavailable. Check your connection and try again.";
+      return;
+    }
+    if (!rows.length) {
+      status.textContent = "No scores yet. Be the first!";
+      return;
+    }
+
+    let ownRow = null;
+    for (const row of rows) {
+      const item = document.createElement("li");
+      const name = document.createElement("span");
+      const result = document.createElement("b");
+      const starCount = document.createElement("small");
+      name.textContent = row.name;
+      result.textContent = `${row.distance.toLocaleString()} m`;
+      starCount.textContent = `★ ${row.stars.toLocaleString()}`;
+      item.append(name, result, starCount);
+      const isOwn =
+        own &&
+        row.name === own.name &&
+        row.distance === own.distance &&
+        row.stars === own.stars;
+      if (isOwn && !ownRow) ownRow = item;
+      list.append(item);
+    }
+
+    if (ownRow) ownRow.classList.add("is-own");
+    status.textContent =
+      own && !ownRow
+        ? `Your ${own.distance.toLocaleString()} m didn't reach the top 10`
+        : "";
+  }
+
+  function closeLeaderboard() {
+    leaderboardScreen.hidden = true;
+    boardReturn.hidden = false;
   }
 
   function spawnPoopParticle() {
@@ -974,6 +1105,8 @@
       if (!event.repeat) beginSwing();
     } else if (event.code === "Escape" && state === "playing") {
       setPaused(true);
+    } else if (event.code === "Escape" && !leaderboardScreen.hidden) {
+      closeLeaderboard();
     }
   });
   window.addEventListener("keyup", (event) => {
@@ -981,6 +1114,20 @@
   });
 
   document.getElementById("start-button").addEventListener("click", resetRun);
+  document
+    .getElementById("start-board-button")
+    .addEventListener("click", () => openLeaderboard(startScreen));
+  document
+    .getElementById("over-board-button")
+    .addEventListener("click", () => openLeaderboard(gameoverScreen));
+  document
+    .getElementById("board-back-button")
+    .addEventListener("click", closeLeaderboard);
+  document.getElementById("score-name").maxLength = board.NAME_MAX;
+  document.getElementById("score-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitScore();
+  });
   document
     .getElementById("play-again-button")
     .addEventListener("click", resetRun);
