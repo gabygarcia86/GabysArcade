@@ -83,7 +83,6 @@
               ${escapeHtml(game.title)}<span class="sr-only"> (PIN required)</span>
             </button>
           </h3>
-          <p class="card-desc">${escapeHtml(game.description)}</p>
           <div class="card-meta">
             <span class="tag">Coming Soon</span>
             <span class="card-cta" aria-hidden="true">${ICONS.lock}</span>
