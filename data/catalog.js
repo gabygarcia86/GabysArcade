@@ -62,9 +62,20 @@ window.ARCADE_CATALOG = {
     {
       folder: "jedi_story",
       title: "Coming Soon - Jedi Story",
-      description: "In development.",
+      description:
+        "Build your Jedi and battle across ten worlds in a lightsaber platformer with five Sith boss fights.",
       category: "Arcade",
-      tags: [],
+      tags: [
+        "platformer",
+        "action",
+        "lightsaber",
+        "jedi",
+        "sci-fi",
+        "story",
+        "boss fights",
+        "keyboard",
+        "touch",
+      ],
       added: "",
     },
     {

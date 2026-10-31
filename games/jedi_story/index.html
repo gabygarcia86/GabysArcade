@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <title>Coming Soon - Jedi Story</title>
     <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#05060f">
+    <meta name="description"
+      content="Jedi Story: a 2D lightsaber platformer. Build your Jedi, cross ten worlds and face the Sith.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
@@ -12,6 +20,52 @@
     <link rel="icon" type="image/png" sizes="256x256"
       href="icon/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="stylesheet" href="style.css">
   </head>
+  <body>
+    <main id="app">
+      <div id="stage">
+        <canvas id="game" aria-label="Jedi Story game view"></canvas>
+        <div id="ui"></div>
+      </div>
+      <div id="touch" hidden>
+        <div id="touch-move" aria-label="Move left or right">
+          <div class="touch-btn" data-dir="left">&#9664;</div>
+          <div class="touch-btn" data-dir="right">&#9654;</div>
+        </div>
+        <div id="touch-actions">
+          <div class="touch-btn small" data-action="push">PUSH</div>
+          <div class="touch-btn small" data-action="deflect">DEFLECT</div>
+          <div class="touch-btn" data-action="attack">SABER</div>
+          <div class="touch-btn" data-action="jump">JUMP</div>
+        </div>
+        <button id="touch-pause" type="button" aria-label="Pause">II</button>
+      </div>
+    </main>
+    <noscript>Jedi Story needs JavaScript to run.</noscript>
 
+    <!-- Plain scripts, not ES modules, so the game also runs from file://. Order matters. -->
+    <script src="js/utils.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/audio-config.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/customization.js"></script>
+    <script src="js/characters.js"></script>
+    <script src="js/abilities.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/bosses.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/backgrounds.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/level-data.js"></script>
+    <script src="js/cinematics.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>
