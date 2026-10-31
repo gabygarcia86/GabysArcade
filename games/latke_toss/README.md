@@ -22,6 +22,18 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 
 Best scores are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
 
+## Online leaderboard
+
+Each difficulty has its own top 10, stored in Supabase, because scores on Easy and Hard can't be compared fairly. Open it from **Leaderboard** on the main menu or **View Leaderboard** on the game-over screen, and use the tabs to switch difficulty.
+
+After a round with a score above zero, the game-over screen lets the player enter a name and submit. Each round can be submitted once.
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `latke_toss_scores` table and its access rules. The project address and publishable key are at the top of `js/leaderboard.js`.
+
+The publishable key is public by design. Visitors can read the boards and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
 ## Running locally
 
 ES modules and import maps don't load from `file://` URLs. Browsers block module scripts on that origin for security (CORS), so double-clicking `index.html` shows a "scripts could not be loaded" message. Serve the folder over HTTP instead. Any static server works:
@@ -117,6 +129,7 @@ LatkeToss/
 │   ├── controls.js   Pointer Events drag-to-aim and perspective-correct launch mapping
 │   ├── game.js       State machine (MENU/READY/PLAYING/PAUSED/GAME_OVER), scoring, round flow
 │   ├── ui.js         DOM overlay helpers
+│   ├── leaderboard.js Online top 10 per difficulty (Supabase REST API)
 │   └── audio.js      Web Audio synth effects, mute, optional sample loading
 └── README.md
 ```
@@ -133,4 +146,3 @@ Works in current versions of Chrome, Edge, Firefox and Safari on desktop, Androi
 
 ## TODO
 
-- Add leaderboard to game

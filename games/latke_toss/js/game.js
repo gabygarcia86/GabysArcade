@@ -275,6 +275,10 @@ export class Game {
   }
 
   _onKeyDown(event) {
+    if (event.key === 'Escape' && this.ui.currentScreen === 'leaderboard') {
+      this.ui.closeLeaderboard();
+      return;
+    }
     if (event.key === 'Escape' || event.key === 'p' || event.key === 'P') {
       if (this.state === GameState.PLAYING || this.state === GameState.READY || this.state === GameState.PAUSED) {
         event.preventDefault();
@@ -370,6 +374,7 @@ export class Game {
     this.ui.setBestScores(this.scores.all());
     this.ui.showGameOver({
       score: this.score,
+      difficulty: this.difficultyKey,
       difficultyLabel: DIFFICULTIES[this.difficultyKey].label,
       best: this.scores.get(this.difficultyKey),
       isNewBest: this.isNewBest,

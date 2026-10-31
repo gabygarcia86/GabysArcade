@@ -48,7 +48,7 @@ window.ARCADE_CATALOG = {
       description:
         "A 60-second 3D Hanukkah challenge. Toss as many latkes as you can into a pot of hot oil.",
       category: "Arcade",
-      tags: ["holiday", "hanukkah", "3d", "timed", "touch"],
+      tags: ["holiday", "hanukkah", "3d", "timed", "leaderboard", "touch"],
       added: "",
     },
     {

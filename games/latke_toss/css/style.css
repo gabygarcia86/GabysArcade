@@ -687,3 +687,133 @@ h2 {
     font-size: 12px;
   }
 }
+
+/* Leaderboard */
+.score-form {
+  margin-top: 12px;
+  text-align: left;
+}
+
+.score-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: var(--silver);
+}
+
+.score-form input {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  /* 16px stops iOS Safari zooming the page when the field gets focus */
+  font: 700 16px var(--font-body);
+  color: var(--white);
+  background: rgba(5, 13, 43, 0.75);
+  border: 2px solid rgba(217, 225, 242, 0.45);
+  border-radius: 12px;
+}
+
+.score-form input:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: 2px;
+}
+
+.score-form .mid-btn {
+  margin-top: 8px;
+}
+
+.score-form .mid-btn:disabled {
+  opacity: 0.6;
+}
+
+.score-message {
+  margin: 10px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.score-message.error {
+  color: var(--danger);
+}
+
+.board-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.board-tab {
+  min-height: 44px;
+  padding: 6px 4px;
+  font: 800 15px var(--font-display);
+  color: var(--white);
+  background: transparent;
+  border: 2px solid rgba(217, 225, 242, 0.45);
+  border-radius: 12px;
+}
+
+.board-tab[aria-pressed="true"] {
+  color: var(--navy-800);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.board-tab:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: 2px;
+}
+
+.board-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  counter-reset: board;
+}
+
+.board-list li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(217, 225, 242, 0.18);
+  counter-increment: board;
+}
+
+.board-list li::before {
+  content: counter(board);
+  flex: none;
+  width: 26px;
+  font-weight: 800;
+  color: var(--silver);
+}
+
+.board-list span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-list b {
+  color: var(--gold);
+}
+
+.board-list li.own {
+  background: rgba(242, 193, 78, 0.18);
+  border-radius: 8px;
+}
+
+.board-status {
+  margin: 10px 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--silver);
+}
+
+.board-status:empty {
+  display: none;
+}

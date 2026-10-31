@@ -115,6 +115,7 @@
 
           <button type="button" class="big-btn" id="btn-start">Start
             Game</button>
+          <button type="button" class="mid-btn" id="btn-menu-board">Leaderboard</button>
 
           <p class="instructions">
             Press the latke, <b>drag upward</b> toward the pot to aim,
@@ -127,6 +128,21 @@
 
           <button type="button" class="text-btn mute-toggle"
             id="btn-mute-menu">Sound: On</button>
+        </div>
+      </section>
+
+      <!-- Leaderboard screen -->
+      <section id="screen-leaderboard" class="overlay hidden">
+        <div class="panel panel-small">
+          <h2>Leaderboard</h2>
+          <div class="board-tabs" role="group" aria-label="Difficulty">
+            <button type="button" class="board-tab" data-board="easy">Easy</button>
+            <button type="button" class="board-tab" data-board="medium">Medium</button>
+            <button type="button" class="board-tab" data-board="hard">Hard</button>
+          </div>
+          <ol id="board-list" class="board-list"></ol>
+          <p id="board-status" class="board-status" role="status"></p>
+          <button type="button" class="big-btn" id="btn-board-back">Back</button>
         </div>
       </section>
 
@@ -153,8 +169,17 @@
           <p class="final-meta">Best: <b id="final-best">0</b></p>
           <p class="new-best hidden" id="final-new-best">&#10022; New best
             score! &#10022;</p>
+          <form id="score-form" class="score-form hidden" novalidate>
+            <label for="score-name">Your name</label>
+            <input id="score-name" type="text" autocomplete="nickname"
+              enterkeyhint="send" spellcheck="false">
+            <button type="submit" class="mid-btn">Submit Score</button>
+          </form>
+          <p id="score-message" class="score-message hidden" role="status"></p>
           <button type="button" class="big-btn" id="btn-play-again">Play
             Again</button>
+          <button type="button" class="mid-btn" id="btn-over-board">View
+            Leaderboard</button>
           <button type="button" class="mid-btn ghost" id="btn-over-menu">Return
             to Menu</button>
         </div>

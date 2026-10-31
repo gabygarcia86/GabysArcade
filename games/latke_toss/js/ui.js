@@ -1,4 +1,5 @@
 import { DIFFICULTIES } from './config.js';
+import { leaderboard, cleanName, loadName, saveName, NAME_MAX } from './leaderboard.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -12,6 +13,7 @@ export class UI {
       menu: $('screen-menu'),
       pause: $('screen-pause'),
       over: $('screen-over'),
+      leaderboard: $('screen-leaderboard'),
       error: $('screen-error'),
     };
     this.hud = $('hud');
@@ -31,6 +33,13 @@ export class UI {
     this.muteButtons = Array.from(document.querySelectorAll('.mute-toggle'));
     this._lastTime = null;
     this._bannerTimer = 0;
+    this.selectedDifficulty = 'easy';
+    this.boardReturn = 'menu';
+    this.boardDifficulty = 'easy';
+    this.boardRequest = 0;
+    this.pendingScore = null;
+    this.overRun = 0;
+    this.submitting = false;
   }
 
   /** Wires buttons to handler callbacks. Every handler receives no arguments except onDifficulty. */
@@ -44,6 +53,17 @@ export class UI {
     on('btn-pause-menu', handlers.onMenu);
     on('btn-play-again', handlers.onRestart);
     on('btn-over-menu', handlers.onMenu);
+    on('btn-menu-board', () => this.openLeaderboard('menu'));
+    on('btn-over-board', () => this.openLeaderboard('over'));
+    on('btn-board-back', () => this.closeLeaderboard());
+    for (const tab of document.querySelectorAll('.board-tab')) {
+      tab.addEventListener('click', () => this.loadBoard(tab.dataset.board));
+    }
+    $('score-name').maxLength = NAME_MAX;
+    $('score-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      this.submitScore();
+    });
     for (const button of this.muteButtons) button.addEventListener('click', () => handlers.onMuteToggle());
     for (const button of this.difficultyButtons) {
       button.addEventListener('click', () => handlers.onDifficulty(button.dataset.difficulty));
@@ -57,6 +77,7 @@ export class UI {
     for (const [key, element] of Object.entries(this.screens)) {
       element.classList.toggle('hidden', key !== name);
     }
+    this.currentScreen = name;
   }
 
   setHudVisible(visible) {
@@ -65,6 +86,7 @@ export class UI {
   }
 
   setDifficulty(key) {
+    this.selectedDifficulty = key;
     for (const button of this.difficultyButtons) {
       button.setAttribute('aria-checked', String(button.dataset.difficulty === key));
     }
@@ -173,13 +195,125 @@ export class UI {
     this.popupLayer.replaceChildren();
   }
 
-  showGameOver({ score, difficultyLabel, best, isNewBest }) {
+  showGameOver({ score, difficulty, difficultyLabel, best, isNewBest }) {
     $('final-score').textContent = String(score);
     $('final-difficulty').textContent = difficultyLabel;
     $('final-best').textContent = String(best);
     $('final-new-best').classList.toggle('hidden', !isNewBest);
+    this.pendingScore = score > 0 ? { difficulty, score } : null;
+    this.overRun += 1;
+    $('score-form').classList.toggle('hidden', !this.pendingScore);
+    $('score-name').value = loadName();
+    this.setScoreMessage('');
     this.showScreen('over');
     $('btn-play-again').focus({ preventScroll: true });
+  }
+
+  setScoreMessage(text, isError = false) {
+    const message = $('score-message');
+    message.textContent = text;
+    message.classList.toggle('hidden', !text);
+    message.classList.toggle('error', isError);
+  }
+
+  // ---------- Leaderboard ----------
+
+  async submitScore() {
+    if (this.submitting || !this.pendingScore) return;
+    const input = $('score-name');
+    const name = cleanName(input.value);
+    if (!name) {
+      this.setScoreMessage('Enter a name first', true);
+      input.focus();
+      return;
+    }
+
+    const { difficulty, score } = this.pendingScore;
+    const run = this.overRun;
+    const button = $('score-form').querySelector('button');
+    const label = button.textContent;
+    this.submitting = true;
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    this.setScoreMessage('');
+    saveName(name);
+
+    let sent = true;
+    try {
+      await leaderboard.submit(difficulty, name, score);
+    } catch {
+      sent = false;
+    }
+
+    this.submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (run !== this.overRun) return;
+
+    if (!sent) {
+      this.setScoreMessage('Score not sent. Check your connection and try again.', true);
+      return;
+    }
+    this.pendingScore = null;
+    $('score-form').classList.add('hidden');
+    this.setScoreMessage('Score submitted');
+    if (this.currentScreen === 'over') this.openLeaderboard('over', { name, score });
+  }
+
+  /** Opens the board for the current difficulty. `own` ({ name, score }) highlights a score just submitted. */
+  openLeaderboard(returnTo, own = null) {
+    this.boardReturn = returnTo;
+    this.showScreen('leaderboard');
+    this.loadBoard(this.selectedDifficulty, own);
+    if (!this.isTouch) $('btn-board-back').focus({ preventScroll: true });
+  }
+
+  closeLeaderboard() {
+    this.showScreen(this.boardReturn);
+  }
+
+  async loadBoard(difficulty, own = null) {
+    const list = $('board-list');
+    const status = $('board-status');
+    const request = ++this.boardRequest;
+    this.boardDifficulty = difficulty;
+    for (const tab of document.querySelectorAll('.board-tab')) {
+      tab.setAttribute('aria-pressed', String(tab.dataset.board === difficulty));
+    }
+    list.replaceChildren();
+    status.textContent = 'Loading…';
+
+    let rows = null;
+    try {
+      rows = await leaderboard.top(difficulty);
+    } catch {
+      rows = null;
+    }
+    if (request !== this.boardRequest) return;
+
+    if (!rows) {
+      status.textContent = 'Leaderboard unavailable. Check your connection and try again.';
+      return;
+    }
+    if (!rows.length) {
+      status.textContent = 'No scores yet. Be the first!';
+      return;
+    }
+
+    let ownRow = null;
+    for (const row of rows) {
+      const item = document.createElement('li');
+      const name = document.createElement('span');
+      const score = document.createElement('b');
+      name.textContent = row.name;
+      score.textContent = row.score.toLocaleString();
+      item.append(name, score);
+      if (own && !ownRow && row.name === own.name && row.score === own.score) ownRow = item;
+      list.append(item);
+    }
+
+    if (ownRow) ownRow.classList.add('own');
+    status.textContent = own && !ownRow ? `Your ${own.score.toLocaleString()} didn't reach the top 10` : '';
   }
 
   showError(message) {
