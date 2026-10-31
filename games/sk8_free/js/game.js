@@ -125,6 +125,7 @@ export class Game {
     this.state = "play";
     this.hintTime = 3.5;
     this.input.reset();
+    this.input.gear = 0;
     this.audio.setTension(0);
     this.ui.showPlaying();
     this.ui.updateHud(this);
@@ -190,9 +191,15 @@ export class Game {
 
     const event = player.update(dt, this.input);
     if (event === "ollie") audio.ollie();
+    if (event === "flip") audio.flip();
     if (event === "land") {
       audio.land();
       this.particles.dust(player.x, player.y, 4);
+      if (player.landedFlips > 0) this.scoreFlips(player.landedFlips);
+    }
+    if (event === "bail") {
+      this.particles.float(player.x, player.y + 22, "BAILED!", "#ff8a7a");
+      this.takeHit();
     }
     if (player.rocket > 0 && !player.airborne) this.particles.flame(player.x, player.y - 12);
 
@@ -206,6 +213,16 @@ export class Game {
 
     audio.setRolling(player.controllable && !player.airborne ? player.groundSpeed : 0);
     this.ui.updateHud(this);
+  }
+
+  // Each extra flip in the same jump is worth more than the last.
+  scoreFlips(count) {
+    const { player, audio } = this;
+    const points = PTS.flip * (count * (count + 1)) / 2;
+    const label = count === 1 ? "FLIP!" : `${count} FLIPS!`;
+    this.award(points, player.x, player.y, `${label} +${points}`);
+    audio.pickup();
+    this.particles.sparkle(player.x, player.y);
   }
 
   addDistanceScore() {
@@ -298,24 +315,33 @@ export class Game {
     if (!player.controllable || player.invulnerable > 0) return;
 
     e.handled = true;
-    this.shake = 0.3;
-    particles.dust(player.x, player.y);
     if (e.kind.mover) {
       e.knocked = true;
       e.vx = player.vx * 0.5;
     }
+    if (!this.takeHit()) return;
+    particles.debris(e.x, e.y, e.kind.debris);
+    if (e.kind === KINDS.dog) audio.bark();
+  }
+
+  // Wipes the player out unless a helmet or recent crash protects them.
+  // Returns true if they actually went down.
+  takeHit() {
+    const { player, particles, audio } = this;
+    if (player.invulnerable > 0) return false;
+    this.shake = 0.3;
+    particles.dust(player.x, player.y);
     if (player.helmet) {
       player.helmet = false;
       player.invulnerable = CONFIG.player.invulnerableTime;
       particles.debris(player.x, player.y, "#7fd0ff");
       particles.float(player.x, player.y + 22, "HELMET SAVED YOU!", "#ffe45c");
       audio.shield();
-      return;
+      return false;
     }
-    particles.debris(e.x, e.y, e.kind.debris);
     audio.crash();
-    if (e.kind === KINDS.dog) audio.bark();
     player.wipeout();
+    return true;
   }
 
   /* ---------- The chase ---------- */
@@ -519,7 +545,7 @@ export class Game {
     if (this.bannerTime > 0) this.drawBanner();
 
     if (this.hintTime > 0 && this.state === "play") {
-      const text = this.ui.touchMode ? "DRAG TO STEER" : "ARROWS STEER - SPACE OLLIES";
+      const text = this.ui.touchMode ? "DRAG TO STEER" : "ARROWS STEER - SPACE OLLIES - F FLIPS";
       const y = camera.anchor + 34;
       drawCenteredText(ctx, text, width / 2 + 1, y + 1, "#1a1a1a", scale);
       drawCenteredText(ctx, text, width / 2, y, "#ffffff", scale);

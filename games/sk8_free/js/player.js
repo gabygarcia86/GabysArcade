@@ -43,6 +43,9 @@ export class Player {
     this.landLag = 0;
     this.airBoost = 1;
     this.ollieBuffer = 0;
+    this.flipProgress = 0; // 0 when not flipping, then climbs toward 1.
+    this.flipCount = 0;    // Flips finished in this jump.
+    this.landedFlips = 0;  // Flips scored by the most recent landing.
     this.helmet = false;
     this.soda = 0;
     this.rocket = 0;
@@ -69,7 +72,7 @@ export class Player {
     return this.energy > 0 ? PW.energyJump : 1;
   }
 
-  // Returns "ollie", "land" or null, so the game can play the right sound.
+  // Returns "ollie", "flip", "land", "bail" or null, so the game can react.
   update(dt, input) {
     this.anim += dt * (2 + this.speed * 0.03);
     this.invulnerable = Math.max(0, this.invulnerable - dt);
@@ -122,8 +125,38 @@ export class Player {
       this.z = 0.01;
       event = "ollie";
     }
-    if (this.applyGravity(dt)) event = "land";
+    if (this.updateFlip(dt, input.takeFlip())) event = "flip";
+    if (this.applyGravity(dt)) event = this.finishFlips();
     return event;
+  }
+
+  // Returns true when a new flip starts. A request made on the ground does nothing.
+  updateFlip(dt, wanted) {
+    if (!this.airborne) return false;
+    if (this.flipProgress > 0) {
+      this.flipProgress += dt / P.flipTime;
+      if (this.flipProgress < 1) return false;
+      this.flipProgress = 0;
+      this.flipCount++;
+    }
+    if (!wanted) return false;
+    this.flipProgress = dt / P.flipTime;
+    return true;
+  }
+
+  // Scores the jump on landing. Most of a flip counts, but less than that is a bail.
+  finishFlips() {
+    const progress = this.flipProgress;
+    const count = this.flipCount + (progress >= P.flipForgiveness ? 1 : 0);
+    const bailed = progress > 0 && progress < P.flipForgiveness;
+    this.clearFlips();
+    this.landedFlips = bailed ? 0 : count;
+    return bailed ? "bail" : "land";
+  }
+
+  clearFlips() {
+    this.flipProgress = 0;
+    this.flipCount = 0;
   }
 
   applyGravity(dt) {
@@ -156,6 +189,7 @@ export class Player {
   wipeout() {
     this.state = "wipeout";
     this.timer = P.wipeoutTime;
+    this.clearFlips();
     this.z = 0;
     this.vz = 0;
     this.airBoost = 1;
@@ -188,6 +222,7 @@ export class Player {
   tumble() {
     this.state = "tumble";
     this.timer = 0.9;
+    this.clearFlips();
     this.z = Math.max(this.z, 8);
     this.vz = 120;
     this.airBoost = 1;
@@ -242,7 +277,10 @@ export class Player {
     ctx.fillRect(x - shadow, groundY + 12, shadow * 2, 8);
 
     switch (this.state) {
-      case "skate": this.drawSkating(ctx, x, y); break;
+      case "skate":
+        if (this.flipProgress > 0) this.drawFlipping(ctx, x, y);
+        else this.drawSkating(ctx, x, y);
+        break;
       case "wipeout":
       case "tumble": this.drawSpinning(ctx, x, y); break;
       case "recover": this.drawGettingUp(ctx, x, y); break;
@@ -263,6 +301,17 @@ export class Player {
     rect(ctx, "#f2c14e", x - 7, y + 8, 15, 2);
     rect(ctx, "#f2c14e", x - 5, y + 13, 11, 2);
     rect(ctx, "#b5651d", x - 7, y - 15, 2, 34);
+  }
+
+  // Skater and board turn over together, in 45-degree steps like old sprite frames.
+  drawFlipping(ctx, x, y) {
+    const pivotY = y - 8;
+    ctx.save();
+    ctx.translate(x, pivotY);
+    ctx.rotate(Math.floor(this.flipProgress * 8) * (Math.PI / 4));
+    ctx.translate(-x, -pivotY);
+    this.drawSkating(ctx, x, y);
+    ctx.restore();
   }
 
   drawSkating(ctx, x, y) {

@@ -21,11 +21,14 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 | Action | Keyboard | Touch |
 | --- | --- | --- |
 | Steer | A / D or Left / Right | Drag anywhere on the game |
-| Go faster | W or Up | FAST button |
-| Slow down | S or Down | SLOW button |
+| Go faster | Hold W or Up | Tap FAST |
+| Slow down | Hold S or Down | Tap SLOW |
 | Ollie | Space | OLLIE button |
+| Flip in the air | F, or hold for more | FLIP button, or hold for more |
 | Pause | P or Esc | PAUSE button |
 | Restart | R | R button |
+
+On touch screens, each tap moves one step between slow, normal and fast, and the speed stays until the next tap. The button lights up while it's set. Tap the other button to return to normal speed.
 
 ## Scoring
 
@@ -35,10 +38,13 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 | Avoiding an obstacle | 5 |
 | Jumping an obstacle or hitting a ramp | 25 |
 | Jumping a pedestrian or jogger | 15 |
+| Flips in one jump | 5 for one, 15 for two, 30 for three, 50 for four, and so on |
 | Collecting an item | 50 |
 | Collecting a gold wheel | 150 |
 
 The high score and best distance are saved in the browser's `localStorage` under `sk8Free.v1`, along with the sound, music and pursuer settings. Your leaderboard name is saved under `sk8Free.playerName`.
+
+A flip that's at least 70% finished when you land still counts. Land earlier in the flip and you bail, which is a normal wipeout, and a helmet will save you from it. A normal ollie fits up to two flips, and a ramp fits up to four.
 
 ## Leaderboard
 
@@ -73,6 +79,8 @@ Almost every number is in `js/config.js`, with a comment on each.
 | How fast the pursuer closes in | `chase.headStart` and `chase.ramp` |
 | Skating speed and steering | The `player` section |
 | Jump height | `player.ollieVelocity` and `player.rampVelocity` |
+| Flip speed and how forgiving landings are | `player.flipTime` and `player.flipForgiveness` |
+| Points per flip | `points.flip` |
 | How busy the world gets | `spawn.gapStart` and `spawn.gapEnd` |
 | Width of the guaranteed clear path | `spawn.safeLaneWidth` |
 | Points | The `points` section |

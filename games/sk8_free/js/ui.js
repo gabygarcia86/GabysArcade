@@ -16,10 +16,11 @@ const pad = (value) => String(value).padStart(5, " ");
 export class Input {
   constructor(canvas) {
     this.keys = { left: false, right: false, up: false, down: false };
-    this.touchUp = false;
-    this.touchDown = false;
+    this.gear = 0; // Touch speed setting: -1 slow, 0 cruise, 1 fast. It stays set between taps.
     this.dragSteer = 0;
     this.ollieQueued = false;
+    this.flipQueued = false; // One quick press still counts as a flip.
+    this.flipHeld = false;   // Holding the button keeps the flips coming.
     this.dragId = null;
     this.dragAnchor = 0;
     this.bindPointer(canvas);
@@ -31,11 +32,11 @@ export class Input {
   }
 
   get up() {
-    return this.keys.up || this.touchUp;
+    return this.keys.up || this.gear > 0;
   }
 
   get down() {
-    return this.keys.down || this.touchDown;
+    return this.keys.down || this.gear < 0;
   }
 
   takeOllie() {
@@ -44,13 +45,19 @@ export class Input {
     return queued;
   }
 
+  takeFlip() {
+    const wanted = this.flipQueued || this.flipHeld;
+    this.flipQueued = false;
+    return wanted;
+  }
+
   reset() {
     Object.keys(this.keys).forEach((key) => { this.keys[key] = false; });
-    this.touchUp = false;
-    this.touchDown = false;
     this.dragSteer = 0;
     this.dragId = null;
     this.ollieQueued = false;
+    this.flipQueued = false;
+    this.flipHeld = false;
   }
 
   bindPointer(canvas) {
@@ -137,6 +144,9 @@ export class UI {
       } else if (event.code === "Space" && playing) {
         if (!event.repeat) input.ollieQueued = true;
         event.preventDefault();
+      } else if (event.code === "KeyF" && playing) {
+        input.flipQueued = true;
+        input.flipHeld = true;
       } else if ((event.code === "KeyP" || event.code === "Escape") && !event.repeat) {
         if ($("howto").hidden === false) this.closeHowTo();
         else game.togglePause();
@@ -147,6 +157,7 @@ export class UI {
     window.addEventListener("keyup", (event) => {
       const mapped = KEY_MAP[event.code];
       if (mapped) input.keys[mapped] = false;
+      if (event.code === "KeyF") input.flipHeld = false;
     });
     window.addEventListener("blur", () => {
       input.reset();
@@ -209,20 +220,17 @@ export class UI {
 
   bindTouchControls() {
     const { input } = this;
-    const hold = (id, flag) => {
-      const button = $(id);
-      const set = (down) => (event) => {
+    // Each tap moves one step: SLOW, cruise, FAST. The speed stays until the next tap.
+    const shift = (id, step) => {
+      $(id).addEventListener("pointerdown", (event) => {
         event.preventDefault();
-        input[flag] = down;
-        button.classList.toggle("held", down);
-      };
-      button.addEventListener("pointerdown", set(true));
-      button.addEventListener("pointerup", set(false));
-      button.addEventListener("pointercancel", set(false));
-      button.addEventListener("pointerleave", set(false));
+        input.gear = Math.max(-1, Math.min(1, input.gear + step));
+        this.audio.click();
+        this.syncGear();
+      });
     };
-    hold("touch-fast", "touchUp");
-    hold("touch-slow", "touchDown");
+    shift("touch-fast", 1);
+    shift("touch-slow", -1);
 
     const ollie = $("touch-ollie");
     ollie.addEventListener("pointerdown", (event) => {
@@ -236,6 +244,22 @@ export class UI {
     ollie.addEventListener("pointercancel", letGo);
     ollie.addEventListener("pointerleave", letGo);
 
+    const flip = $("touch-flip");
+    flip.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      this.audio.unlock();
+      input.flipQueued = true;
+      input.flipHeld = true;
+      flip.classList.add("held");
+    });
+    const stopFlipping = () => {
+      input.flipHeld = false;
+      flip.classList.remove("held");
+    };
+    flip.addEventListener("pointerup", stopFlipping);
+    flip.addEventListener("pointercancel", stopFlipping);
+    flip.addEventListener("pointerleave", stopFlipping);
+
     // Show touch buttons as soon as someone touches, even on hybrid laptops.
     window.addEventListener("pointerdown", (event) => {
       this.audio.unlock();
@@ -244,6 +268,11 @@ export class UI {
         this.setView(this.view);
       }
     });
+  }
+
+  syncGear() {
+    $("touch-fast").setAttribute("aria-pressed", String(this.input.gear > 0));
+    $("touch-slow").setAttribute("aria-pressed", String(this.input.gear < 0));
   }
 
   /* ---------- Settings ---------- */
@@ -286,6 +315,7 @@ export class UI {
     $("howto").hidden = true;
     $("hud").hidden = view === "menu" || view === "over" || view === "board";
     $("touch-controls").hidden = !(playing && this.touchMode);
+    this.syncGear();
     $("hud-pause").textContent = view === "pause" ? "PLAY" : "PAUSE";
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   }

@@ -307,15 +307,14 @@ function drawMailbox(ctx, x, y) {
   rect(ctx, "#e03030", x + 6, y - 24, 2, 7);
 }
 
-// The rarest-feeling pickup: a star helmet inside a pulsing shield bubble.
-function drawHelmetPickup(ctx, x, y, e) {
-  const pulse = Math.floor(e.anim * 0.7) % 3;
-  const r = 16 + pulse;
-  const glow = "rgba(90,200,255,0.24)";
+const bubbleRadius = (e) => 16 + Math.floor(e.anim * 0.7) % 3;
+
+// Every power-up floats inside a pulsing bubble in its own color.
+function drawBubble(ctx, x, y, e, glow, ring) {
+  const r = bubbleRadius(e);
   rect(ctx, glow, x - r + 5, y - r, r * 2 - 10, r * 2);
   rect(ctx, glow, x - r, y - r + 5, r * 2, r * 2 - 10);
 
-  const ring = "#c8f4ff";
   rect(ctx, ring, x - r + 5, y - r - 1, r * 2 - 10, 1);
   rect(ctx, ring, x - r + 5, y + r, r * 2 - 10, 1);
   rect(ctx, ring, x - r - 1, y - r + 5, 1, r * 2 - 10);
@@ -323,7 +322,22 @@ function drawHelmetPickup(ctx, x, y, e) {
   for (const [cornerX, cornerY] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     rect(ctx, ring, x + cornerX * (r - 3) - 1, y + cornerY * (r - 3) - 1, 3, 3);
   }
+}
 
+// Sparkles orbit the bubble and twinkle as they go.
+function drawSparkles(ctx, x, y, e) {
+  const r = bubbleRadius(e);
+  for (let i = 0; i < 3; i++) {
+    const angle = e.anim * 0.45 + (i * Math.PI * 2) / 3;
+    const sparkX = Math.round(x + Math.cos(angle) * (r + 4));
+    const sparkY = Math.round(y + Math.sin(angle) * (r + 4));
+    const size = (Math.floor(e.anim) + i) % 2 ? 2 : 1;
+    rect(ctx, "#ffffff", sparkX - size, sparkY, size * 2 + 1, 1);
+    rect(ctx, "#ffffff", sparkX, sparkY - size, 1, size * 2 + 1);
+  }
+}
+
+function drawHelmetPickup(ctx, x, y) {
   // Dome.
   rect(ctx, OUTLINE, x - 7, y - 11, 14, 2);
   rect(ctx, OUTLINE, x - 10, y - 9, 20, 3);
@@ -345,59 +359,115 @@ function drawHelmetPickup(ctx, x, y, e) {
   rect(ctx, "#ffd23c", x - 3, y - 3, 6, 2);
   rect(ctx, "#ffd23c", x - 4, y - 1, 3, 2);
   rect(ctx, "#ffd23c", x + 1, y - 1, 3, 2);
+}
 
-  // Sparkles orbit the bubble and twinkle as they go.
+function drawSodaPickup(ctx, x, y, e) {
+  rect(ctx, OUTLINE, x - 7, y - 11, 14, 22);
+  rect(ctx, "#d8dee6", x - 6, y - 10, 12, 3);
+  rect(ctx, "#8a93a0", x - 2, y - 10, 4, 1);
+  rect(ctx, "#e0262e", x - 6, y - 7, 12, 15);
+  rect(ctx, "#ff7a70", x - 5, y - 7, 2, 15);
+  // White swoosh across the label.
+  rect(ctx, "#ffffff", x - 6, y - 3, 7, 2);
+  rect(ctx, "#ffffff", x - 2, y - 1, 8, 2);
+  rect(ctx, "#ffffff", x + 2, y + 1, 4, 1);
+  rect(ctx, "#d8dee6", x - 6, y + 8, 12, 2);
+  // Fizz rises off the top of the can.
   for (let i = 0; i < 3; i++) {
-    const angle = e.anim * 0.45 + (i * Math.PI * 2) / 3;
-    const sparkX = Math.round(x + Math.cos(angle) * (r + 4));
-    const sparkY = Math.round(y + Math.sin(angle) * (r + 4));
-    const size = (Math.floor(e.anim) + i) % 2 ? 2 : 1;
-    rect(ctx, "#ffffff", sparkX - size, sparkY, size * 2 + 1, 1);
-    rect(ctx, "#ffffff", sparkX, sparkY - size, 1, size * 2 + 1);
+    const rise = (Math.floor(e.anim * 0.8) + i * 2) % 6;
+    rect(ctx, "#ffffff", x - 4 + i * 4, y - 12 - rise, 2, 2);
   }
 }
 
+function drawWheelPickup(ctx, x, y, e) {
+  rect(ctx, OUTLINE, x - 7, y - 11, 14, 22);
+  rect(ctx, OUTLINE, x - 11, y - 7, 22, 14);
+  rect(ctx, OUTLINE, x - 9, y - 9, 18, 18);
+  rect(ctx, "#ffc61a", x - 6, y - 10, 12, 20);
+  rect(ctx, "#ffc61a", x - 10, y - 6, 20, 12);
+  rect(ctx, "#ffc61a", x - 8, y - 8, 16, 16);
+  rect(ctx, "#fff0a0", x - 6, y - 9, 5, 2);
+  rect(ctx, "#fff0a0", x - 8, y - 7, 2, 4);
+  rect(ctx, "#d9920a", x + 1, y + 7, 6, 2);
+  rect(ctx, "#d9920a", x + 6, y + 2, 2, 5);
+  // Notches step around the rim, so the wheel looks like it's spinning.
+  const turn = Math.floor(e.anim * 0.8) * (Math.PI / 4);
+  for (let i = 0; i < 4; i++) {
+    const angle = turn + (i * Math.PI) / 2;
+    const notchX = Math.round(x + Math.cos(angle) * 7);
+    const notchY = Math.round(y + Math.sin(angle) * 7);
+    rect(ctx, "#b87a08", notchX - 1, notchY - 1, 2, 2);
+  }
+  // Silver bearing.
+  rect(ctx, OUTLINE, x - 4, y - 4, 8, 8);
+  rect(ctx, "#e8edf2", x - 3, y - 3, 6, 6);
+  rect(ctx, OUTLINE, x - 1, y - 1, 2, 2);
+}
+
+function drawRocketPickup(ctx, centerX, y, e) {
+  const x = centerX + 3;
+  const flicker = Math.floor(e.anim) % 2;
+  // Flames blast out of the heel.
+  rect(ctx, "#ff8a1f", x - 18 + flicker * 2, y - 3, 7, 3);
+  rect(ctx, "#ff8a1f", x - 17 - flicker, y + 1, 6, 3);
+  rect(ctx, "#ffd84a", x - 14, y - 2, 3, 2);
+  rect(ctx, "#ffd84a", x - 14 + flicker, y + 1, 3, 2);
+  rect(ctx, "#8a93a0", x - 11, y - 4, 3, 9);
+  // High-top sneaker.
+  rect(ctx, OUTLINE, x - 9, y - 10, 11, 14);
+  rect(ctx, OUTLINE, x - 9, y - 2, 20, 7);
+  rect(ctx, OUTLINE, x - 10, y + 3, 22, 6);
+  rect(ctx, "#ff5a1f", x - 8, y - 9, 9, 12);
+  rect(ctx, "#ff5a1f", x - 8, y - 1, 18, 5);
+  rect(ctx, "#ffd84a", x - 8, y - 9, 9, 2);
+  rect(ctx, "#ffd84a", x - 6, y - 4, 5, 2);
+  rect(ctx, "#ffd84a", x - 4, y - 2, 5, 2);
+  rect(ctx, "#ffffff", x + 3, y, 1, 3);
+  rect(ctx, "#ffffff", x + 6, y, 1, 3);
+  rect(ctx, "#ffffff", x - 9, y + 4, 20, 3);
+}
+
+function drawEnergyPickup(ctx, x, y, e) {
+  rect(ctx, OUTLINE, x - 6, y - 12, 12, 24);
+  rect(ctx, "#d8dee6", x - 5, y - 11, 10, 2);
+  rect(ctx, "#16b85a", x - 5, y - 9, 10, 18);
+  rect(ctx, "#6ff0a0", x - 5, y - 9, 2, 18);
+  rect(ctx, "#d8dee6", x - 5, y + 9, 10, 2);
+  // Lightning bolt on the label.
+  rect(ctx, "#ffe45c", x, y - 7, 3, 2);
+  rect(ctx, "#ffe45c", x - 1, y - 5, 3, 2);
+  rect(ctx, "#ffe45c", x - 3, y - 3, 7, 2);
+  rect(ctx, "#ffe45c", x, y - 1, 3, 2);
+  rect(ctx, "#ffe45c", x - 1, y + 1, 3, 2);
+  rect(ctx, "#ffe45c", x - 2, y + 3, 2, 3);
+  // Electricity crackles down each side, swapping sides as it flickers.
+  const side = Math.floor(e.anim) % 2 ? 1 : -1;
+  const arc = "#d8ffe4";
+  rect(ctx, arc, x + side * 9, y - 8, 1, 4);
+  rect(ctx, arc, x + side * 11, y - 5, 1, 5);
+  rect(ctx, arc, x + side * 9, y, 1, 4);
+  rect(ctx, arc, x + side * 11, y + 3, 1, 4);
+  rect(ctx, arc, x + side * 10, y - 5, 1, 1);
+  rect(ctx, arc, x + side * 10, y, 1, 1);
+  rect(ctx, arc, x + side * 10, y + 3, 1, 1);
+}
+
+const PICKUP_LOOKS = {
+  helmet: { glow: "rgba(90,200,255,0.24)", ring: "#c8f4ff", art: drawHelmetPickup },
+  soda: { glow: "rgba(255,80,80,0.24)", ring: "#ffd0cc", art: drawSodaPickup },
+  wheel: { glow: "rgba(255,210,60,0.28)", ring: "#fff2b0", art: drawWheelPickup },
+  rocket: { glow: "rgba(255,140,40,0.26)", ring: "#ffd9a8", art: drawRocketPickup },
+  energy: { glow: "rgba(80,240,130,0.24)", ring: "#caffd9", art: drawEnergyPickup },
+};
+
 function drawCollectible(ctx, x, y, e) {
   const bob = Math.round(Math.sin(e.anim * 0.5) * 2);
-  const top = y - 8 + bob;
-  rect(ctx, "rgba(0,0,0,0.22)", x - 6, y + 4, 12, 3);
-  if (e.kind.id === "helmet") {
-    drawHelmetPickup(ctx, x, top - 4, e);
-    return;
-  }
-  rect(ctx, "rgba(255,255,160,0.45)", x - 10, top - 8, 20, 18);
-
-  switch (e.kind.id) {
-    case "soda":
-      rect(ctx, OUTLINE, x - 5, top - 8, 10, 17);
-      rect(ctx, "#d8282f", x - 4, top - 6, 8, 14);
-      rect(ctx, "#c8d0d8", x - 4, top - 7, 8, 2);
-      rect(ctx, "#ffffff", x - 2, top - 2, 5, 5);
-      break;
-    case "wheel":
-      rect(ctx, OUTLINE, x - 8, top - 6, 16, 14);
-      rect(ctx, OUTLINE, x - 6, top - 8, 12, 18);
-      rect(ctx, "#ffc61a", x - 7, top - 5, 14, 12);
-      rect(ctx, "#ffc61a", x - 5, top - 7, 10, 16);
-      rect(ctx, "#fff0a0", x - 5, top - 5, 3, 3);
-      rect(ctx, OUTLINE, x - 2, top - 1, 4, 4);
-      break;
-    case "rocket":
-      rect(ctx, OUTLINE, x - 8, top - 4, 16, 12);
-      rect(ctx, "#ff5a1f", x - 7, top - 3, 14, 7);
-      rect(ctx, "#ffffff", x - 7, top + 4, 14, 3);
-      rect(ctx, "#ffd84a", x + 8, top - 2, 3 + (Math.floor(e.anim) % 2) * 2, 2);
-      rect(ctx, "#ff8a1f", x + 8, top + 1, 4, 2);
-      rect(ctx, "#ffffff", x - 3, top - 1, 6, 1);
-      break;
-    default: // energy
-      rect(ctx, OUTLINE, x - 5, top - 9, 10, 19);
-      rect(ctx, "#2bd46a", x - 4, top - 7, 8, 16);
-      rect(ctx, "#d8e0e8", x - 4, top - 8, 8, 2);
-      rect(ctx, "#101018", x, top - 5, 2, 5);
-      rect(ctx, "#101018", x - 2, top - 1, 4, 2);
-      rect(ctx, "#101018", x - 1, top + 1, 2, 4);
-  }
+  const center = y - 12 + bob;
+  const look = PICKUP_LOOKS[e.kind.id];
+  rect(ctx, "rgba(0,0,0,0.22)", x - 8, y + 6, 16, 3);
+  drawBubble(ctx, x, center, e, look.glow, look.ring);
+  look.art(ctx, x, center, e);
+  drawSparkles(ctx, x, center, e);
 }
 
 /* ---------- Kinds ---------- */
@@ -431,11 +501,11 @@ export const KINDS = {
   dog: { id: "dog", r: 8, height: 9, solid: true, mover: true, speed: 78, animRate: 10, debris: "#a86a35", draw: drawDog },
   pigeon: { id: "pigeon", r: 4, height: 0, mover: true, speed: 0, animRate: 4, draw: drawPigeon },
   // Collectibles.
-  soda: { id: "soda", r: 11, height: 0, collectible: true, draw: drawCollectible },
-  wheel: { id: "wheel", r: 11, height: 0, collectible: true, draw: drawCollectible },
-  helmet: { id: "helmet", r: 11, height: 0, collectible: true, draw: drawCollectible },
-  rocket: { id: "rocket", r: 11, height: 0, collectible: true, draw: drawCollectible },
-  energy: { id: "energy", r: 11, height: 0, collectible: true, draw: drawCollectible },
+  soda: { id: "soda", r: 14, height: 0, collectible: true, draw: drawCollectible },
+  wheel: { id: "wheel", r: 14, height: 0, collectible: true, draw: drawCollectible },
+  helmet: { id: "helmet", r: 14, height: 0, collectible: true, draw: drawCollectible },
+  rocket: { id: "rocket", r: 14, height: 0, collectible: true, draw: drawCollectible },
+  energy: { id: "energy", r: 14, height: 0, collectible: true, draw: drawCollectible },
   // Background scenery beyond the fences.
   house: { id: "house", r: 0, height: 0, decor: true, draw: drawHouse },
   shop: { id: "shop", r: 0, height: 0, decor: true, draw: drawShop },

@@ -140,6 +140,13 @@ export class AudioEngine {
     this.tone("square", 130, 70, t, 0.07, 0.15);
   }
 
+  flip() {
+    if (!this.ready("flip", 0.08)) return;
+    const t = this.ctx.currentTime;
+    this.burst("bandpass", 1500, t, 0.12, 0.16);
+    this.tone("triangle", 420, 840, t, 0.13, 0.12);
+  }
+
   ramp() {
     if (!this.ready("ramp", 0.1)) return;
     const t = this.ctx.currentTime;

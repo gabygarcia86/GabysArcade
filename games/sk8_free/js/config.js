@@ -37,6 +37,8 @@ export const CONFIG = {
     ollieAirBoost: 1.1,  // Speed multiplier in the air, so jumps gain ground.
     rampAirBoost: 1.38,
     landingLag: 0.12,    // Delay before you can ollie again.
+    flipTime: 0.26,      // Seconds for one flip.
+    flipForgiveness: 0.7, // Land a flip at least this finished and it still counts.
     wipeoutTime: 0.75,
     recoverTime: 0.55,
     invulnerableTime: 1.2,
@@ -82,6 +84,7 @@ export const CONFIG = {
     avoid: 5,
     jump: 25,
     jumpPedestrian: 15,
+    flip: 5,               // Each flip in one jump adds this much more: 5, 15, 30, 50...
     collect: 50,
     goldWheel: 150,
   },

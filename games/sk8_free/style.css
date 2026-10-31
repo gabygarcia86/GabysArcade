@@ -536,6 +536,26 @@ button:disabled {
   height: 52px;
 }
 
+/* Lit up while that speed is set, since it stays on after the tap. */
+.speed-buttons button[aria-pressed="true"] {
+  background: #ffd23c;
+  opacity: 1;
+}
+
+.trick-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#touch-flip {
+  width: 88px;
+  height: 60px;
+  font-size: 16px;
+  background: #8fd0f0;
+}
+
 #touch-ollie {
   width: 104px;
   height: 104px;
