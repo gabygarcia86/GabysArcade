@@ -192,22 +192,20 @@ SkateboardNinjas/
 - Canvas resolution is capped at 2× device pixel ratio. Background buildings are
   rendered once to cached offscreen canvases.
 - Personal best and daily best go to `localStorage`. If storage is blocked, the game keeps running and just doesn't save them.
-- The online leaderboard lives in Supabase: scores are inserted into the `scores`
-  table (`id`, `nickname`, `score`, `created_at`) and the top 10 is read from the
-  `leaderboard` view. After a run, **SUBMIT HIGH SCORE** asks for a name
-  (up to 16 characters, remembered for next time) and posts it once per run;
-  **VIEW LEADERBOARD** (title and results screens) shows the top 10. The anon key
-  in `src/leaderboard.js` is public by design, so row-level security must let
-  `anon` insert into `scores` and select from `leaderboard`. If the network is down, the
-  game still plays and the leaderboard screens show an error.
+- The online leaderboard lives in Supabase, in the `skateboard_ninjas_scores` table
+  (`id`, `nickname`, `score`, `created_at`). Run `leaderboard.sql` once in the
+  Supabase SQL Editor to create it. After a run, **SUBMIT HIGH SCORE** asks for
+  a name (up to 16 characters, remembered for next time) and posts it once per run;
+  **VIEW LEADERBOARD** (title and results screens) shows the top 10. The publishable
+  key in `src/leaderboard.js` is public by design: visitors can read the board and
+  add scores, but can't edit or delete them. If the network is down, the game still
+  plays and the leaderboard screens show an error.
 
 ## Known limitations
 
 - The art is procedural canvas drawing, not sprite sheets. See `assets/README.md` for how to swap in sprites.
 - Portrait phones work, but the view is cramped. The title screen suggests rotating to landscape.
 - Fullscreen is offered where the browser supports it (not iPhone Safari).
-- There's no online leaderboard. The daily challenge compares against your own best only.
+- The daily challenge has no online leaderboard. It compares against your own best only.
 
-# TODO
-
-- Update leaderboard to new supabase project
+## TODO
