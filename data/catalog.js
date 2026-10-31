@@ -60,6 +60,14 @@ window.ARCADE_CATALOG = {
       added: "",
     },
     {
+      folder: "jedi_story",
+      title: "Coming Soon - Jedi Story",
+      description: "In development.",
+      category: "Arcade",
+      tags: [],
+      added: "",
+    },
+    {
       folder: "latke_toss",
       title: "Coming Soon - Latke Toss",
       description:
@@ -117,6 +125,14 @@ window.ARCADE_CATALOG = {
         "3d",
         "mobile",
       ],
+      added: "",
+    },
+    {
+      folder: "sk8_free",
+      title: "Coming Soon - Sk8 Free",
+      description: "In development.",
+      category: "Arcade",
+      tags: [],
       added: "",
     },
     {
