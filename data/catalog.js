@@ -39,7 +39,7 @@ window.ARCADE_CATALOG = {
       description:
         "Pick a ship from the Galactic Squadron fleet and race three AI rivals on ten top-down circuits.",
       category: "Racing",
-      tags: ["space", "sci-fi", "top-down", "drifting", "keyboard", "gamepad", "touch"],
+      tags: ["space", "sci-fi", "top-down", "drifting", "leaderboard", "keyboard", "gamepad", "touch"],
       added: "",
     },
     {

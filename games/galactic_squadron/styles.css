@@ -699,6 +699,9 @@ input[type="range"]:focus-visible {
   padding: 0.55em 0.7em;
   /* 16px stops iOS Safari zooming the page when the field gets focus */
   font: 700 max(16px, 1em) var(--ui-font);
+  /* The page turns text selection off, which can block typing in Safari. */
+  -webkit-user-select: text;
+  user-select: text;
   color: #fff;
   background: rgba(3, 5, 13, 0.7);
   border: 1px solid rgba(56, 214, 255, 0.45);

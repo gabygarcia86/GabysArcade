@@ -12,10 +12,12 @@ import { getGeometry } from './trackGeometry.js';
 import { TrackRenderer } from './trackRenderer.js';
 import { drawShip } from './shipRender.js';
 import { getRecord } from './timeTrial.js';
+import { leaderboard, cleanName, NAME_MAX } from './leaderboard.js';
+import { storage } from './storage.js';
 import { formatTime, ordinal, clamp, TAU } from './utils.js';
 import { glow } from './gfx.js';
 
-const SCREENS = ['title', 'menu', 'cups', 'ships', 'tracks', 'intro', 'pause', 'results', 'standings', 'champion', 'settings', 'help'];
+const SCREENS = ['title', 'menu', 'cups', 'ships', 'tracks', 'intro', 'pause', 'results', 'standings', 'champion', 'settings', 'help', 'leaderboard'];
 
 function shipIcon(canvas, ship, size, heading = -Math.PI / 2) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -48,6 +50,10 @@ export class UI {
     this.previews = new Map();
     this.preview = { angle: -Math.PI / 2, auto: true, boost: 0, t: 0, spin: 0 };
     this.trackAnim = 0;
+    this.pendingRun = null;
+    this.overRun = 0;
+    this.submitting = false;
+    this.boardRequest = 0;
   }
 
   el(sel) {
@@ -56,6 +62,14 @@ export class UI {
 
   bind(game) {
     this.game = game;
+    this.el('#run-name').maxLength = NAME_MAX;
+    this.el('#run-submit').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitRun();
+    });
+    const boardTrack = this.el('#board-track');
+    boardTrack.append(...TRACKS.map((t) => new Option(t.name, t.id)));
+    boardTrack.addEventListener('change', () => this.loadBoard(boardTrack.value));
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -126,7 +140,7 @@ export class UI {
   show(name) {
     for (const [id, el] of Object.entries(this.screens)) el.hidden = id !== name;
     this.current = name;
-    const focusable = name && this.screens[name]?.querySelector('.btn.primary, .btn, .menu-card');
+    const focusable = name && this.screens[name]?.querySelector('.btn.primary, .btn:not([type="submit"]), .menu-card');
     if (focusable && !this.isTouch) {
       try {
         focusable.focus({ preventScroll: true });
@@ -557,7 +571,107 @@ export class UI {
     btns.querySelector('[data-action="change-track"]').hidden = !!gp;
     btns.querySelector('[data-action="gp-standings"]').hidden = !gp;
     btns.querySelector('[data-action="restart"]').classList.toggle('primary', !gp);
+    this.pendingRun = info.canSubmit ? { track: race.track.id, ms: Math.round(me.time * 1000) } : null;
+    this.overRun += 1;
+    this.el('#run-submit').hidden = !info.canSubmit;
+    this.el('#run-name').value = storage.get('playerName', '');
+    this.el('#run-time').textContent = formatTime(me.time);
+    this.setRunMessage('');
     this.show('results');
+  }
+
+  setRunMessage(text, isError = false) {
+    const message = this.el('#run-message');
+    message.textContent = text;
+    message.hidden = !text;
+    message.classList.toggle('error', isError);
+  }
+
+  /* -------------------------------------------------------- leaderboard */
+
+  async submitRun() {
+    if (this.submitting || !this.pendingRun) return;
+    const input = this.el('#run-name');
+    const name = cleanName(input.value);
+    if (!name) {
+      this.setRunMessage('ENTER A NAME FIRST', true);
+      input.focus();
+      return;
+    }
+
+    const { track, ms } = this.pendingRun;
+    const run = this.overRun;
+    const button = this.el('#run-submit button');
+    const label = button.textContent;
+    this.submitting = true;
+    button.disabled = true;
+    button.textContent = 'SENDING…';
+    this.setRunMessage('');
+    storage.set('playerName', name);
+
+    let sent = true;
+    try {
+      await leaderboard.submit(track, name, ms);
+    } catch {
+      sent = false;
+    }
+
+    this.submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (run !== this.overRun) return;
+
+    if (!sent) {
+      this.setRunMessage('TIME NOT SENT. CHECK YOUR CONNECTION AND TRY AGAIN.', true);
+      return;
+    }
+    this.pendingRun = null;
+    this.el('#run-submit').hidden = true;
+    this.setRunMessage('TIME SUBMITTED');
+    if (this.current === 'results') this.game.openLeaderboard(track, { name, ms });
+  }
+
+  /** Shows a track's top 10. `own` ({ name, ms }) highlights a time just submitted. */
+  async loadBoard(trackId, own = null) {
+    const select = this.el('#board-track');
+    const list = this.el('#board-list');
+    const status = this.el('#board-status');
+    const request = ++this.boardRequest;
+    select.value = getTrack(trackId).id;
+    list.replaceChildren();
+    status.textContent = 'LOADING…';
+
+    let rows = null;
+    try {
+      rows = await leaderboard.top(select.value);
+    } catch {
+      rows = null;
+    }
+    if (request !== this.boardRequest) return;
+
+    if (!rows) {
+      status.textContent = 'LEADERBOARD UNAVAILABLE. CHECK YOUR CONNECTION AND TRY AGAIN.';
+      return;
+    }
+    if (!rows.length) {
+      status.textContent = 'NO TIMES YET. BE THE FIRST!';
+      return;
+    }
+
+    let ownRow = null;
+    rows.forEach((row) => {
+      const item = document.createElement('li');
+      const name = document.createElement('span');
+      const time = document.createElement('b');
+      name.textContent = row.name;
+      time.textContent = formatTime(row.ms / 1000);
+      item.append(name, time);
+      if (own && !ownRow && row.name === own.name && row.ms === own.ms) ownRow = item;
+      list.append(item);
+    });
+
+    if (ownRow) ownRow.classList.add('own');
+    status.textContent = own && !ownRow ? `YOUR ${formatTime(own.ms / 1000)} DIDN'T REACH THE TOP 10` : '';
   }
 
   stat(label, value, badge = '', hl = false) {

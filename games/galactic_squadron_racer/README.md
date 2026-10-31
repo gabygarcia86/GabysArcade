@@ -29,6 +29,8 @@ Then open `http://localhost:8000/`. All paths are relative, so it also works fro
 
 Settings let you limit the keyboard to **WASD + Space** or **arrows + Shift**, pick stick or button steering on touch screens, turn on touch auto-accelerate, and change steering sensitivity.
 
+On iPhones the game plays sound even with the ring/silent switch on silent, like a video would. Use the game's own mute or volume controls to silence it.
+
 ## Driving
 
 - **Turning** is sharpest at low and medium speed. At top speed the turning circle widens, so brake before tight corners.
@@ -68,6 +70,18 @@ Every hazard warns you before it can hit: gates crackle, vents glow, rocks cast 
 - **Quick Race:** any track, any ship, Easy / Normal / Hard AI.
 - **Time Trial:** solo. Your best lap, best three-lap total and a ghost of your best lap are saved per track in `localStorage`. On later runs the ghost races alongside you, and the HUD shows how far ahead or behind you are.
 
+## Online leaderboard
+
+Each track has its own top 10, ranked by fastest three-lap time and stored in Supabase. Open it from **LEADERBOARD** on the title screen, the mode menu or the results screen, and use the track picker to switch boards.
+
+After a finished race in any mode, the results screen lets the player enter a name and submit their time. Each race can be submitted once. Autopilot runs and races the player didn't finish can't be submitted.
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `galactic_squadron_racer_times` table and its access rules. The project address and publishable key are at the top of `js/leaderboard.js`.
+
+The publishable key is public by design. Visitors can read the boards and add times, but can't edit or delete them. Times are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
 ## AI
 
 Each track gets a minimum-curvature racing line. Every AI driver then builds its own speed profile from its ship's turn rate, grip and brakes, so heavy ships really do brake earlier. Drivers steer by pure pursuit, brake for what's coming up, boost on straights and corner exits, steer around hazards they see coming, pull out to overtake, and back off a wall when they're stuck (or respawn if they're lost). There is no rubber-banding. Difficulty changes cornering speed, how closely drivers follow the racing line, boost use, reaction distance and occasional mistakes.
@@ -105,6 +119,7 @@ galactic_squadron_racer/
     ui.js             DOM screens, hangar preview, track thumbnails, results, trophy
     grandPrix.js      championship rounds and points
     timeTrial.js      records and ghosts in localStorage
+    leaderboard.js    online top 10 per track (Supabase REST API)
     titleScene.js     animated title backdrop
     gfx.js            drawing helpers
     storage.js        localStorage wrapper that never throws

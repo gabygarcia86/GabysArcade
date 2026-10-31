@@ -35,10 +35,12 @@ ui.bind(game);
 input.attach(game, ui);
 if (matchMedia('(pointer: coarse)').matches) ui.setTouchMode(true);
 
-// Browsers only allow audio after a user gesture.
+// Browsers only allow audio after a user gesture, and iOS Safari only counts the
+// end of a touch or a click, not pointerdown.
 const unlockAudio = () => audio.unlock();
-window.addEventListener('pointerdown', unlockAudio, { capture: true, passive: true });
-window.addEventListener('keydown', unlockAudio, { capture: true });
+for (const type of ['pointerdown', 'touchend', 'click', 'keydown']) {
+  window.addEventListener(type, unlockAudio, { capture: true, passive: true });
+}
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {

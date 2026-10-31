@@ -58,11 +58,17 @@ export class AudioEngine {
   /** Must be called from a user gesture (browser autoplay policy). Safe to call repeatedly. */
   unlock() {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended' && !document.hidden) this.ctx.resume().catch(() => {});
+      this.wake();
       return;
     }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    try {
+      // iPhones mute Web Audio on the silent switch unless the page declares playback.
+      if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    } catch {
+      /* optional: everything else still works without it */
+    }
     try {
       const ctx = new AC();
       this.ctx = ctx;
@@ -80,7 +86,7 @@ export class AudioEngine {
       const data = this.noise.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
       this.applySettings();
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      this.wake();
       if (this.wantMusic) this.startMusic(this.wantMusic);
       if (this.wantAmbient) this.startAmbient(this.wantAmbient);
     } catch {
@@ -97,12 +103,26 @@ export class AudioEngine {
     this.sfxGain.gain.setTargetAtTime(s.sfx, t, 0.02);
   }
 
+  /**
+   * Restarts a stopped context. Safari also has an 'interrupted' state, after a
+   * call or locking the phone, and iOS needs a sound started inside the gesture.
+   */
+  wake() {
+    const ctx = this.ctx;
+    if (ctx.state === 'running' || document.hidden) return;
+    ctx.resume().catch(() => {});
+    const silence = ctx.createBufferSource();
+    silence.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    silence.connect(ctx.destination);
+    silence.start();
+  }
+
   suspend() {
     if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
   }
 
   resume() {
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
   }
 
   /* ------------------------------------------------------------ synthesis */

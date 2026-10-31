@@ -58,6 +58,7 @@
                             class="w3">RACER</span></h1>
                     <div class="title-buttons">
                         <button class="btn primary big" data-action="play">PLAY</button>
+                        <button class="btn" data-action="leaderboard">LEADERBOARD</button>
                         <div class="btn-row">
                             <button class="btn" data-action="help">HOW TO PLAY</button>
                             <button class="btn" data-action="settings">SETTINGS</button>
@@ -88,7 +89,10 @@
                             <span class="mc-sub">Solo · records · ghost of your best lap</span>
                         </button>
                     </div>
-                    <button class="btn" data-action="back">BACK</button>
+                    <div class="btn-row">
+                        <button class="btn" data-action="leaderboard">LEADERBOARD</button>
+                        <button class="btn" data-action="back">BACK</button>
+                    </div>
                 </div>
             </section>
 
@@ -201,7 +205,15 @@
                     <p id="results-sub" class="results-sub"></p>
                     <div id="results-summary" class="summary"></div>
                     <table id="results-table" class="table"></table>
+                    <form id="run-submit" class="run-form" novalidate hidden>
+                        <label for="run-name">SUBMIT <b id="run-time"></b> AS</label>
+                        <input id="run-name" type="text" placeholder="Your name"
+                            autocomplete="nickname" enterkeyhint="send" spellcheck="false">
+                        <button class="btn" type="submit">SUBMIT TIME</button>
+                    </form>
+                    <p id="run-message" class="run-message" role="status" hidden></p>
                     <div class="btn-row" id="results-buttons">
+                        <button class="btn" data-action="leaderboard">LEADERBOARD</button>
                         <button class="btn" data-action="quit">MAIN MENU</button>
                         <button class="btn" data-action="change-track">CHANGE TRACK</button>
                         <button class="btn" data-action="restart">RETRY</button>
@@ -234,6 +246,20 @@
                     <div class="btn-row">
                         <button class="btn primary" data-action="quit">MAIN MENU</button>
                     </div>
+                </div>
+            </section>
+
+            <!-- ============================== LEADERBOARD -->
+            <section id="screen-leaderboard" class="screen" aria-label="Leaderboard" hidden>
+                <div class="panel narrow">
+                    <h2>LEADERBOARD</h2>
+                    <p class="board-note">Top 10 three-lap times</p>
+                    <label class="board-track">TRACK
+                        <select id="board-track"></select>
+                    </label>
+                    <ol id="board-list" class="board-list"></ol>
+                    <p id="board-status" class="board-status" role="status"></p>
+                    <button class="btn primary" data-action="back">BACK</button>
                 </div>
             </section>
 

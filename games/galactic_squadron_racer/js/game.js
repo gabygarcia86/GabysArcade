@@ -126,6 +126,11 @@ export class Game {
     this.onScreen(screen);
   }
 
+  openLeaderboard(trackId, own = null) {
+    this.go('leaderboard');
+    this.ui.loadBoard(trackId, own);
+  }
+
   back() {
     const prev = this.stack.pop() || 'title';
     this.audio.play('back');
@@ -173,6 +178,9 @@ export class Game {
         break;
       case 'settings':
         this.go('settings');
+        break;
+      case 'leaderboard':
+        this.openLeaderboard(this.state === 'post' && this.race ? this.race.track.id : s.track);
         break;
       case 'back':
         this.back();
@@ -402,11 +410,12 @@ export class Game {
     this.ui.setResetVisible(false);
     this.audio.stopEngine();
     const info = { race, results, mode: race.mode };
+    const me = results.find((r) => r.isPlayer);
+    info.canSubmit = !this.lastOpts.autopilot && !me.estimated && Number.isFinite(me.time);
     if (race.mode === 'grandprix') {
       info.gp = this.gp;
       info.awarded = this.gp.record(results);
     } else if (race.mode === 'timetrial') {
-      const me = results.find((r) => r.isPlayer);
       const best = race.bestRun;
       info.tt = saveRun(race.track.id, {
         bestLap: me.bestLap,
