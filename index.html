@@ -3,6 +3,16 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Gaby's Arcade - A playground for imagination!</title>
+        <meta name="description"
+            content="Free HTML5 browser games by Gaby. No logins, no ads and no microtransactions. Pick a game and start playing.">
+        <meta name="theme-color" content="#070b16">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Gaby's Arcade">
+        <meta property="og:title" content="Gaby's Arcade - A playground for imagination!">
+        <meta property="og:description"
+            content="Free HTML5 browser games. No logins, no ads and no microtransactions.">
+        <meta property="og:image" content="https://gabygarcia86.github.io/GabysArcade/icon/icon-256.png">
         <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
         <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
         <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
@@ -11,8 +21,71 @@
         <link rel="icon" type="image/png" sizes="256x256"
             href="icon/icon-256.png">
         <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
-        <title>Gaby's Arcade - A playground for imagination!</title>
+        <link rel="preload" href="assets/fonts/oxanium-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="assets/fonts/sora-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="assets/css/site.css">
+        <script src="data/site-config.js" defer></script>
+        <script src="data/catalog.js" defer></script>
+        <script src="assets/js/core.js" defer></script>
+        <script src="assets/js/layout.js" defer></script>
+        <script src="assets/js/arcade.js" defer></script>
     </head>
-    <body>
+    <body data-page="home">
+        <header class="site-header" id="site-header"></header>
+
+        <main id="main" tabindex="-1">
+            <section class="hero" aria-labelledby="hero-title">
+                <div class="hero-copy">
+                    <p class="eyebrow">Free HTML5 games</p>
+                    <h1 class="hero-title" id="hero-title">
+                        <span>Gaby’s</span> <span class="brand-accent">Arcade</span>
+                    </h1>
+                    <p class="hero-message">Welcome to Gaby’s Arcade, A playground for imagination! All games are completely FREE, no logins, no ads, and no micro transactions!</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#library">Browse the games</a>
+                        <dl class="hero-stats">
+                            <div><dt>Games</dt><dd data-stat="games">–</dd></div>
+                            <div><dt>Apps</dt><dd data-stat="apps">–</dd></div>
+                            <div><dt>In the lab</dt><dd data-stat="upcoming">–</dd></div>
+                        </dl>
+                    </div>
+                </div>
+                <div class="hero-emblem" aria-hidden="true">
+                    <img src="icon/icon-256.png" width="256" height="256" alt="">
+                </div>
+            </section>
+
+            <section class="section" id="favorites" aria-labelledby="favorites-heading">
+                <div class="section-head">
+                    <p class="eyebrow">Your picks</p>
+                    <h2 id="favorites-heading" tabindex="-1">Favorites</h2>
+                </div>
+                <div data-favorites></div>
+            </section>
+
+            <section class="section" id="library" aria-labelledby="library-heading">
+                <div class="section-head">
+                    <p class="eyebrow">Play now</p>
+                    <h2 id="library-heading">Game Library</h2>
+                </div>
+                <div data-library>
+                    <div class="card-grid" aria-hidden="true">
+                        <div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div>
+                    </div>
+                </div>
+                <noscript><p class="noscript">The game library needs JavaScript to run.</p></noscript>
+            </section>
+
+            <section class="section" id="coming-soon" aria-labelledby="coming-soon-heading">
+                <div class="section-head">
+                    <p class="eyebrow">In the lab</p>
+                    <h2 id="coming-soon-heading">Coming Soon</h2>
+                </div>
+                <div data-coming-soon></div>
+            </section>
+        </main>
+
+        <footer class="site-footer" id="site-footer"></footer>
+        <div class="sr-only" id="live-region" role="status"></div>
     </body>
 </html>

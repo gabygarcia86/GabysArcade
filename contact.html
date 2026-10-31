@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Contact | Gaby's Arcade</title>
+        <meta name="description"
+            content="Send a comment about a game in Gaby's Arcade or report a bug.">
+        <meta name="theme-color" content="#070b16">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Gaby's Arcade">
+        <meta property="og:title" content="Contact | Gaby's Arcade">
+        <meta property="og:description"
+            content="Send a comment about a game or report a bug.">
+        <meta property="og:image" content="https://gabygarcia86.github.io/GabysArcade/icon/icon-256.png">
+        <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+        <link rel="icon" type="image/png" sizes="128x128"
+            href="icon/icon-128.png">
+        <link rel="icon" type="image/png" sizes="256x256"
+            href="icon/icon-256.png">
+        <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+        <link rel="preload" href="assets/fonts/oxanium-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="assets/fonts/sora-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="assets/css/site.css">
+        <script src="data/site-config.js" defer></script>
+        <script src="data/catalog.js" defer></script>
+        <script src="assets/js/core.js" defer></script>
+        <script src="assets/js/layout.js" defer></script>
+        <script src="assets/js/contact.js" defer></script>
+    </head>
+    <body data-page="contact">
+        <header class="site-header" id="site-header"></header>
+
+        <main id="main" tabindex="-1">
+            <div class="page-head">
+                <p class="eyebrow">Open channel</p>
+                <h1>Contact</h1>
+                <p class="page-lead">Loved a game? Found a bug? Choose an option below and send it over.</p>
+            </div>
+
+            <div class="contact-panel">
+                <p class="notice" id="contact-offline" hidden>The contact form isn’t connected yet, so messages can’t be sent right now.</p>
+
+                <fieldset class="type-picker">
+                    <legend>What would you like to do?</legend>
+                    <label class="type-option">
+                        <input type="radio" name="contact-type" value="comment" checked>
+                        <span><strong>General Comments</strong> Share feedback or ideas</span>
+                    </label>
+                    <label class="type-option">
+                        <input type="radio" name="contact-type" value="bug">
+                        <span><strong>Report a Bug / Issue</strong> Tell me what went wrong</span>
+                    </label>
+                </fieldset>
+
+                <form class="contact-form" data-contact-form="comment" novalidate>
+                    <div class="field">
+                        <label for="comment-game" data-name="a game">Game</label>
+                        <select id="comment-game" name="Game" data-game-select required aria-describedby="comment-game-error">
+                            <option value="">Select a game</option>
+                        </select>
+                        <p class="field-error" id="comment-game-error"></p>
+                    </div>
+                    <div class="field">
+                        <label for="comment-message" data-name="your message">Message</label>
+                        <textarea id="comment-message" name="Message" rows="6" maxlength="4000" required
+                            placeholder="What did you like? What would you change?"
+                            aria-describedby="comment-message-error"></textarea>
+                        <p class="field-error" id="comment-message-error"></p>
+                    </div>
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="comment-gotcha">Leave this field empty</label>
+                        <input id="comment-gotcha" type="text" name="_gotcha" tabindex="-1" autocomplete="off">
+                    </div>
+                    <button class="btn btn-primary" type="submit">Send comment</button>
+                    <p class="form-status" tabindex="-1" role="status" hidden></p>
+                </form>
+
+                <form class="contact-form" data-contact-form="bug" novalidate hidden>
+                    <div class="field">
+                        <label for="bug-game" data-name="a game">Game</label>
+                        <select id="bug-game" name="Game" data-game-select required aria-describedby="bug-game-error">
+                            <option value="">Select a game</option>
+                        </select>
+                        <p class="field-error" id="bug-game-error"></p>
+                    </div>
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="bug-device" data-name="your device">Device</label>
+                            <input id="bug-device" name="Device" type="text" list="device-options" maxlength="120" required
+                                placeholder="e.g. iPhone 15, Windows laptop"
+                                aria-describedby="bug-device-error">
+                            <datalist id="device-options">
+                                <option value="Windows PC"></option>
+                                <option value="Mac"></option>
+                                <option value="Chromebook"></option>
+                                <option value="iPhone"></option>
+                                <option value="iPad"></option>
+                                <option value="Android phone"></option>
+                                <option value="Android tablet"></option>
+                            </datalist>
+                            <p class="field-error" id="bug-device-error"></p>
+                        </div>
+                        <div class="field">
+                            <label for="bug-browser" data-name="your browser">Browser</label>
+                            <input id="bug-browser" name="Browser" type="text" list="browser-options" maxlength="120" required
+                                placeholder="e.g. Chrome, Safari"
+                                aria-describedby="bug-browser-error">
+                            <datalist id="browser-options">
+                                <option value="Chrome"></option>
+                                <option value="Edge"></option>
+                                <option value="Firefox"></option>
+                                <option value="Safari"></option>
+                                <option value="Samsung Internet"></option>
+                                <option value="Opera"></option>
+                            </datalist>
+                            <p class="field-error" id="bug-browser-error"></p>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="bug-description" data-name="a description of the issue">Description of the issue</label>
+                        <textarea id="bug-description" name="Issue description" rows="6" maxlength="4000" required
+                            placeholder="What happened, and what were you doing when it happened?"
+                            aria-describedby="bug-description-error"></textarea>
+                        <p class="field-error" id="bug-description-error"></p>
+                    </div>
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="bug-gotcha">Leave this field empty</label>
+                        <input id="bug-gotcha" type="text" name="_gotcha" tabindex="-1" autocomplete="off">
+                    </div>
+                    <button class="btn btn-primary" type="submit">Send report</button>
+                    <p class="form-status" tabindex="-1" role="status" hidden></p>
+                </form>
+            </div>
+            <noscript><p class="noscript">The contact form needs JavaScript to run.</p></noscript>
+        </main>
+
+        <footer class="site-footer" id="site-footer"></footer>
+    </body>
+</html>

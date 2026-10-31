@@ -3,6 +3,18 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            // GitHub Pages serves this file for a missing URL at any depth, so relative
+            // paths need pointing back at the site root (/GabysArcade/ on github.io).
+            (function () {
+                var folder = location.pathname.split("/")[1];
+                var base = document.createElement("base");
+                base.href = location.hostname.endsWith(".github.io") && folder ? "/" + folder + "/" : "/";
+                document.head.appendChild(base);
+            })();
+        </script>
+        <meta name="robots" content="noindex">
+        <meta name="theme-color" content="#070b16">
         <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
         <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
         <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
@@ -12,87 +24,31 @@
             href="icon/icon-256.png">
         <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
         <title>Page Not Found - 404</title>
-        <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f7f9fa;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-        .not-found-page #poop-layer {
-            position: fixed;
-            z-index: 0;
-            inset: 0;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 500px;
-            padding: 20px;
-        }
-        h1 {
-            font-size: 6rem;
-            margin: 0;
-            color: #ff4757;
-        }
-        h2 {
-            font-size: 2rem;
-            margin: 10px 0;
-        }
-        .not-found-image {
-            display: block;
-            max-width: 100%;
-            height: auto;
-            margin: 0 auto;
-        }
-        p {
-            font-size: 1.1rem;
-            color: #57606f;
-            line-height: 1.5;
-            margin-bottom: 30px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #1e90ff;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 25px;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
-        }
-        .btn:hover {
-            background-color: #1175db;
-        }
-    </style>
+        <link rel="stylesheet" href="assets/css/site.css">
         <link rel="stylesheet" href="404.css">
+        <script src="assets/js/layout.js" defer></script>
     </head>
-    <body class="not-found-page">
+    <body class="not-found-page" data-page="not-found">
+        <header class="site-header" id="site-header"></header>
         <div id="poop-layer" aria-hidden="true"></div>
-        <div class="container">
-            <h1>404</h1>
-            <h2>AH AH AH</h2>
-            <img src="404.png" alt="404" class="not-found-image">
-            <p>You didn't say the magic word.</p>
-            <!-- The absolute path '/' ensures the home link works from any nested URL subfolder -->
-            <a href="./index.html" class="btn">Back
-                Home</a>
-        </div>
+        <main id="main" tabindex="-1">
+            <div class="not-found">
+                <h1 class="brand-accent">404</h1>
+                <h2>AH AH AH</h2>
+                <img src="404.png" alt="404" class="not-found-image">
+                <p>You didn't say the magic word.</p>
+                <a href="index.html" class="btn btn-primary">Back Home</a>
+            </div>
+        </main>
+        <footer class="site-footer" id="site-footer"></footer>
         <script src="404.js"></script>
         <script>
             const poopStorm = new PoopStorm(document.getElementById("poop-layer"));
-            poopStorm.start();
+            const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (!calm) poopStorm.start();
             window.addEventListener("pagehide", () => poopStorm.stop());
             window.addEventListener("pageshow", (event) => {
-                if (event.persisted) poopStorm.start();
+                if (event.persisted && !calm) poopStorm.start();
             });
         </script>
     </body>

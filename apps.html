@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Apps | Gaby's Arcade</title>
+        <meta name="description"
+            content="Free browser apps from Gaby's Arcade. Open one and start creating.">
+        <meta name="theme-color" content="#070b16">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Gaby's Arcade">
+        <meta property="og:title" content="Apps | Gaby's Arcade">
+        <meta property="og:description"
+            content="Free browser apps from Gaby's Arcade.">
+        <meta property="og:image" content="https://gabygarcia86.github.io/GabysArcade/icon/icon-256.png">
+        <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+        <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+        <link rel="icon" type="image/png" sizes="128x128"
+            href="icon/icon-128.png">
+        <link rel="icon" type="image/png" sizes="256x256"
+            href="icon/icon-256.png">
+        <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+        <link rel="preload" href="assets/fonts/oxanium-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="assets/fonts/sora-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="assets/css/site.css">
+        <script src="data/site-config.js" defer></script>
+        <script src="data/catalog.js" defer></script>
+        <script src="assets/js/core.js" defer></script>
+        <script src="assets/js/layout.js" defer></script>
+        <script src="assets/js/arcade.js" defer></script>
+    </head>
+    <body data-page="apps">
+        <header class="site-header" id="site-header"></header>
+
+        <main id="main" tabindex="-1">
+            <div class="page-head">
+                <p class="eyebrow">Tools and toys</p>
+                <h1>Apps</h1>
+                <p class="page-lead">Not everything here is a game. These little apps are just as free, with nothing to install.</p>
+            </div>
+
+            <section class="section section-tight" aria-label="All apps">
+                <h2 class="sr-only">All apps</h2>
+                <div data-apps></div>
+                <noscript><p class="noscript">The app list needs JavaScript to run.</p></noscript>
+            </section>
+        </main>
+
+        <footer class="site-footer" id="site-footer"></footer>
+    </body>
+</html>
