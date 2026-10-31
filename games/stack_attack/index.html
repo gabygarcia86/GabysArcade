@@ -19,7 +19,7 @@
         <link rel="icon" type="image/png" sizes="256x256"
             href="icon/icon-256.png">
         <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="styles.css?v=2">
         <link rel="stylesheet" href="themes.css">
         <script>
             // Apply the saved theme before first paint so there is no flash.
@@ -190,6 +190,8 @@
                     aria-label="Pieces in this difficulty"></canvas>
                 <button type="button" id="btn-play"
                     class="btn btn-primary">Play</button>
+                <button type="button" id="btn-menu-board"
+                    class="btn">Leaderboard</button>
                 <div class="menu-row">
                     <button type="button" class="btn"
                         data-open="theme">Theme</button>
@@ -232,9 +234,18 @@
                     <div><dt>Lines</dt><dd id="over-lines">0</dd></div>
                     <div><dt>Best</dt><dd id="over-best">0</dd></div>
                 </dl>
+                <form id="score-form" class="score-form" novalidate hidden>
+                    <label for="score-name">Your name</label>
+                    <input id="score-name" type="text" autocomplete="nickname"
+                        enterkeyhint="send" spellcheck="false">
+                    <button type="submit" class="btn">Submit Score</button>
+                </form>
+                <p class="score-message" id="score-message" role="status" hidden></p>
                 <button type="button" id="btn-again"
                     class="btn btn-primary">Play
                     Again</button>
+                <button type="button" id="btn-over-board"
+                    class="btn">View Leaderboard</button>
                 <button type="button" id="btn-over-menu" class="btn">Main
                     Menu</button>
             </div>
@@ -247,6 +258,18 @@
                 <div class="theme-groups" id="theme-groups"></div>
                 <button type="submit" class="btn btn-primary"
                     value="close">Done</button>
+            </form>
+        </dialog>
+
+        <dialog id="dlg-leaderboard" class="dlg" aria-labelledby="board-title">
+            <form method="dialog" class="dlg-body">
+                <h2 id="board-title" class="card-title">Leaderboard</h2>
+                <div class="board-tabs" role="group" aria-label="Difficulty"
+                    id="board-tabs"></div>
+                <ol class="board-list" id="board-list"></ol>
+                <p class="hint board-status" id="board-status" role="status"></p>
+                <button type="submit" class="btn btn-primary"
+                    value="close">Back</button>
             </form>
         </dialog>
 
@@ -337,6 +360,7 @@
 
         <script src="audio/audio-config.js"></script>
         <script src="audio/audio-engine.js"></script>
-        <script src="game.js"></script>
+        <script src="leaderboard.js?v=2"></script>
+        <script src="game.js?v=2"></script>
     </body>
 </html>

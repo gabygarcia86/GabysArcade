@@ -11,6 +11,7 @@ Built with HTML5 Canvas, the Web Audio API and vanilla JavaScript. There are no 
 | `index.html` | Page structure: toolbar, HUD panels, overlays, dialogs, touch controls |
 | `styles.css` | Layout (desktop / portrait / landscape), menus, the four Arcade-era themes |
 | `themes.css` | The other 13 themes (colors, fonts, backgrounds, animated extras) |
+| `leaderboard.js` | Online top 10 per difficulty (Supabase REST API) |
 | `game.js`    | Game, rendering, input and UI (see [Code layout](#code-layout)) |
 | `audio/audio-config.js` | Music and sound effects for every theme. **Edit this to change the sound** |
 | `audio/audio-engine.js` | The synthesizer and sequencer that plays the config |
@@ -171,6 +172,18 @@ A theme changes appearance and sound only: CSS custom properties for the UI, a c
 
 A single `requestAnimationFrame` loop drives everything. Listeners are attached once at boot, and a guard stops the app from booting twice.
 
+## Online leaderboard
+
+Each difficulty has its own top 10, stored in Supabase, because 15 piece types and 7 piece types can't be compared fairly. Open it from **Leaderboard** on the main menu or **View Leaderboard** after a game, and use the tabs to switch difficulty. After a game with a score above zero, the game over screen lets the player enter a name and submit. Each game can be submitted once.
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `stack_attack_scores` table and its access rules. The project address and publishable key are at the top of `leaderboard.js`.
+
+The publishable key is public by design. Visitors can read the boards and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
+When you change `game.js`, `leaderboard.js` or `styles.css`, raise the `?v=` number on its link in `index.html` so browsers fetch the new file instead of a cached copy.
+
 ## Accessibility
 
 - Semantic buttons, a fieldset with radio buttons for difficulty, native `<dialog>` for modals (focus trap, Esc closes).
@@ -249,4 +262,3 @@ A single `requestAnimationFrame` loop drives everything. Listeners are attached 
 
 - Create all new music for each theme
 - Improve theme graphics
-- Add leaderboard

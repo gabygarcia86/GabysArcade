@@ -173,8 +173,7 @@ window.ARCADE_CATALOG = {
         "retro",
         "themes",
         "keyboard",
-        "touch",
-      ],
+        "touch", "leaderboard"],
       added: "",
     },
     {

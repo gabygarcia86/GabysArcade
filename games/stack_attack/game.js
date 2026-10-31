@@ -62,6 +62,7 @@
     },
   };
   const DIFFICULTY_ORDER = ['easy', 'medium', 'hard'];
+  const Leaderboard = window.StackAttackLeaderboard;
 
   function gravityInterval(diff, level) {
     const L = Math.min(diff.speedCap, diff.speedStart + (level - 1) * diff.speedStep);
@@ -1766,7 +1767,8 @@
       this.input = new InputManager({
         onPress: (a) => this.onPress(a),
         onRelease: (a) => this.game.release(a),
-        isBlocked: () => this.dialogOpen(),
+        // Typing a name must not trigger hotkeys like P, M and R.
+        isBlocked: () => this.dialogOpen() || document.activeElement === $('score-name'),
         shouldCapture: () => this.game.state === State.PLAYING || this.game.state === State.CLEARING,
       });
       this.input.bindButtons(this.el.touchBar);
@@ -1869,6 +1871,7 @@
         $('over-best').textContent = (this.prefs.data.best[this.game.diff.id] || 0).toLocaleString();
         $('over-newbest').hidden = !this.game.isNewBest;
         this.updateBestList();
+        if (prev !== State.OVER) this.prepareScoreForm();
         // Delay focus so a key still held from play can't activate the button.
         this.focusSoon($('btn-again'), 400);
       } else if (prev === State.PAUSED || prev === State.MENU || prev === State.OVER || prev === null) {
@@ -1880,7 +1883,7 @@
 
     focusSoon(el, delay = 0) {
       setTimeout(() => {
-        if (!el.offsetParent || this.dialogOpen()) return;
+        if (!el.offsetParent || this.dialogOpen() || document.activeElement === $('score-name')) return;
         el.focus({ preventScroll: true });
       }, delay);
     }
@@ -1948,6 +1951,134 @@
       if (await this.confirm('Quit to the main menu? This game will end.', 'Quit')) {
         this.game.abandon();
       }
+    }
+
+    // ---- leaderboard ----
+
+    prepareScoreForm() {
+      const score = this.game.score;
+      this.pendingRun = score > 0 ? { difficulty: this.game.diff.id, score } : null;
+      this.overRun = (this.overRun || 0) + 1;
+      $('score-form').hidden = !this.pendingRun;
+      $('score-name').value = Leaderboard.loadName();
+      this.setScoreMessage('');
+    }
+
+    setScoreMessage(text, isError = false) {
+      const message = $('score-message');
+      message.textContent = text;
+      message.hidden = !text;
+      message.classList.toggle('is-error', isError);
+    }
+
+    async submitScore() {
+      if (this.submitting || !this.pendingRun) return;
+      const input = $('score-name');
+      const name = Leaderboard.cleanName(input.value);
+      if (!name) {
+        this.setScoreMessage('Enter a name first', true);
+        input.focus();
+        return;
+      }
+
+      const { difficulty, score } = this.pendingRun;
+      const run = this.overRun;
+      const button = $('score-form').querySelector('button');
+      const label = button.textContent;
+      this.submitting = true;
+      button.disabled = true;
+      button.textContent = 'Sending…';
+      this.setScoreMessage('');
+      Leaderboard.saveName(name);
+
+      let sent = true;
+      try {
+        await Leaderboard.submit(difficulty, name, score);
+      } catch {
+        sent = false;
+      }
+
+      this.submitting = false;
+      button.disabled = false;
+      button.textContent = label;
+      if (run !== this.overRun) return;
+
+      if (!sent) {
+        this.setScoreMessage('Score not sent. Check your connection and try again.', true);
+        return;
+      }
+      this.pendingRun = null;
+      $('score-form').hidden = true;
+      this.setScoreMessage('Score submitted!');
+      if (this.game.state === State.OVER && !this.dialogOpen()) this.openLeaderboard(difficulty, { name, score });
+    }
+
+    /** `own` ({ name, score }) highlights a score just submitted. */
+    openLeaderboard(difficulty, own = null) {
+      this.openDialog($('dlg-leaderboard'));
+      this.loadBoard(difficulty, own);
+    }
+
+    async loadBoard(difficulty, own = null) {
+      const list = $('board-list');
+      const status = $('board-status');
+      const request = (this.boardRequest = (this.boardRequest || 0) + 1);
+      $('board-tabs').querySelectorAll('button').forEach((tab) => {
+        tab.setAttribute('aria-pressed', String(tab.dataset.board === difficulty));
+      });
+      list.replaceChildren();
+      status.textContent = 'Loading…';
+
+      let rows = null;
+      try {
+        rows = await Leaderboard.top(difficulty);
+      } catch {
+        rows = null;
+      }
+      if (request !== this.boardRequest) return;
+
+      if (!rows) {
+        status.textContent = 'Leaderboard unavailable. Check your connection and try again.';
+        return;
+      }
+      if (!rows.length) {
+        status.textContent = 'No scores yet. Be the first!';
+        return;
+      }
+
+      let ownRow = null;
+      for (const row of rows) {
+        const item = document.createElement('li');
+        const name = document.createElement('span');
+        const score = document.createElement('b');
+        name.textContent = row.name;
+        score.textContent = row.score.toLocaleString();
+        item.append(name, score);
+        if (own && !ownRow && row.name === own.name && row.score === own.score) ownRow = item;
+        list.append(item);
+      }
+
+      if (ownRow) ownRow.classList.add('is-own');
+      status.textContent = own && !ownRow ? `Your ${own.score.toLocaleString()} didn't reach the top 10` : '';
+    }
+
+    bindLeaderboard() {
+      for (const id of DIFFICULTY_ORDER) {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'btn';
+        tab.dataset.board = id;
+        tab.textContent = DIFFICULTIES[id].label;
+        tab.addEventListener('click', () => this.loadBoard(id));
+        $('board-tabs').append(tab);
+      }
+      $('btn-menu-board').addEventListener('click', () => this.openLeaderboard(this.prefs.data.difficulty));
+      $('btn-over-board').addEventListener('click', () => this.openLeaderboard(this.game.diff.id));
+      $('score-name').maxLength = Leaderboard.NAME_MAX;
+      $('score-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.submitScore();
+      });
     }
 
     // ---- HUD ----
@@ -2203,6 +2334,7 @@
       $('btn-resume').addEventListener('click', () => this.game.resume());
       $('btn-pause-restart').addEventListener('click', () => this.requestRestart());
       $('btn-pause-menu').addEventListener('click', () => this.quitToMenu());
+      this.bindLeaderboard();
       $('btn-again').addEventListener('click', () => this.startGame());
       $('btn-over-menu').addEventListener('click', () => this.quitToMenu());
 
