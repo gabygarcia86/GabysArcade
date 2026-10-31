@@ -24,6 +24,11 @@
       this.returnTo = "menu";
       this.previews = [];
       this.pendingDroid = null;
+      this.boardDifficulty = "normal";
+      this.boardOwn = null; // { name, score, difficulty } just submitted, to highlight.
+      this.boardRequest = 0;
+      this.submitted = false;
+      this.submitting = false;
       this.hudState = {};
       this.toastTimer = null;
 
@@ -94,7 +99,9 @@
       this.screens.scrollTop = 0;
       this.collectPreviews(this.screens);
       this.onShown[name] && this.onShown[name].call(this);
-      const first = this.screens.querySelector("[data-primary]") || this.screens.querySelector("button:not([disabled])");
+      const first = this.screens.querySelector("[data-autofocus]")
+        || this.screens.querySelector("[data-primary]")
+        || this.screens.querySelector("button:not([disabled])");
       if (first) first.focus({ preventScroll: true });
     }
 
@@ -217,6 +224,124 @@
       box.textContent = locked ? "Clear Level 5 to unlock this droid." : `${info.name}: ${info.line}`;
     }
 
+    /* ---------- Leaderboard ---------- */
+
+    // A finished run can be submitted once.
+    prepareSubmit() {
+      this.submitted = false;
+      this.submitting = false;
+      this.boardOwn = null;
+    }
+
+    openBoard(difficulty) {
+      this.returnTo = this.current;
+      this.boardDifficulty = difficulty;
+      this.show("leaderboard");
+    }
+
+    async loadBoard() {
+      const list = document.getElementById("board-list");
+      const status = document.getElementById("board-status");
+      const retry = document.getElementById("board-retry");
+      const difficulty = this.boardDifficulty;
+      const own = this.boardOwn && this.boardOwn.difficulty === difficulty ? this.boardOwn : null;
+      const request = ++this.boardRequest;
+      list.replaceChildren();
+      retry.hidden = true;
+      status.textContent = "Loading...";
+
+      let rows = null;
+      try {
+        rows = await D.Leaderboard.top(difficulty);
+      } catch (error) {
+        rows = null;
+      }
+      // The player may have switched boards or left while this was loading.
+      if (request !== this.boardRequest || this.current !== "leaderboard") return;
+
+      if (!rows) {
+        status.textContent = "Leaderboard unavailable. Check your connection and try again.";
+        retry.hidden = false;
+        return;
+      }
+      if (!rows.length) {
+        status.textContent = "No scores yet. Be the first!";
+        return;
+      }
+
+      let ownRow = null;
+      rows.forEach((row, i) => {
+        const item = this.boardRow(row, i + 1);
+        if (own && !ownRow && row.name === own.name && row.score === own.score) ownRow = item;
+        list.append(item);
+      });
+      if (ownRow) ownRow.classList.add("own");
+      status.textContent = own && !ownRow ? `Your ${D.fmt(own.score)} didn't reach the top 10.` : "";
+    }
+
+    // Names come from other players, so they only ever go in through textContent.
+    boardRow(row, rank) {
+      const part = (tag, className, text) => {
+        const el = document.createElement(tag);
+        el.className = className;
+        el.textContent = text;
+        return el;
+      };
+      const droid = D.DROIDS.find((d) => d.id === row.droid);
+      const who = part("span", "board-who", "");
+      who.append(part("span", "board-name", row.name), part("small", "board-droid", droid ? droid.name : ""));
+      const item = document.createElement("li");
+      item.append(
+        part("span", "board-rank", String(rank)),
+        who,
+        part("span", "board-run", `L${row.level} C${row.cycle}`),
+        part("b", "board-score", D.fmt(row.score)),
+      );
+      return item;
+    }
+
+    async submitScore() {
+      if (this.submitting || this.submitted) return;
+      const { score, levels, save, audio, droidId } = this.game;
+      const input = document.getElementById("board-name");
+      const status = document.getElementById("submit-status");
+      const button = document.getElementById("submit-score");
+      const name = D.Leaderboard.cleanName(input.value);
+      if (!name) {
+        status.textContent = "Enter a name first.";
+        audio.sfx("back");
+        input.focus();
+        return;
+      }
+
+      const entry = {
+        name, score: score.score, difficulty: levels.difficulty, droid: droidId, level: levels.number, cycle: levels.cycle,
+      };
+      this.submitting = true;
+      button.disabled = true;
+      status.textContent = "Submitting...";
+      save.data.playerName = name;
+      save.save();
+      try {
+        await D.Leaderboard.submit(entry);
+      } catch (error) {
+        this.submitting = false;
+        if (this.current === "gameover") {
+          button.disabled = false;
+          status.textContent = "Couldn't submit your score. Check your connection and try again.";
+          audio.sfx("back");
+        }
+        return;
+      }
+      this.submitting = false;
+      this.submitted = true;
+      audio.sfx("unlock");
+      // Skip the jump if the player has already moved on.
+      if (this.current !== "gameover") return;
+      this.boardOwn = { name, score: entry.score, difficulty: entry.difficulty };
+      this.openBoard(entry.difficulty);
+    }
+
     /* ---------- HUD ---------- */
 
     setPlaying(on) {
@@ -336,6 +461,22 @@
       this.show(name);
     },
     back() { this.back(); },
+    leaderboard() {
+      const { levels, save, audio } = this.game;
+      audio.sfx("select");
+      this.openBoard(this.current === "gameover" ? levels.difficulty : save.options.difficulty);
+    },
+    board(value) {
+      this.boardDifficulty = value;
+      this.game.audio.sfx("select");
+      this.markChoice("board", value);
+      this.loadBoard();
+    },
+    boardRetry() {
+      this.game.audio.sfx("select");
+      this.loadBoard();
+    },
+    submit() { this.submitScore(); },
     pick(id, fromKeyboard) {
       const { save, audio } = this.game;
       if (id === "b1" && !save.data.unlockedB1) {
@@ -420,11 +561,12 @@
             <div class="menu-buttons">
               <button type="button" class="btn primary" data-primary data-action="play">Play Game</button>
               <button type="button" class="btn" data-action="open:select">Choose Droid</button>
+              <button type="button" class="btn" data-action="leaderboard">Leaderboard</button>
               <button type="button" class="btn" data-action="open:instructions">Instructions</button>
               <button type="button" class="btn" data-action="open:options">Options</button>
             </div>
-            <section class="menu-scores" aria-label="High scores">
-              <h2>High Scores</h2>
+            <section class="menu-scores" aria-label="Your best scores">
+              <h2>Your Best Scores</h2>
               ${scoreRows(data.scores)}
             </section>
           </div>
@@ -532,16 +674,48 @@
         </div>`;
     },
 
+    leaderboard() {
+      const tabs = Object.entries(LevelManager.DIFFICULTY).map(([key, value]) => {
+        const on = key === this.boardDifficulty;
+        return `<button type="button" class="chip${on ? " on" : ""}" aria-pressed="${on}" data-action="board:${key}" ${on ? "data-autofocus" : ""}>${value.label}</button>`;
+      }).join("");
+      return `
+        <div class="panel board">
+          <h2>Leaderboard</h2>
+          <div class="chips board-tabs" role="group" aria-label="Difficulty">${tabs}</div>
+          <ol class="board-list" id="board-list"></ol>
+          <p class="muted board-status" id="board-status" aria-live="polite"></p>
+          <div class="row">
+            <button type="button" class="btn" id="board-retry" data-action="boardRetry" hidden>Try Again</button>
+            <button type="button" class="btn primary" data-primary data-action="back">Back</button>
+          </div>
+        </div>`;
+    },
+
     gameover() {
       const { score, levels, save } = this.game;
+      const canSubmit = score.score > 0 && !this.submitted;
+      // On touch screens, focusing the box right away would throw the keyboard up.
+      const autofocus = this.touchEnabled ? "" : "data-autofocus";
+      const form = canSubmit ? `
+          <div class="submit-row">
+            <input type="text" id="board-name" maxlength="${D.Leaderboard.NAME_MAX}" placeholder="Your name"
+              aria-label="Name for the leaderboard" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" ${autofocus}>
+            <button type="button" class="btn primary" id="submit-score" data-primary data-action="submit">Submit Score</button>
+          </div>
+          <p class="muted submit-status" id="submit-status" aria-live="polite"></p>` : "";
+      const done = this.submitted ? '<p class="muted">Score submitted.</p>' : "";
+      const restart = canSubmit ? "" : "data-primary";
       return `
         <div class="panel over">
           <h2 class="danger">Game Over</h2>
           <p class="final">${D.fmt(score.score)}</p>
           <p class="muted">Reached Level ${levels.number}: ${levels.level.name}, cycle ${levels.cycle}</p>
           ${score.newHigh ? '<p class="new-high">New High Score!</p>' : `<p class="muted">High score: ${D.fmt(save.data.highScore)}</p>`}
+          ${form}${done}
           <div class="row">
-            <button type="button" class="btn primary" data-primary data-action="restart">Restart</button>
+            <button type="button" class="btn" data-action="leaderboard">View Leaderboard</button>
+            <button type="button" class="btn${canSubmit ? "" : " primary"}" ${restart} data-action="restart">Restart</button>
             <button type="button" class="btn" data-action="quit">Main Menu</button>
           </div>
         </div>`;
@@ -550,6 +724,11 @@
 
   UIManager.prototype.onShown = {
     select() { this.setInfo(this.pendingDroid); },
+    leaderboard() { this.loadBoard(); },
+    gameover() {
+      const input = document.getElementById("board-name");
+      if (input) input.value = this.game.save.data.playerName;
+    },
   };
 
   D.UIManager = UIManager;

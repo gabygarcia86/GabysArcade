@@ -33,6 +33,7 @@ window.DROID = {};
     scores: [], // Top five: { score, droid, level, cycle }
     droid: "r2d2",
     unlockedB1: false,
+    playerName: "", // Last name used on the online leaderboard.
     options: {
       music: 0.6,
       sfx: 0.8,

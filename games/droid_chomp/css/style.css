@@ -341,6 +341,53 @@ p { margin: .4em 0; line-height: 1.4; }
 .chip { min-height: 38px; padding: 6px 12px; font-size: 15px; font-weight: 600; }
 .chip.on { background: var(--gold); border-color: var(--gold); color: #1b1400; }
 
+.panel.board { width: min(560px, 100%); }
+.board-tabs { justify-content: center; margin-bottom: 10px; }
+.board-list { list-style: none; margin: 0; padding: 0; text-align: left; }
+
+.board-list li {
+  display: grid;
+  grid-template-columns: 1.7em minmax(0, 1fr) auto minmax(5.2em, auto);
+  align-items: center;
+  gap: 10px;
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+
+.board-list li:nth-child(odd) { background: rgba(120, 190, 255, .07); }
+.board-list li.own { background: rgba(255, 225, 77, .24); outline: 1px solid var(--gold); }
+.board-rank { color: var(--muted); font-weight: 700; text-align: right; }
+.board-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.board-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-droid { color: var(--muted); font-size: 12px; }
+.board-run { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.board-score { color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+.board-status { min-height: 1.4em; margin-bottom: 0; }
+
+.submit-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.submit-row .btn { flex: 0 0 auto; }
+
+/* 16px or larger, or iPhones zoom the page when the box takes focus. */
+.submit-row input {
+  flex: 1 1 150px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  background: rgba(10, 16, 44, .9);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  -webkit-user-select: text; /* The page blocks selection, which would stop typing on iOS. */
+  user-select: text;
+}
+
+.submit-row input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.submit-status { min-height: 1.4em; margin: 4px 0 0; }
+.panel.over .row { margin-top: 8px; }
+.panel.over .row .btn { flex: 1 1 130px; padding-inline: 10px; font-size: 16px; }
+
 .final { margin: .1em 0; font-size: clamp(34px, 7vw, 52px); font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
 .new-high { font-size: 21px; font-weight: 800; color: #7dff8a; animation: pulse .7s ease-in-out infinite alternate; }
 
@@ -437,4 +484,8 @@ body.compact .clear-bonus { font-size: 18px; }
   .menu-buttons { gap: 6px; }
   .panel { padding: 10px 16px; }
   .droid-card canvas { height: 60px; }
+  .board-list li { padding-block: 1px; }
+  .panel.over h2.danger { font-size: 26px; }
+  .panel.over .final { font-size: 30px; }
+  .board-droid { display: none; }
 }

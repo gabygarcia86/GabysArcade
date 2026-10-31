@@ -458,6 +458,7 @@
     gameOver() {
       const { levels, score } = this;
       score.record(this.droidId, levels.number, levels.cycle);
+      this.ui.prepareSubmit();
       this.setState("gameover");
       this.placeDancers();
       this.audio.stopMusic();

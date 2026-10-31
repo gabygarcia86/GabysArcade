@@ -14,6 +14,7 @@ This is a free, non-commercial fan project. Star Wars and its names and characte
 - [The droids](#the-droids)
 - [The ten levels](#the-ten-levels)
 - [Difficulty](#difficulty)
+- [Leaderboard](#leaderboard)
 - [Change the game](#change-the-game)
 - [Saved data](#saved-data)
 - [Publish it](#publish-it)
@@ -100,6 +101,21 @@ Options has three settings, which apply from the next new game.
 
 Each level and each cycle then adds speed for both sides, makes enemies react faster and chase harder, and shortens insignias. Insignias never drop below 3 seconds, and enemies never go above 97% of your speed, so the game gets very hard but stays beatable at any cycle. All these numbers are at the top of `js/LevelManager.js`.
 
+## Leaderboard
+
+The online leaderboard uses the arcade's Supabase project, with its own `droid_chomp_scores` table.
+
+**Set it up once:** in the Supabase dashboard, open **SQL Editor → New query**, paste in all of `leaderboard.sql`, and click **Run**. Until then, the leaderboard says it's unavailable and submitting a score fails, but the rest of the game works normally.
+
+- Open it with **Leaderboard** on the main menu or the Game Over screen.
+- Cadet, Pilot and Jedi Master each have their own top 10. A run goes on the board for the difficulty it was started on.
+- After a game over, enter a name and select **Submit Score**. Each run can be submitted once, and a score of 0 can't be submitted. Your name is remembered for next time.
+- `leaderboard.sql` also has commented-out examples for removing an entry or wiping the boards.
+
+Scores are checked for a valid format, but they're sent from the player's browser, so a determined cheater could still post a fake one. Delete those by hand.
+
+**Your Best Scores** on the main menu is separate. It's the top five from this browser only.
+
 ## Change the game
 
 **Edit or redraw a maze:** open `js/LevelData.js`. The comment at the top explains the symbols. Each maze is the left half of the board, and the game mirrors it. Then run the checker from the repository root:
@@ -122,7 +138,7 @@ It reports dead ends, open rooms, unreachable tiles, the wrong number of insigni
 
 ## Saved data
 
-Everything lives in one localStorage record, `droidChomp.save.v1`: the top five scores, the high score, your chosen droid, the B1 unlock and your options. If storage is blocked the game still runs, but it won't remember anything.
+Everything lives in one localStorage record, `droidChomp.save.v1`: the top five scores, the high score, your chosen droid, the B1 unlock, your leaderboard name and your options. Online scores are stored in Supabase. If storage is blocked the game still runs, but it won't remember anything.
 
 ## Publish it
 
@@ -134,6 +150,7 @@ The game is in the Coming Soon section now. To release it, follow [Move a game f
 games/droid_chomp/
 ├── index.html              Page and script order
 ├── css/style.css           Menus, HUD and touch pad
+├── leaderboard.sql         Supabase setup for the online leaderboard
 ├── tools/check-mazes.mjs   Validates all ten mazes
 └── js/
     ├── utils.js            Shared namespace, helpers and SaveData
@@ -146,6 +163,7 @@ games/droid_chomp/
     ├── CollisionManager.js Touches and collecting
     ├── LevelManager.js     ★ Level, cycle and all difficulty numbers
     ├── ScoreManager.js     Score, lives and the high-score table
+    ├── Leaderboard.js      Reads and submits online scores
     ├── AudioManager.js     Sound effects, droid voices and the music sequencer
     ├── InputManager.js     Keyboard, touch pad and swipes
     ├── DroidArt.js         All twelve droids, and the baked Sprites cache

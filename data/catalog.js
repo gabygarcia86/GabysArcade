@@ -36,6 +36,7 @@ window.ARCADE_CATALOG = {
         "droids",
         "sci-fi",
         "classic",
+        "leaderboard",
         "keyboard",
         "touch",
       ],

@@ -33,7 +33,11 @@
         }
         const dir = KEYS[event.code];
         if (dir === undefined) return;
-        if (event.target && event.target.tagName === "INPUT" && dir % 2 === 1) return; // Sliders.
+        const field = event.target && event.target.tagName === "INPUT" ? event.target : null;
+        // Sliders keep left and right. The name box keeps every key except up and down,
+        // so WASD types letters there and the arrows can still leave it.
+        if (field && dir % 2 === 1) return;
+        if (field && field.type === "text" && !event.code.startsWith("Arrow")) return;
         event.preventDefault();
         if (event.repeat) return;
         if (!this.held.includes(dir)) this.held.push(dir);
