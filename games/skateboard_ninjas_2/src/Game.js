@@ -193,6 +193,7 @@ export class Game {
       ui.showScreen('stats');
     });
     ui.button('stats-back', () => this.goMenu());
+    ui.bindLeaderboard();
     ui.button('settings-btn', () => this.openSettings('menu'));
     ui.button('settings-done', () => this.closeSettings());
     ui.button('reset-progress', async () => {
@@ -331,6 +332,12 @@ export class Game {
         if (action === 'pause' && this.ui.current !== 'menu') this.goMenu();
         break;
       case 'gameover':
+        if (this.ui.current === 'leaderboard') {
+          if (action === 'pause') this.ui.closeLeaderboard();
+          break;
+        }
+        // Enter or Space on the Submit button must not also start a new run.
+        if (event?.target?.closest?.('form')) break;
         if (action === 'confirm' || action === 'jump') this.startRun();
         break;
       case 'customize':

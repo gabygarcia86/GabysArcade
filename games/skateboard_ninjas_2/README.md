@@ -205,6 +205,16 @@ coins, unlocks, your look, settings, stats, missions and the last environment.
 Old or hand-edited saves are validated, and anything invalid falls back to its
 default.
 
+## Online leaderboard
+
+The top 10 is stored in Supabase. Open it from **LEADERBOARD** on the main menu or the game over screen. After a run with a score above zero, the game over screen lets the player enter a name and submit. Each run can be submitted once.
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `skateboard_ninjas_2_scores` table and its access rules. The project address and publishable key are at the top of `src/leaderboard.js`.
+
+The publishable key is public by design. Visitors can read the board and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
 ## Project structure
 
 ```
@@ -226,6 +236,7 @@ skateboard_ninjas_2/
     ├── environments.js   the thirteen environments
     ├── cosmetics.js      colour swatches, patterns, stickers, hats, unlock costs, default look
     ├── storage.js        save data + validation
+    ├── leaderboard.js    online top 10 (Supabase REST API)
     ├── Track.js          road, terrain, sky, mountains, scenery, weather, the road bend
     ├── World.js          obstacles, enemies, coins, power-ups, collisions, projectiles
     ├── Generator.js      procedural, always-fair course patterns
@@ -308,6 +319,5 @@ licensed (`vendor/LICENSE-three.txt`). Music is from `assets/music/`.
 
 ## TODO
 
-- Add leaderboard
 - back flip is actually a front flip
 - Customization, move hats to ninja section

@@ -30,7 +30,15 @@ window.ARCADE_CATALOG = {
       description:
         "An arcade space shooter with diving enemy squadrons and a capital-ship boss every seventh stage.",
       category: "Shooter",
-      tags: ["space", "sci-fi", "retro", "boss battles", "leaderboard", "keyboard", "touch"],
+      tags: [
+        "space",
+        "sci-fi",
+        "retro",
+        "boss battles",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -39,7 +47,16 @@ window.ARCADE_CATALOG = {
       description:
         "Pick a ship from the Galactic Squadron fleet and race three AI rivals on ten top-down circuits.",
       category: "Racing",
-      tags: ["space", "sci-fi", "top-down", "drifting", "leaderboard", "keyboard", "gamepad", "touch"],
+      tags: [
+        "space",
+        "sci-fi",
+        "top-down",
+        "drifting",
+        "leaderboard",
+        "keyboard",
+        "gamepad",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -57,7 +74,14 @@ window.ARCADE_CATALOG = {
       description:
         "A Halloween carnival photo scavenger hunt. Fill all ten spooky challenges with your own pictures.",
       category: "Real World",
-      tags: ["halloween", "photo", "camera", "scavenger hunt", "family", "mobile"],
+      tags: [
+        "halloween",
+        "photo",
+        "camera",
+        "scavenger hunt",
+        "family",
+        "mobile",
+      ],
       added: "",
     },
     {
@@ -66,16 +90,33 @@ window.ARCADE_CATALOG = {
       description:
         "Head to a park or playground and take on ten outdoor photo challenges.",
       category: "Real World",
-      tags: ["outdoors", "park", "playground", "photo", "camera", "scavenger hunt", "family", "mobile"],
+      tags: [
+        "outdoors",
+        "park",
+        "playground",
+        "photo",
+        "camera",
+        "scavenger hunt",
+        "family",
+        "mobile",
+      ],
       added: "",
     },
     {
       folder: "pumpkin_smash_AR",
-      title: "Pumpkin Smash — AR Halloween Hunt",
+      title: "Coming Soon - Pumpkin Smash — AR Halloween Hunt",
       description:
         "A mobile AR Halloween hunt. Explore your surroundings to find and smash five hidden pumpkins.",
       category: "Real World",
-      tags: ["halloween", "ar", "augmented reality", "camera", "demo mode", "3d", "mobile"],
+      tags: [
+        "halloween",
+        "ar",
+        "augmented reality",
+        "camera",
+        "demo mode",
+        "3d",
+        "mobile",
+      ],
       added: "",
     },
     {
@@ -84,7 +125,14 @@ window.ARCADE_CATALOG = {
       description:
         "A 60-second side-scrolling skate run. Ollie, flip, grab and grind while dodging angry Karens.",
       category: "Arcade",
-      tags: ["skateboarding", "ninja", "timed", "leaderboard", "side-scroller", "touch"],
+      tags: [
+        "skateboarding",
+        "ninja",
+        "timed",
+        "leaderboard",
+        "side-scroller",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -93,7 +141,15 @@ window.ARCADE_CATALOG = {
       description:
         "An endless 3D downhill runner. Grind rails and throw ninja stars at Karens and rival ninjas.",
       category: "Arcade",
-      tags: ["skateboarding", "ninja", "endless runner", "3d", "customization", "touch"],
+      tags: [
+        "skateboarding",
+        "ninja",
+        "endless runner",
+        "3d",
+        "customization",
+        "leaderboard",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -111,7 +167,14 @@ window.ARCADE_CATALOG = {
       description:
         "A retro falling-block puzzle game with 17 themes. Stack and clear lines as gravity speeds up.",
       category: "Puzzle",
-      tags: ["blocks", "falling blocks", "retro", "themes", "keyboard", "touch"],
+      tags: [
+        "blocks",
+        "falling blocks",
+        "retro",
+        "themes",
+        "keyboard",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -120,7 +183,15 @@ window.ARCADE_CATALOG = {
       description:
         "A neon four-lane rhythm game built for phones. Tap each lane as its note crosses the pad.",
       category: "Rhythm",
-      tags: ["music", "neon", "songs", "import songs", "tapping", "touch", "keyboard"],
+      tags: [
+        "music",
+        "neon",
+        "songs",
+        "import songs",
+        "tapping",
+        "touch",
+        "keyboard",
+      ],
       added: "",
     },
   ],

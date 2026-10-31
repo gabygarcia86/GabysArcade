@@ -7,9 +7,10 @@ import { patternThumb, stickerThumb, effectThumb } from './models/decals.js';
 import { hatThumb } from './models/hats.js';
 import { ENV_LIST } from './environments.js';
 import { formatInt } from './utils.js';
+import { leaderboard, cleanName, loadName, saveName, NAME_MAX } from './leaderboard.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['menu', 'customize', 'pause', 'gameover', 'stats', 'settings'];
+const SCREENS = ['menu', 'customize', 'pause', 'gameover', 'stats', 'settings', 'leaderboard'];
 const PU_INFO = {
   magnet: { label: 'MAGNET', color: '#ff5e7a' },
   shield: { label: 'SHIELD', color: '#3de1ff' },
@@ -24,6 +25,11 @@ export class UI {
     this.toasts = $('toasts');
     this.current = null;
     this.onClick = () => {};
+    this.boardReturn = 'menu';
+    this.boardRequest = 0;
+    this.pendingScore = 0;
+    this.overRun = 0;
+    this.submitting = false;
   }
 
   // Wire a button; every click also plays the UI click sound.
@@ -404,6 +410,120 @@ export class UI {
     $('go-reward-total').textContent = formatInt(r.rewardTotal);
     $('go-best').textContent = formatInt(r.bestScore);
     $('go-best-dist').textContent = formatInt(r.bestDistance);
+    this.pendingScore = Math.floor(r.score);
+    this.overRun += 1;
+    $('go-submit').hidden = this.pendingScore <= 0;
+    $('go-name').value = loadName();
+    this.setScoreMessage('');
+  }
+
+  // -------------------------------------------------------- leaderboard
+
+  bindLeaderboard() {
+    this.button('leaderboard-btn', () => this.openLeaderboard('menu'));
+    this.button('go-leaderboard', () => this.openLeaderboard('gameover'));
+    this.button('board-back', () => this.closeLeaderboard());
+    $('go-name').maxLength = NAME_MAX;
+    $('go-submit').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitScore();
+    });
+  }
+
+  setScoreMessage(text, isError = false) {
+    const message = $('go-message');
+    message.textContent = text;
+    message.hidden = !text;
+    message.classList.toggle('error', isError);
+  }
+
+  async submitScore() {
+    if (this.submitting || this.pendingScore <= 0) return;
+    const input = $('go-name');
+    const name = cleanName(input.value);
+    if (!name) {
+      this.setScoreMessage('Type your name first!', true);
+      input.focus();
+      return;
+    }
+
+    const score = this.pendingScore;
+    const run = this.overRun;
+    const button = $('go-submit').querySelector('button');
+    const label = button.textContent;
+    this.submitting = true;
+    button.disabled = true;
+    button.textContent = 'SENDING…';
+    this.setScoreMessage('');
+    saveName(name);
+
+    let sent = true;
+    try {
+      await leaderboard.submit(name, score);
+    } catch {
+      sent = false;
+    }
+
+    this.submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (run !== this.overRun) return;
+
+    if (!sent) {
+      this.setScoreMessage("Couldn't submit your score. Check your connection and try again.", true);
+      return;
+    }
+    this.pendingScore = 0;
+    $('go-submit').hidden = true;
+    this.setScoreMessage('Score submitted!');
+    if (this.current === 'gameover') this.openLeaderboard('gameover', { name, score });
+  }
+
+  // own ({ name, score }) highlights a score just submitted.
+  async openLeaderboard(returnTo, own = null) {
+    this.boardReturn = returnTo;
+    this.showScreen('leaderboard');
+    const list = $('board-list');
+    const status = $('board-status');
+    const request = ++this.boardRequest;
+    list.textContent = '';
+    status.textContent = 'Loading…';
+
+    let rows = null;
+    try {
+      rows = await leaderboard.top();
+    } catch {
+      rows = null;
+    }
+    if (request !== this.boardRequest) return;
+
+    if (!rows) {
+      status.textContent = "Couldn't load the leaderboard. Check your connection and try again.";
+      return;
+    }
+    if (!rows.length) {
+      status.textContent = 'No scores yet. Be the first!';
+      return;
+    }
+
+    let ownRow = null;
+    for (const row of rows) {
+      const item = document.createElement('li');
+      const name = document.createElement('span');
+      const score = document.createElement('b');
+      name.textContent = row.name;
+      score.textContent = formatInt(row.score);
+      item.append(name, score);
+      if (own && !ownRow && row.name === own.name && row.score === own.score) ownRow = item;
+      list.append(item);
+    }
+
+    if (ownRow) ownRow.classList.add('own');
+    status.textContent = own && !ownRow ? `Your ${formatInt(own.score)} didn't reach the top 10` : '';
+  }
+
+  closeLeaderboard() {
+    this.showScreen(this.boardReturn);
   }
 
   renderStats(save) {

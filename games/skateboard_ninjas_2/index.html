@@ -106,6 +106,7 @@
           <div class="menu-buttons">
             <button id="play-btn" class="btn btn-primary" type="button">PLAY</button>
             <button id="customize-btn" class="btn btn-pink" type="button">CUSTOMIZE</button>
+            <button id="leaderboard-btn" class="btn btn-secondary" type="button">LEADERBOARD</button>
             <div class="btn-row">
               <button id="stats-btn" class="btn btn-secondary" type="button">STATS</button>
               <button id="settings-btn" class="btn btn-secondary" type="button">SETTINGS</button>
@@ -222,6 +223,12 @@
             <span>SCORE</span>
             <strong id="go-score">0</strong>
           </div>
+          <form id="go-submit" class="score-form" novalidate hidden>
+            <label for="go-name">YOUR NAME</label>
+            <input id="go-name" type="text" autocomplete="nickname" enterkeyhint="send" spellcheck="false">
+            <button class="btn btn-secondary" type="submit">SUBMIT SCORE</button>
+          </form>
+          <p id="go-message" class="score-message" role="status" hidden></p>
           <dl class="stats">
             <div><dt>Distance</dt><dd id="go-dist">0 m</dd></div>
             <div><dt>Coins</dt><dd id="go-coins">0</dd></div>
@@ -240,8 +247,22 @@
           <p class="best-row">BEST <b id="go-best">0</b> <span class="dot">&bull;</span> <b id="go-best-dist">0</b> m</p>
           <div class="menu-buttons btn-row">
             <button id="go-restart" class="btn btn-primary" type="button">RESTART</button>
+            <button id="go-leaderboard" class="btn btn-pink" type="button">LEADERBOARD</button>
             <button id="go-customize" class="btn btn-pink" type="button">CUSTOMIZE</button>
             <button id="go-menu" class="btn btn-secondary" type="button">MAIN MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Leaderboard -->
+      <section id="leaderboard" class="screen" hidden>
+        <div class="panel board-panel">
+          <h2>LEADERBOARD</h2>
+          <p class="board-note">TOP 10 NINJAS</p>
+          <ol id="board-list" class="board-list"></ol>
+          <p id="board-status" class="board-status" role="status"></p>
+          <div class="menu-buttons">
+            <button id="board-back" class="btn btn-primary" type="button">BACK</button>
           </div>
         </div>
       </section>
