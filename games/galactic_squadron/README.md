@@ -36,6 +36,8 @@ All paths are relative, so the folder works at any URL depth.
 | Mute | M | Speaker button |
 | Confirm (start, resume, play again) | Enter | — |
 
+On iPhones the game plays sound even with the ring/silent switch on silent, like a video would. Use the game's own mute or volume controls to silence it.
+
 Touch movement is a relative drag, so your finger never covers the ship. In portrait the controls sit in a bar under the playfield, and in landscape they sit in the side margins, so they never cover the action. The game pauses itself when the tab is hidden.
 
 ## Gameplay
@@ -145,4 +147,3 @@ The simulation runs at a fixed 120 Hz step, rendered with `requestAnimationFrame
 
 - Custom sound fx, ships come in, light speed, explosions, lasers, boss battle
 - Music updates
-- Fix sound on Apple Safari
