@@ -499,7 +499,7 @@ export class Player {
     // Backflip: the whole ninja and board rotate backwards around the hips.
     if (this.flip) {
       const p = Math.min(1, this.flip.t / P.flipTime);
-      const a = -p * p * (3 - 2 * p) * Math.PI * 2;
+      const a = p * p * (3 - 2 * p) * Math.PI * 2; // positive tips the head back, away from the direction of travel
       const h = 0.9;
       this.visual.rotation.x = a;
       this.visual.position.y = this.y + h - h * Math.cos(a);

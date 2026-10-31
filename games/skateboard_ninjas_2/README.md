@@ -177,7 +177,7 @@ preview; drag it to spin your ninja.
 - **Effect: Fart Cloud** (10,000 coins): every couple of seconds a burst of
   green gas puffs out of your ninja's backside, with sound on the customize
   screen. Switch it off any time with the empty tile.
-- **Hats** (100 to 900 coins, on their own tab): Beanie, Party Hat, Fez, Chef
+- **Hats** (100 to 900 coins, on the Ninja tab): Beanie, Party Hat, Fez, Chef
   Hat, Propeller Cap (it spins faster the faster you go), Bunny Ears, Traffic
   Cone, Graduation Cap, Cowboy Hat, Top Hat, Santa Hat, Pirate Hat, Sombrero,
   Viking Helmet, Wizard Hat, Unicorn Horn, Samurai Helmet, Halo, Space Helmet
@@ -319,5 +319,3 @@ licensed (`vendor/LICENSE-three.txt`). Music is from `assets/music/`.
 
 ## TODO
 
-- back flip is actually a front flip
-- Customization, move hats to ninja section

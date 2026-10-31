@@ -233,11 +233,9 @@ export class UI {
       this.decalRow({ key: 'pattern', label: 'Suit pattern' }, PATTERNS),
       this.decalRow({ key: 'stickerFront', label: 'Chest sticker' }, STICKERS),
       this.decalRow({ key: 'stickerBack', label: 'Back sticker' }, STICKERS),
+      this.decalRow({ key: 'hat', label: 'Hat' }, HATS),
       this.decalRow({ key: 'trail', label: 'Effect' }, EFFECTS),
     );
-    const hats = $('cz-hats');
-    hats.textContent = '';
-    hats.append(this.decalRow({ key: 'hat', label: 'Hat' }, HATS));
     this.thumbColors = null;
     this.buildBoardRows(save);
     for (const b of document.querySelectorAll('[data-board]')) {
@@ -250,7 +248,7 @@ export class UI {
       this.onClick();
       handlers.neon(!save.look.neon);
     };
-    const tabs = [['tab-ninja', 'cz-ninja'], ['tab-hats', 'cz-hats'], ['tab-board', 'cz-board']];
+    const tabs = [['tab-ninja', 'cz-ninja'], ['tab-board', 'cz-board']];
     for (const [tab, panel] of tabs) {
       $(tab).onclick = () => {
         this.onClick();

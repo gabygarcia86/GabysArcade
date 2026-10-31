@@ -1,6 +1,6 @@
 // Entry point: check for WebGL, then start the game.
 
-import { Game } from './Game.js';
+import { Game } from './Game.js?v=3';
 
 function webglAvailable() {
   try {

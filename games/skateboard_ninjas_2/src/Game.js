@@ -15,14 +15,14 @@ import { Track } from './Track.js';
 import { Particles } from './Particles.js';
 import { World } from './World.js';
 import { Generator } from './Generator.js';
-import { Player } from './Player.js';
+import { Player } from './Player.js?v=2';
 import { CameraRig } from './CameraRig.js';
 import { FxOverlay } from './FxOverlay.js';
 import { Input } from './Input.js';
 import { AudioManager } from './AudioManager.js';
 import { Scoring } from './Scoring.js';
 import { Missions } from './Missions.js';
-import { UI } from './UI.js';
+import { UI } from './UI.js?v=2';
 import { damp, clamp, isTouchDevice, formatInt } from './utils.js';
 
 const S = CONFIG.scoring;
