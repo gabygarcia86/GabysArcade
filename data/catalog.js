@@ -57,7 +57,7 @@ window.ARCADE_CATALOG = {
         "keyboard",
         "touch",
       ],
-      added: "",
+      added: "2026-10-27",
     },
     {
       folder: "galactic_squadron_racer",
@@ -75,7 +75,7 @@ window.ARCADE_CATALOG = {
         "gamepad",
         "touch",
       ],
-      added: "",
+      added: "2026-10-30",
     },
     {
       folder: "jedi_story",
@@ -119,7 +119,7 @@ window.ARCADE_CATALOG = {
         "family",
         "mobile",
       ],
-      added: "",
+      added: "2026-10-31",
     },
     {
       folder: "photo_scavenger_hunt_park",
@@ -137,7 +137,7 @@ window.ARCADE_CATALOG = {
         "family",
         "mobile",
       ],
-      added: "",
+      added: "2026-10-20",
     },
     {
       folder: "postal_inspectors",
@@ -194,7 +194,7 @@ window.ARCADE_CATALOG = {
         "side-scroller",
         "touch",
       ],
-      added: "",
+      added: "2026-10-25",
     },
     {
       folder: "skateboard_ninjas_2",
@@ -211,7 +211,7 @@ window.ARCADE_CATALOG = {
         "leaderboard",
         "touch",
       ],
-      added: "",
+      added: "2026-10-31",
     },
     {
       folder: "skyline_slinger",
@@ -227,7 +227,7 @@ window.ARCADE_CATALOG = {
         "leaderboard",
         "touch",
       ],
-      added: "",
+      added: "2026-10-15",
     },
     {
       folder: "stack_attack",
@@ -244,7 +244,7 @@ window.ARCADE_CATALOG = {
         "touch",
         "leaderboard",
       ],
-      added: "",
+      added: "2026-10-27",
     },
     {
       folder: "touch_the_beat",
@@ -262,7 +262,7 @@ window.ARCADE_CATALOG = {
         "keyboard",
         "leaderboard",
       ],
-      added: "",
+      added: "2026-10-25",
     },
   ],
 
@@ -273,7 +273,16 @@ window.ARCADE_CATALOG = {
       description:
         "Sculpt, paint and export your own 3D models, starting from a ball of digital clay.",
       category: "Creativity",
-      tags: ["3d", "sculpting", "modeling", "clay", "painting", "art", "kids", "touch"],
+      tags: [
+        "3d",
+        "sculpting",
+        "modeling",
+        "clay",
+        "painting",
+        "art",
+        "kids",
+        "touch",
+      ],
       added: "2026-10-31",
     },
     {
@@ -283,7 +292,7 @@ window.ARCADE_CATALOG = {
         "Draw, fill and erase on a simple canvas with brush sizes and a color palette, then save your picture.",
       category: "Creativity",
       tags: ["art", "drawing", "painting", "kids"],
-      added: "",
+      added: "2026-10-10",
     },
   ],
 };
