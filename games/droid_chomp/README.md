@@ -34,12 +34,12 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 
 ## Controls
 
-| Action | Keyboard | Touch |
-| --- | --- | --- |
-| Move | Arrow keys or WASD | Direction pad, or swipe on the maze |
-| Pause | Esc | Pause button |
-| Start or confirm | Enter | Tap the button |
-| Back out of a menu | Esc | Back button |
+| Action             | Keyboard           | Touch                               |
+| ------------------ | ------------------ | ----------------------------------- |
+| Move               | Arrow keys or WASD | Direction pad, or swipe on the maze |
+| Pause              | Esc                | Pause button                        |
+| Start or confirm   | Enter              | Tap the button                      |
+| Back out of a menu | Esc                | Back button                         |
 
 Menus also work with the arrow keys. The pad appears automatically on touch screens, and Options can force it on or off. The game fits portrait and landscape.
 
@@ -49,13 +49,13 @@ Movement is grid-based, and a direction press is buffered for half a second. Pre
 
 Collect every gear to clear the level. Enemies hunt you the whole time, and one touch costs a life. Rebel insignias turn the tables for about 8 seconds: enemies turn blue, slow down and can be defeated. Blue enemies flash white just before the effect ends. Tunnels at the maze edges wrap to the other side and slow enemies down, but Exegol has none.
 
-| Item | Points |
-| --- | --- |
-| Gear | 10 |
-| Rebel insignia | 50 |
+| Item                    | Points               |
+| ----------------------- | -------------------- |
+| Gear                    | 10                   |
+| Rebel insignia          | 50                   |
 | Enemies on one insignia | 200, 400, 800, 1,600 |
-| Level complete | 1,000 |
-| All ten levels | 5,000 |
+| Level complete          | 1,000                |
+| All ten levels          | 5,000                |
 
 Leftover insignias don't block a level from ending. Only gears count.
 
@@ -65,27 +65,27 @@ Leftover insignias don't block a level from ending. Only gears count.
 
 **Enemies:**
 
-| Enemy | Behavior |
-| --- | --- |
-| Imperial Probe Droid | Hunts you directly |
-| Droideka | Aims four tiles ahead of you |
-| KX Security Droid | Patrols the corners, then breaks off for bursts of pursuit |
-| IG Assassin Droid | Mixes random turns with pincers set up off the Probe Droid |
+| Enemy                | Behavior                                                   |
+| -------------------- | ---------------------------------------------------------- |
+| Imperial Probe Droid | Hunts you directly                                         |
+| Droideka             | Aims four tiles ahead of you                               |
+| KX Security Droid    | Patrols the corners, then breaks off for bursts of pursuit |
+| IG Assassin Droid    | Mixes random turns with pincers set up off the Probe Droid |
 
 ## The ten levels
 
-| # | World | Maze idea |
-| --- | --- | --- |
-| 1 | Tatooine | Classic layout with wide side blocks |
-| 2 | Death Star | Concentric rings |
-| 3 | Hoth | Long ice trenches, two tunnels |
-| 4 | Endor | Winding trails, house at the top |
-| 5 | Cloud City | Stair-step corridors, you start at the bottom |
-| 6 | Mustafar | Long factory lines, you start at the top and the house is low |
-| 7 | Geonosis | Corner rooms and two long tunnel rows |
-| 8 | Coruscant | City blocks with three tunnels |
-| 9 | Kamino | Serpentine lab corridors |
-| 10 | Exegol | A symmetrical rune with no tunnels |
+| #   | World      | Maze idea                                                     |
+| --- | ---------- | ------------------------------------------------------------- |
+| 1   | Tatooine   | Classic layout with wide side blocks                          |
+| 2   | Death Star | Concentric rings                                              |
+| 3   | Hoth       | Long ice trenches, two tunnels                                |
+| 4   | Endor      | Winding trails, house at the top                              |
+| 5   | Cloud City | Stair-step corridors, you start at the bottom                 |
+| 6   | Mustafar   | Long factory lines, you start at the top and the house is low |
+| 7   | Geonosis   | Corner rooms and two long tunnel rows                         |
+| 8   | Coruscant  | City blocks with three tunnels                                |
+| 9   | Kamino     | Serpentine lab corridors                                      |
+| 10  | Exegol     | A symmetrical rune with no tunnels                            |
 
 After Level 10 comes the galaxy celebration, then Level 1 again on the next cycle.
 
@@ -93,11 +93,11 @@ After Level 10 comes the galaxy celebration, then Level 1 again on the next cycl
 
 Options has three settings, which apply from the next new game.
 
-| Setting | Lives | Enemy speed | Insignia time |
-| --- | --- | --- | --- |
-| Cadet | 5 | 78% of yours | 10 s |
-| Pilot | 3 | 82% of yours | 8 s |
-| Jedi Master | 3 | 90% of yours | 6 s |
+| Setting     | Lives | Enemy speed  | Insignia time |
+| ----------- | ----- | ------------ | ------------- |
+| Cadet       | 5     | 78% of yours | 10 s          |
+| Pilot       | 3     | 82% of yours | 8 s           |
+| Jedi Master | 3     | 90% of yours | 6 s           |
 
 Each level and each cycle then adds speed for both sides, makes enemies react faster and chase harder, and shortens insignias. Insignias never drop below 3 seconds, and enemies never go above 97% of your speed, so the game gets very hard but stays beatable at any cycle. All these numbers are at the top of `js/LevelManager.js`.
 
@@ -174,3 +174,7 @@ games/droid_chomp/
     ├── GameManager.js      Main loop and game flow
     └── main.js             Starts the game
 ```
+
+## TODO
+
+- Fix rebel sign graphic
