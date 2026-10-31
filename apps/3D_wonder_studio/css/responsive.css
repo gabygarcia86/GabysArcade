@@ -1,0 +1,399 @@
+/* Short laptop screens keep every tool visible by making them smaller. */
+@media (max-height: 760px) and (min-width: 1000px) {
+  .tool {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 3px 4px;
+  }
+
+  .tool-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .tool-icon .icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .tool-label {
+    font-size: 0.72rem;
+  }
+
+  .tool-group + .tool-group {
+    margin-top: 4px;
+  }
+
+  .tool-group h2 {
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 1320px) {
+  .top-btn {
+    min-width: 50px;
+    padding: 2px 3px;
+  }
+
+  .save-state {
+    display: none;
+  }
+}
+
+/* Tablets: tools shrink to a strip, and the panel slides over the viewport. */
+@media (max-width: 1099px) {
+  :root {
+    --tool-width: 82px;
+  }
+
+  .studio {
+    grid-template-columns: var(--tool-width) minmax(0, 1fr);
+    grid-template-areas:
+      "top top"
+      "tools stage"
+      "dock dock";
+  }
+
+  .tool-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-group h2 {
+    display: none;
+  }
+
+  .tool {
+    padding: 4px 1px;
+  }
+
+  .tool-label {
+    font-size: 0.7rem;
+  }
+
+  .props {
+    position: fixed;
+    top: calc(var(--top-height) + var(--gap) * 2);
+    right: var(--gap);
+    bottom: calc(var(--dock-height) + var(--gap) * 2);
+    width: min(320px, calc(100vw - 16px));
+    z-index: 25;
+    transform: translateX(calc(100% + 20px));
+    transition: transform 0.22s ease;
+  }
+
+  .props.is-open {
+    transform: none;
+  }
+
+  .props-close,
+  .props-toggle {
+    display: grid;
+  }
+
+  .quick:not(.is-hidden) {
+    display: flex;
+  }
+
+  .stats {
+    display: none;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .top-more {
+    flex: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .top-menu {
+    display: flex;
+  }
+
+  .top-more {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 212px;
+    padding: 7px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    border-radius: 16px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+
+  .top-more.is-open {
+    display: grid;
+  }
+
+  .top-more .top-btn {
+    min-width: 0;
+    height: 56px;
+  }
+}
+
+/* Phones: tools run along the bottom, above the dock. */
+@media (max-width: 640px) {
+  :root {
+    --top-height: 54px;
+    --dock-height: 106px;
+    --gap: 5px;
+  }
+
+  .studio {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--top-height) minmax(0, 1fr) 62px var(--dock-height);
+    grid-template-areas:
+      "top"
+      "stage"
+      "tools"
+      "dock";
+    padding-bottom: max(var(--gap), env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    padding: 0 6px;
+    gap: 6px;
+  }
+
+  .top-btn {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .top-history .top-btn span {
+    display: none;
+  }
+
+  .brand img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tools {
+    display: flex;
+    gap: 5px;
+    padding: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 14px;
+    overscroll-behavior-x: contain;
+  }
+
+  .tool-group {
+    flex: none;
+  }
+
+  .tool-group + .tool-group {
+    margin: 0;
+  }
+
+  .tool-row {
+    display: flex;
+    gap: 5px;
+  }
+
+  .tool {
+    width: 58px;
+    padding: 2px 0;
+    gap: 0;
+  }
+
+  .tool-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .tool-icon .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tool-label {
+    font-size: 0.66rem;
+  }
+
+  .props {
+    top: var(--top-height);
+    bottom: var(--gap);
+    left: var(--gap);
+    width: auto;
+    margin-top: var(--gap);
+  }
+
+  .dock {
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .dock-tabs {
+    display: flex;
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+
+  .dock-tab {
+    padding: 3px 7px;
+    font-size: 0.74rem;
+  }
+
+  .dock-tab .icon {
+    display: none;
+  }
+
+  .dock-body {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .thumb {
+    width: 64px;
+  }
+
+  .thumb img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .material-ball {
+    width: 38px;
+    height: 38px;
+  }
+
+  .toasts {
+    bottom: calc(var(--dock-height) + 76px);
+  }
+
+  #gizmo {
+    width: 72px;
+    height: 72px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .props-toggle {
+    top: 84px;
+    right: 5px;
+  }
+
+  .quick {
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+  }
+
+  .dialog-head h2 {
+    font-size: 1.2rem;
+  }
+
+  .dialog-body {
+    padding: 4px 13px 12px;
+  }
+
+  .starter-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 6px;
+  }
+
+  .starter img,
+  .starter-blank {
+    width: 76px;
+    height: 76px;
+  }
+
+  .starter > span:last-child {
+    display: none;
+  }
+
+  .starter strong {
+    font-size: 0.86rem;
+  }
+
+  .project-box {
+    max-width: none;
+  }
+
+  .format-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Phones held sideways don't have height to spare. */
+@media (max-height: 500px) and (max-width: 1099px) {
+  :root {
+    --top-height: 48px;
+    --dock-height: 56px;
+    --gap: 4px;
+  }
+
+  .dock {
+    flex-direction: row;
+  }
+
+  .dock-tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+  }
+
+  .dock-tab span {
+    display: none;
+  }
+
+  .dock-tab .icon {
+    display: block;
+  }
+
+  .thumb span,
+  .material-card span:last-child {
+    display: none;
+  }
+
+  .thumb {
+    width: 48px;
+  }
+
+  .thumb img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .material-card {
+    width: 48px;
+  }
+
+  .material-ball {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tool-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .tool-label {
+    display: none;
+  }
+
+  .top-btn {
+    height: 40px;
+  }
+
+  .top-btn span {
+    display: none;
+  }
+
+  .top-more.is-open .top-btn span {
+    display: block;
+  }
+}

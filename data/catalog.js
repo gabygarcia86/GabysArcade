@@ -268,6 +268,15 @@ window.ARCADE_CATALOG = {
 
   apps: [
     {
+      folder: "3D_wonder_studio",
+      title: "3D Wonder Studio",
+      description:
+        "Sculpt, paint and export your own 3D models, starting from a ball of digital clay.",
+      category: "Creativity",
+      tags: ["3d", "sculpting", "modeling", "clay", "painting", "art", "kids", "touch"],
+      added: "2026-10-31",
+    },
+    {
       folder: "drawing_studio",
       title: "Drawing Studio",
       description:

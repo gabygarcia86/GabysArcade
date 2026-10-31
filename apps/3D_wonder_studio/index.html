@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#141634">
+    <meta name="description"
+      content="Sculpt, paint and export your own 3D models in the browser, starting from a ball of digital clay.">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16"
+      href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+      href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>3D Wonder Studio</title>
+    <link rel="preload" href="assets/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./libs/three/three.module.min.js",
+          "three/addons/": "./libs/three/addons/"
+        }
+      }
+    </script>
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <div class="studio" id="studio">
+      <header class="topbar" id="topbar"></header>
+
+      <nav class="tools" id="tools" aria-label="Sculpting tools"></nav>
+
+      <main class="stage" id="stage">
+        <canvas id="viewport" aria-label="3D workspace"></canvas>
+        <canvas id="gizmo" aria-label="View direction. Click an axis to look along it."></canvas>
+        <div class="placing-bar is-hidden" id="placing-bar" role="status"></div>
+        <div class="empty-hint is-hidden" id="empty-hint">
+          <strong>A blank canvas!</strong>
+          <span>Tap a shape in the bottom bar to begin.</span>
+        </div>
+        <div class="quick is-hidden" id="quick" aria-label="Quick brush controls">
+          <label><span>Size</span><input id="quick-size" type="range" min="0.01" max="1" step="0.005" aria-label="Brush size"></label>
+          <label><span>Power</span><input id="quick-strength" type="range" min="0.05" max="1" step="0.01" aria-label="Brush strength"></label>
+        </div>
+        <button class="props-toggle" id="props-toggle" type="button" aria-label="Open settings panel">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="15.500" cy="7" r="2.500"/><circle cx="8.500" cy="17" r="2.500"/></svg>
+        </button>
+        <aside class="challenge-card is-hidden" id="challenge-card" aria-label="Challenge"></aside>
+      </main>
+
+      <aside class="props" id="props" aria-label="Properties">
+        <button class="props-close" id="props-close" type="button" aria-label="Close settings panel">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg>
+        </button>
+        <div class="props-body" id="props-body"></div>
+        <section class="panel-section object-list-box">
+          <h2>Objects <span class="count" id="object-count">0</span></h2>
+          <ul class="object-list" id="object-list"></ul>
+        </section>
+      </aside>
+
+      <footer class="dock" id="dock"></footer>
+    </div>
+
+    <div id="modals"></div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="tooltip" id="tooltip" role="tooltip"></div>
+    <div class="coach-ring is-hidden" id="coach-ring"></div>
+    <div class="coach is-hidden" id="coach" role="dialog" aria-label="Lesson"></div>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+    <div class="blocker is-hidden" id="context-lost">
+      <div>
+        <strong>Your screen took a little break</strong>
+        <p>Your creation is safe. It will come back in a moment.</p>
+      </div>
+    </div>
+    <div class="blocker is-hidden" id="no-webgl">
+      <div>
+        <strong>3D needs WebGL</strong>
+        <p>This browser or device can't show 3D right now. Turn on graphics acceleration, or try a different browser.</p>
+      </div>
+    </div>
+    <noscript><p class="noscript">3D Wonder Studio needs JavaScript to run.</p></noscript>
+  </body>
+</html>
