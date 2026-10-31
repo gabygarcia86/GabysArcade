@@ -32,7 +32,7 @@ GabysArcade/
 ├── apps.html             All apps
 ├── contact.html          Contact forms
 ├── about.html            About page (your text lives here)
-├── 404.html, 404.*       "Page not found" page
+├── 404.html              "Page not found" page
 ├── sitemap.xml           Page list for search engines
 ├── .nojekyll             Tells GitHub Pages to serve files exactly as they are
 ├── data/
@@ -40,18 +40,20 @@ GabysArcade/
 │   └── site-config.js    ★ Contact form address and Coming Soon PIN hash
 ├── assets/
 │   ├── css/site.css      All styling. Brand colors are at the top
+│   ├── css/404.css       Falling-emoji effect for the 404 page
 │   ├── fonts/            Oxanium and Sora, with their licenses
 │   └── js/
 │       ├── core.js                Loads the catalog, reads game titles, stores favorites
 │       ├── layout.js              Header, navigation, footer and disclaimer
 │       ├── arcade.js              Cards, search, filters, sorting, PIN dialog
 │       ├── contact.js             Contact form validation and sending
-│       └── coming-soon-guard.js   Blocks direct links to Coming Soon games
+│       ├── coming-soon-guard.js   Blocks direct links to Coming Soon games
+│       └── 404.js                 Falling-emoji effect for the 404 page
 ├── tools/
 │   ├── check-catalog.mjs  Finds catalog mistakes before you publish
 │   └── hash-pin.mjs       Generates a new PIN hash
 ├── icon/                 Site logo and favicons
-├── images/               Site images, including the About portrait
+├── images/               Site images, including the About portrait and 404 art
 ├── games/<game>/         Each game: index.html plus icon/icon-256.png
 └── apps/<app>/           Each app: index.html plus icon/icon-256.png
 ```
