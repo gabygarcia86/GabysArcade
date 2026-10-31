@@ -59,8 +59,8 @@
         ${art(game, "game icon")}
         <div class="card-body">
           <h3 class="card-title">
-            <a class="card-link" href="${escapeHtml(game.url)}" target="_blank" rel="noopener">
-              ${escapeHtml(game.title)}<span class="sr-only"> (opens in a new tab)</span>
+            <a class="card-link" href="${escapeHtml(game.url)}">
+              ${escapeHtml(game.title)}
             </a>
           </h3>
           <p class="card-desc">${escapeHtml(game.description)}</p>
@@ -97,8 +97,8 @@
         ${art(app, "app icon")}
         <div class="card-body">
           <h3 class="card-title">
-            <a class="card-link" href="${escapeHtml(app.url)}" target="_blank" rel="noopener">
-              ${escapeHtml(app.title)}<span class="sr-only"> (opens in a new tab)</span>
+            <a class="card-link" href="${escapeHtml(app.url)}">
+              ${escapeHtml(app.title)}
             </a>
           </h3>
           <p class="card-desc">${escapeHtml(app.description)}</p>
@@ -288,10 +288,7 @@
 
       storageSet(PREVIEW_PASS_KEY, String(Date.now() + PREVIEW_PASS_MS));
       dialog.close();
-      // Runs inside the submit gesture so popup blockers allow it. If one still
-      // blocks the new tab, the game opens in this tab instead.
-      const opened = window.open(activeGame.url, "_blank");
-      if (!opened) location.href = activeGame.url;
+      location.href = activeGame.url;
     });
 
     document.addEventListener("click", (event) => {

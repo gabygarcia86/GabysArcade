@@ -193,7 +193,7 @@ A game is Coming Soon whenever the `<title>` in its `index.html` starts with `Co
 
 ### Test a Coming Soon game on the live site
 
-Click its card on the Home page and enter the PIN. The game opens in a new tab, and that browser can reopen or refresh it for the next 12 hours. Clicking the card always asks for the PIN again.
+Click its card on the Home page and enter the PIN. The game opens in the same tab, and that browser can reopen or refresh it for the next 12 hours. Clicking the card always asks for the PIN again.
 
 ### Update a Coming Soon game
 
