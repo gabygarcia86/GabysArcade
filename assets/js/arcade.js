@@ -76,11 +76,11 @@
   function comingSoonCard(game) {
     return `
       <article class="card card-locked">
-        ${art(game, "game icon")}
+        ${art({ ...game, title: "Coming Soon" }, "game icon")}
         <div class="card-body">
           <h3 class="card-title">
             <button class="card-link" type="button" data-unlock="${escapeHtml(game.id)}">
-              ${escapeHtml(game.title)}<span class="sr-only"> (PIN required)</span>
+              <span class="sr-only">Coming Soon game (PIN required)</span>
             </button>
           </h3>
           <div class="card-meta">
@@ -252,7 +252,7 @@
     dialog.innerHTML = `
       <form method="dialog" novalidate>
         <p class="eyebrow">Restricted build</p>
-        <h2 id="pin-title"></h2>
+        <h2 id="pin-title">Coming Soon</h2>
         <p class="pin-help">This game is still in development. Enter the PIN to open the test build.</p>
         <label for="pin-input">PIN</label>
         <input id="pin-input" type="password" inputmode="numeric" autocomplete="off"
@@ -267,7 +267,6 @@
 
     const input = dialog.querySelector("#pin-input");
     const error = dialog.querySelector("#pin-error");
-    const title = dialog.querySelector("#pin-title");
     let activeGame = null;
 
     dialog.querySelector("[data-pin-cancel]").addEventListener("click", () => dialog.close());
@@ -299,7 +298,6 @@
       const trigger = event.target.closest("[data-unlock]");
       if (!trigger) return;
       activeGame = games.find((game) => game.id === trigger.dataset.unlock);
-      title.textContent = activeGame.title;
       error.textContent = "";
       input.value = "";
       input.removeAttribute("aria-invalid");

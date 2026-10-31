@@ -831,6 +831,15 @@ main {
   border-color: rgba(255, 194, 74, 0.38);
 }
 
+/* Locked cards show no name, so the title takes up no space. */
+.card-locked .card-body {
+  gap: 0;
+}
+
+.card-locked .card-title {
+  height: 0;
+}
+
 .card-locked .card-cta {
   color: var(--amber);
 }

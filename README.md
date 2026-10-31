@@ -169,7 +169,7 @@ Put the files in `apps/pixel_painter/`, with `index.html` and `icon/icon-256.png
 
 ## Coming Soon games
 
-A game is Coming Soon whenever the `<title>` in its `index.html` starts with `Coming Soon`. Capitals don't matter. The arcade removes those words from the display name, so `Coming Soon - Latke Toss` appears as **Latke Toss**.
+A game is Coming Soon whenever the `<title>` in its `index.html` starts with `Coming Soon`. Capitals don't matter. Coming Soon cards show only the icon and a Coming Soon tag, with no name or description. Both appear automatically once the game is published, without the `Coming Soon` words.
 
 ### Add a Coming Soon game
 
