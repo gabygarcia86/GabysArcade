@@ -190,6 +190,7 @@ window.ARCADE_CATALOG = {
         "tapping",
         "touch",
         "keyboard",
+        "leaderboard",
       ],
       added: "",
     },

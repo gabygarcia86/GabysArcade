@@ -25,7 +25,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&display=swap">
-        <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="styles/main.css?v=3">
     </head>
     <body data-screen="boot">
         <canvas id="stage" aria-hidden="true"></canvas>
@@ -51,6 +51,7 @@
                         <p class="quick-song" id="quick-song"></p>
                         <button class="btn" id="btn-library">Song
                             Library</button>
+                        <button class="btn" id="btn-leaderboard">Leaderboard</button>
                         <button class="btn" id="btn-settings">Settings</button>
                         <button class="btn btn-ghost" id="btn-howto">How to
                             Play</button>
@@ -189,11 +190,22 @@
                     </div>
                     <ul class="judgement-bars" id="results-judgements"></ul>
                     <p class="results-hint" id="results-hint"></p>
+                    <form class="score-form" id="score-form" novalidate hidden>
+                        <label for="score-name">Your name</label>
+                        <input id="score-name" type="text"
+                            autocomplete="nickname" enterkeyhint="send"
+                            spellcheck="false">
+                        <button class="btn" type="submit">Submit score</button>
+                    </form>
+                    <p class="score-message" id="score-message" role="status"
+                        hidden></p>
                     <div class="results-actions">
                         <button class="btn btn-primary"
                             id="btn-replay">Replay</button>
                         <button class="btn" id="btn-results-songs">Song
                             Select</button>
+                        <button class="btn results-board-btn"
+                            id="btn-results-board">View Leaderboard</button>
                     </div>
                 </div>
             </section>
@@ -449,6 +461,32 @@
                 </div>
             </div>
 
+            <div class="modal" id="modal-leaderboard" hidden role="dialog"
+                aria-modal="true" aria-labelledby="board-title">
+                <div class="panel">
+                    <h2 id="board-title">Leaderboard</h2>
+                    <label class="board-song">Song
+                        <select id="board-song"></select>
+                    </label>
+                    <div class="difficulty-tabs board-difficulty"
+                        id="board-difficulty" role="radiogroup"
+                        aria-label="Difficulty">
+                        <button role="radio" type="button"
+                            data-diff="easy"><span>Easy</span></button>
+                        <button role="radio" type="button"
+                            data-diff="normal"><span>Normal</span></button>
+                        <button role="radio" type="button"
+                            data-diff="hard"><span>Hard</span></button>
+                    </div>
+                    <ol class="board-list" id="board-list"></ol>
+                    <p class="board-status" id="board-status" role="status"></p>
+                    <div class="row-buttons">
+                        <button class="btn btn-primary"
+                            data-close>Close</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal" id="modal-message" hidden role="dialog"
                 aria-modal="true" aria-labelledby="message-title">
                 <div class="panel">
@@ -469,6 +507,6 @@
 
         <noscript><p class="noscript">Touch the Beat needs JavaScript
                 enabled.</p></noscript>
-        <script type="module" src="src/main.js"></script>
+        <script type="module" src="src/main.js?v=2"></script>
     </body>
 </html>

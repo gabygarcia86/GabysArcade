@@ -9,3 +9,5 @@ The publishable key is public by design. Visitors can read the board and add sco
 If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
 
 When you change `script.js`, `leaderboard.js` or `styles.css`, raise the `?v=` number on its link in `index.html` so browsers fetch the new file instead of a cached copy.
+
+## TODO

@@ -11,9 +11,10 @@ import { SongLibrary } from './library/SongLibrary.js';
 import { NeonRenderer } from './rendering/NeonRenderer.js';
 import { CalibrationScreen } from './ui/CalibrationScreen.js';
 import { LoadingScreen } from './ui/LoadingScreen.js';
-import { MainMenu } from './ui/MainMenu.js';
+import { LeaderboardModal } from './ui/LeaderboardModal.js?v=2';
+import { MainMenu } from './ui/MainMenu.js?v=2';
 import { PauseMenu } from './ui/PauseMenu.js';
-import { ResultsScreen } from './ui/ResultsScreen.js';
+import { ResultsScreen } from './ui/ResultsScreen.js?v=2';
 import { SettingsScreen } from './ui/SettingsScreen.js';
 import { SongSelect } from './ui/SongSelect.js';
 import { UIManager } from './ui/UIManager.js';
@@ -49,6 +50,7 @@ class App {
     });
 
     this.ui = new UIManager(this.sfx);
+    this.leaderboard = new LeaderboardModal(this);
     this.loading = new LoadingScreen();
     this.ui.register('menu', new MainMenu(this));
     this.songSelect = this.ui.register('songs', new SongSelect(this));

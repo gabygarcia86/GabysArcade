@@ -125,6 +125,26 @@ and the browser run the **same code**.
 
 ---
 
+## Online leaderboard
+
+Every song has a separate top 10 for each difficulty, stored in Supabase. Open it from **Leaderboard** on the main menu or **View Leaderboard** on the results screen, then pick a song and difficulty. After a song, the results screen lets the player enter a name and submit. Each play can be submitted once.
+
+To keep scores comparable, these runs can't be submitted, and the results screen says why:
+
+- imported songs, which only exist on one device
+- recompiled charts, which differ from the shipped chart
+- runs on **Lenient** timing, which makes hits easier
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `touch_the_beat_scores` table and its access rules. The project address and publishable key are at the top of `src/leaderboard.js`.
+
+**If you recompile a shipped song's charts** with `npm run compile`, old scores were set on a different chart. `leaderboard.sql` has a commented example for wiping one song's boards.
+
+The publishable key is public by design. Visitors can read the boards and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
+**Browser caching:** when you change `styles/main.css` or the leaderboard, main menu or results code, raise the `?v=` number where that file is linked (`index.html`, `src/main.js`, or the import in `src/ui`) so browsers fetch the new file instead of a cached copy.
+
 ## Audio analysis
 
 `src/audio/AudioAnalyzer.js` is a set of classic music-information-retrieval heuristics. It
@@ -307,4 +327,3 @@ will be less musical. Try a tempo hint and a different seed.
 ## TODO
 
 - Add more songs!
-- Add leaderboard

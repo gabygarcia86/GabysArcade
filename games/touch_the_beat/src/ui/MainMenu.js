@@ -7,6 +7,10 @@ export class MainMenu {
     this.app = app;
     $('#btn-play').addEventListener('click', () => app.quickPlay());
     $('#btn-library').addEventListener('click', () => app.ui.show('songs'));
+    $('#btn-leaderboard').addEventListener('click', () => {
+      const { song, difficulty } = app.quickPlayTarget();
+      app.leaderboard.open(song?.id, difficulty);
+    });
     $('#btn-settings').addEventListener('click', () => app.ui.show('settings'));
     $('#btn-howto').addEventListener('click', () => openModal('modal-howto'));
 

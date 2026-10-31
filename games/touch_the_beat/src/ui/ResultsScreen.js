@@ -1,6 +1,7 @@
 // End-of-song results.
 
-import { $, el } from '../util/dom.js';
+import { cleanName, leaderboard, loadName, NAME_MAX, saveName, submitBlockReason } from '../leaderboard.js?v=2';
+import { $, el, topModal } from '../util/dom.js';
 
 const ROWS = [
   ['perfect', 'PERFECT', '#ffffff'],
@@ -14,7 +15,77 @@ export class ResultsScreen {
     this.app = app;
     $('#btn-replay').addEventListener('click', () => app.replay());
     $('#btn-results-songs').addEventListener('click', () => app.ui.reset('songs'));
+    $('#btn-results-board').addEventListener('click', () => app.leaderboard.open(app.currentSong?.id, app.currentDifficulty));
+    $('#score-name').maxLength = NAME_MAX;
+    $('#score-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitScore();
+    });
     this.counterRaf = 0;
+    this.pendingRun = null;
+    this.run = 0;
+    this.submitting = false;
+  }
+
+  prepareSubmit(song, difficulty, summary) {
+    const reason = summary.score > 0 ? submitBlockReason(song, this.app.settings.get('timingWindows')) : '';
+    const canSubmit = summary.score > 0 && !reason;
+    this.pendingRun = canSubmit ? { song: song.id, difficulty, score: summary.score, accuracy: summary.accuracy } : null;
+    this.run += 1;
+    $('#score-form').hidden = !canSubmit;
+    $('#score-name').value = loadName();
+    this.setMessage(reason, false);
+  }
+
+  setMessage(text, isError) {
+    const message = $('#score-message');
+    message.textContent = text;
+    message.hidden = !text;
+    message.classList.toggle('error', isError);
+  }
+
+  async submitScore() {
+    if (this.submitting || !this.pendingRun) return;
+    const input = $('#score-name');
+    const name = cleanName(input.value);
+    if (!name) {
+      this.setMessage('Enter a name first', true);
+      input.focus();
+      return;
+    }
+
+    const entry = { ...this.pendingRun, name };
+    const run = this.run;
+    const button = $('#score-form button');
+    const label = button.textContent;
+    this.submitting = true;
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    this.setMessage('', false);
+    saveName(name);
+
+    let sent = true;
+    try {
+      await leaderboard.submit(entry);
+    } catch {
+      sent = false;
+    }
+
+    this.submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (run !== this.run) return;
+
+    if (!sent) {
+      this.setMessage('Score not sent. Check your connection and try again.', true);
+      return;
+    }
+    this.pendingRun = null;
+    $('#score-form').hidden = true;
+    this.setMessage('Score submitted!', false);
+    if (this.app.ui.current === 'results' && !topModal()) {
+      this.app.leaderboard.open(entry.song, entry.difficulty, { name, score: entry.score });
+    }
   }
 
   onShow({ summary, song, difficulty, newBest }) {
@@ -48,6 +119,7 @@ export class ResultsScreen {
       hint = `Timing centred: average error ${d > 0 ? '+' : ''}${d} ms.`;
     }
     $('#results-hint').textContent = hint;
+    this.prepareSubmit(song, difficulty, summary);
 
     // animated score counter
     cancelAnimationFrame(this.counterRaf);
