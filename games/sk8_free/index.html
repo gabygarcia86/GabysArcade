@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <title>Coming Soon - Sk8 Free</title>
     <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#000080">
+    <meta name="description"
+      content="Sk8 Free: skate downhill through an endless neighborhood until something very angry catches you.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
@@ -12,6 +20,131 @@
     <link rel="icon" type="image/png" sizes="256x256"
       href="icon/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="stylesheet" href="style.css">
   </head>
+  <body>
+    <canvas id="game" aria-label="Sk8 Free game"></canvas>
 
+    <div id="hud" hidden>
+      <div class="stats" aria-live="off">
+        <span>Score</span><b id="hud-score">0</b>
+        <span>Dist</span><b id="hud-dist">0M</b>
+        <span>Km/h</span><b id="hud-speed">0</b>
+        <span>Best</span><b id="hud-best">0</b>
+      </div>
+      <div id="hud-effects"></div>
+      <div id="hud-chase"></div>
+      <div class="hud-buttons">
+        <button id="hud-pause" type="button">PAUSE</button>
+        <button id="hud-restart" type="button" aria-label="Restart">R</button>
+        <button id="hud-sound" type="button" aria-label="Sound">SND</button>
+      </div>
+    </div>
+
+    <div id="touch-controls" hidden>
+      <div class="speed-buttons">
+        <button id="touch-fast" type="button" aria-label="Speed up">FAST</button>
+        <button id="touch-slow" type="button" aria-label="Slow down">SLOW</button>
+      </div>
+      <button id="touch-ollie" type="button">OLLIE</button>
+    </div>
+
+    <section id="menu" class="window" aria-labelledby="menu-title">
+      <header class="titlebar"><span class="close-box"></span><span id="menu-title">SK8 FREE</span></header>
+      <div class="body">
+        <h1 class="logo"><canvas id="logo" aria-label="Sk8 Free" role="img"></canvas></h1>
+        <p class="tagline">NO RULES. NO BRAKES. NO MERCY.</p>
+        <button id="btn-start" class="primary" type="button">START SKATING</button>
+        <button id="btn-board" type="button">LEADERBOARD</button>
+        <fieldset class="picker">
+          <legend>SELECT PURSUER</legend>
+          <button type="button" data-pursuer="cop" aria-pressed="false">
+            <canvas data-portrait="cop" width="60" height="62"></canvas><span>COP</span>
+          </button>
+          <button type="button" data-pursuer="karen" aria-pressed="false">
+            <canvas data-portrait="karen" width="60" height="62"></canvas><span>KAREN</span>
+          </button>
+          <button type="button" data-pursuer="random" aria-pressed="false">
+            <canvas data-portrait="random" width="60" height="62"></canvas><span>RANDOM</span>
+          </button>
+        </fieldset>
+        <div class="row">
+          <button id="btn-howto" type="button">HOW TO PLAY</button>
+          <button id="btn-sound" type="button">SOUND: ON</button>
+          <button id="btn-music" type="button">MUSIC: OFF</button>
+        </div>
+        <p id="menu-best" class="best">HIGH SCORE: 0</p>
+        <a class="back" href="../../index.html">Back to the arcade</a>
+      </div>
+    </section>
+
+    <section id="howto" class="window" aria-labelledby="howto-title" hidden>
+      <header class="titlebar"><span class="close-box"></span><span id="howto-title">HOW TO PLAY</span></header>
+      <div class="body">
+        <table class="keys">
+          <tr><th>A / LEFT, D / RIGHT</th><td>Steer</td></tr>
+          <tr><th>W / UP</th><td>Go faster</td></tr>
+          <tr><th>S / DOWN</th><td>Slow down</td></tr>
+          <tr><th>SPACE</th><td>Ollie</td></tr>
+          <tr><th>P / ESC</th><td>Pause</td></tr>
+          <tr><th>R</th><td>Restart</td></tr>
+          <tr><th>PHONE</th><td>Drag to steer, tap OLLIE</td></tr>
+        </table>
+        <p>Skate as far as you can. Steer around trees, cars and lamp posts. Ollie over the small stuff, and hit ramps for big air. Puddles make you slide, and cracks slow you down.</p>
+        <p>Grab soda, gold wheels, helmets, rocket shoes and energy drinks.</p>
+        <p>Enjoy the peace and quiet while it lasts.</p>
+        <button id="btn-howto-close" class="primary" type="button">GOT IT</button>
+      </div>
+    </section>
+
+    <section id="pause" class="window" aria-labelledby="pause-title" hidden>
+      <header class="titlebar"><span class="close-box"></span><span id="pause-title">PAUSED</span></header>
+      <div class="body">
+        <button id="btn-resume" class="primary" type="button">KEEP SKATING</button>
+        <button id="btn-pause-restart" type="button">RESTART</button>
+        <button id="btn-pause-menu" type="button">MAIN MENU</button>
+      </div>
+    </section>
+
+    <section id="gameover" class="window" aria-labelledby="over-title" aria-live="polite" hidden>
+      <header class="titlebar"><span class="close-box"></span><span id="over-title">GAME OVER</span></header>
+      <div class="body">
+        <p id="over-line" class="over-line"></p>
+        <p id="over-by" class="over-by"></p>
+        <p id="over-new" class="new-best" hidden>NEW HIGH SCORE!</p>
+        <dl class="results">
+          <div><dt>Score</dt><dd id="over-score">0</dd></div>
+          <div><dt>Distance</dt><dd id="over-dist">0 M</dd></div>
+          <div><dt>Best</dt><dd id="over-best">0</dd></div>
+        </dl>
+        <form id="score-form" class="score-form">
+          <input id="score-name" type="text" autocomplete="nickname" spellcheck="false"
+            placeholder="Your name" aria-label="Your name for the leaderboard">
+          <button id="score-submit" type="submit">SUBMIT</button>
+        </form>
+        <p id="score-status" class="status" role="status"></p>
+        <button id="btn-again" class="primary" type="button">PLAY AGAIN</button>
+        <div class="pair">
+          <button id="btn-over-board" type="button">LEADERBOARD</button>
+          <button id="btn-over-menu" type="button">MAIN MENU</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="leaderboard" class="window" aria-labelledby="board-title" hidden>
+      <header class="titlebar"><span class="close-box"></span><span id="board-title">LEADERBOARD</span></header>
+      <div class="body">
+        <div class="board-tabs" role="group" aria-label="Choose a leaderboard">
+          <button type="button" data-board="all" aria-pressed="true">ALL</button>
+          <button type="button" data-board="cop" aria-pressed="false">COP</button>
+          <button type="button" data-board="karen" aria-pressed="false">KAREN</button>
+        </div>
+        <ol id="board-list" class="board-list"></ol>
+        <p id="board-status" class="status" role="status"></p>
+        <button id="btn-board-close" class="primary" type="button">BACK</button>
+      </div>
+    </section>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
 </html>
