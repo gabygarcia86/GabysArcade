@@ -677,6 +677,119 @@ input[type="range"]:focus-visible {
   text-align: right;
 }
 
+/* --------------------------------------------------------------- leaderboard */
+
+.score-form {
+  margin: 0 0 0.7em;
+  text-align: left;
+}
+
+.score-form label {
+  display: block;
+  margin-bottom: 0.4em;
+  font-size: 0.8em;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.score-form input {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5em;
+  padding: 0.55em 0.7em;
+  /* 16px stops iOS Safari zooming the page when the field gets focus */
+  font: 700 max(16px, 1em) var(--ui-font);
+  color: #fff;
+  background: rgba(3, 5, 13, 0.7);
+  border: 1px solid rgba(56, 214, 255, 0.45);
+  border-radius: 0.5em;
+}
+
+.score-form input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.score-message {
+  margin: 0 0 0.8em;
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+}
+
+.score-message.error {
+  color: #ff8a95;
+}
+
+#screen-leaderboard h2 {
+  font-size: 1.35em;
+  letter-spacing: 0.1em;
+}
+
+.board-list {
+  margin: 0 0 1em;
+  padding: 0;
+  font-size: 0.9em;
+  list-style: none;
+  counter-reset: board;
+}
+
+/* In a narrow frame a long score wraps under the name instead of hiding it. */
+.board-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5em;
+  align-items: center;
+  padding: 0.42em 0.3em;
+  text-align: left;
+  border-bottom: 1px solid rgba(56, 214, 255, 0.14);
+  counter-increment: board;
+}
+
+.board-list li::before {
+  content: counter(board);
+  flex: none;
+  width: 1.7em;
+  font: 800 0.9em var(--num-font);
+  color: var(--muted);
+}
+
+.board-list span {
+  flex: 1 1 5em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-list b {
+  margin-left: auto;
+  font: 800 1em var(--num-font);
+  color: #fff;
+}
+
+.board-list li.own {
+  background: rgba(56, 214, 255, 0.14);
+  border-radius: 0.4em;
+}
+
+.board-list li.own span,
+.board-list li.own::before {
+  color: var(--cyan);
+}
+
+.board-status {
+  margin: 0.6em 0 1em;
+  font-size: 0.82em;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.board-status:empty {
+  display: none;
+}
+
 /* ------------------------------------------------------------ touch controls */
 
 #touch-controls {

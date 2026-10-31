@@ -30,7 +30,7 @@ window.ARCADE_CATALOG = {
       description:
         "An arcade space shooter with diving enemy squadrons and a capital-ship boss every seventh stage.",
       category: "Shooter",
-      tags: ["space", "sci-fi", "retro", "boss battles", "keyboard", "touch"],
+      tags: ["space", "sci-fi", "retro", "boss battles", "leaderboard", "keyboard", "touch"],
       added: "",
     },
     {

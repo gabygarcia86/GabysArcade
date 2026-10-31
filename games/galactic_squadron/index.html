@@ -74,6 +74,8 @@
                                 <span>CHOOSE YOUR SHIP<small
                                         id="title-ship-name">X-SHIP</small></span>
                             </button>
+                            <button class="btn"
+                                data-action="leaderboard">LEADERBOARD</button>
                             <div class="btn-row">
                                 <button class="btn" data-action="help">HOW TO
                                     PLAY</button>
@@ -120,6 +122,19 @@
                                 same, so pick your favorite.</p>
                             <button class="btn primary"
                                 data-action="back">DONE</button>
+                        </div>
+                    </section>
+
+                    <!-- ============================== LEADERBOARD -->
+                    <section id="screen-leaderboard" class="screen"
+                        aria-label="Leaderboard" hidden>
+                        <div class="panel narrow">
+                            <h2>LEADERBOARD</h2>
+                            <ol id="board-list" class="board-list"></ol>
+                            <p id="board-status" class="board-status"
+                                role="status"></p>
+                            <button class="btn primary"
+                                data-action="back">BACK</button>
                         </div>
                     </section>
 
@@ -301,8 +316,22 @@
                                 <dt>STAGE</dt><dd id="over-stage">1</dd>
                                 <dt>KILLS</dt><dd id="over-kills">0</dd>
                             </dl>
+                            <form id="over-submit" class="score-form"
+                                novalidate hidden>
+                                <label for="over-name">YOUR NAME</label>
+                                <input id="over-name" type="text"
+                                    autocomplete="nickname"
+                                    enterkeyhint="send" spellcheck="false">
+                                <button class="btn" type="submit">SUBMIT
+                                    SCORE</button>
+                            </form>
+                            <p id="over-message" class="score-message"
+                                role="status" hidden></p>
                             <button class="btn primary"
                                 data-action="restart">PLAY AGAIN</button>
+                            <button class="btn"
+                                data-action="leaderboard">VIEW
+                                LEADERBOARD</button>
                             <button class="btn" data-action="title">MAIN
                                 MENU</button>
                         </div>

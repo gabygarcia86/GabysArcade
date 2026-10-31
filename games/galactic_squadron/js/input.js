@@ -17,6 +17,10 @@ const FIRE = new Set(['Space', 'ArrowUp', 'KeyW']);
 const SHIELD = new Set(['ShiftLeft', 'ShiftRight', 'KeyS', 'ArrowDown']);
 const GAME_KEYS = new Set([...LEFT, ...RIGHT, ...FIRE, ...SHIELD, 'KeyP', 'Escape', 'Enter', 'KeyM']);
 
+function isTextEntry(el) {
+  return !!el && el.tagName === 'INPUT' && el.type === 'text';
+}
+
 function isFormControl(el) {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'BUTTON' || el.tagName === 'TEXTAREA');
 }
@@ -95,6 +99,9 @@ export class Input {
   }
 
   onKeyDown(e) {
+    // Typing a name must not mute, pause or restart the game.
+    if (isTextEntry(document.activeElement)) return;
+
     const code = e.code;
     const inGame = this.game.isActivePlay();
     const focused = document.activeElement;

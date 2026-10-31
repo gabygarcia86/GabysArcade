@@ -4,6 +4,7 @@
  * DOM is only touched on state changes — never every frame.
  */
 import { CONFIG, WORLD, DEFAULT_SETTINGS } from './config.js';
+import { leaderboard, cleanName, NAME_MAX } from './leaderboard.js';
 import { storage } from './storage.js';
 import { getSprites, drawPowerIcon, POWERUP_COLORS } from './sprites.js';
 import { POWERUP_INFO } from './powerups.js';
@@ -16,7 +17,7 @@ const UI_FONT = (px, w = 800) => `${w} ${px}px "Segoe UI", system-ui, -apple-sys
 
 const pad = (n, len = 7) => String(Math.floor(n)).padStart(len, '0');
 
-const SUB_SCREENS = new Set(['settings', 'help', 'ships']);
+const SUB_SCREENS = new Set(['settings', 'help', 'ships', 'leaderboard']);
 
 /** Draws a ship centered and fitted into a square canvas of `size` CSS px. */
 function paintShip(canvas, id, size, withFlames) {
@@ -63,6 +64,7 @@ export class UI {
       settings: this.$('#screen-settings'),
       help: this.$('#screen-help'),
       ships: this.$('#screen-ships'),
+      leaderboard: this.$('#screen-leaderboard'),
       pause: this.$('#screen-pause'),
       over: this.$('#screen-over'),
     };
@@ -72,6 +74,10 @@ export class UI {
     this.touchMode = false;
     this.lastShieldPct = -1;
     this.hudGradient = null;
+    this.pendingScore = 0;
+    this.overRun = 0;
+    this.submitting = false;
+    this.boardRequest = 0;
   }
 
   bind(game) {
@@ -88,6 +94,12 @@ export class UI {
     document.querySelectorAll('[data-setting]').forEach((el) => {
       const evt = el.type === 'range' ? 'input' : 'change';
       el.addEventListener(evt, () => this.onSettingInput(el));
+    });
+
+    this.$('#over-name').maxLength = NAME_MAX;
+    this.$('#over-submit').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitScore();
     });
 
     let resizeQueued = false;
@@ -137,6 +149,9 @@ export class UI {
         break;
       case 'ships':
         this.openSub('ships');
+        break;
+      case 'leaderboard':
+        this.openLeaderboard();
         break;
       case 'pick-ship':
         this.pickShip(btn.dataset.ship);
@@ -215,7 +230,107 @@ export class UI {
     this.$('#over-stage').textContent = String(data.stage);
     this.$('#over-kills').textContent = String(data.kills);
     this.$('#over-new').hidden = !data.newBest;
+    this.pendingScore = data.canSubmit ? data.score : 0;
+    this.overRun += 1;
+    this.$('#over-submit').hidden = !data.canSubmit;
+    this.$('#over-name').value = storage.get('playerName', '');
+    this.setOverMessage('');
     this.show('over');
+  }
+
+  setOverMessage(text, isError = false) {
+    const message = this.$('#over-message');
+    message.textContent = text;
+    message.hidden = !text;
+    message.classList.toggle('error', isError);
+  }
+
+  /* -------------------------------------------------------------- leaderboard */
+
+  async submitScore() {
+    if (this.submitting || !this.pendingScore) return;
+    const input = this.$('#over-name');
+    const name = cleanName(input.value);
+    if (!name) {
+      this.setOverMessage('ENTER A NAME FIRST', true);
+      input.focus();
+      return;
+    }
+
+    const score = this.pendingScore;
+    const run = this.overRun;
+    const button = this.$('#over-submit button');
+    const label = button.textContent;
+    this.submitting = true;
+    button.disabled = true;
+    button.textContent = 'SENDING…';
+    this.setOverMessage('');
+    storage.set('playerName', name);
+
+    let sent = true;
+    try {
+      await leaderboard.submit(name, score);
+    } catch {
+      sent = false;
+    }
+
+    this.submitting = false;
+    button.disabled = false;
+    button.textContent = label;
+    if (run !== this.overRun) return;
+
+    if (!sent) {
+      this.setOverMessage('SCORE NOT SENT. CHECK YOUR CONNECTION AND TRY AGAIN.', true);
+      return;
+    }
+    this.pendingScore = 0;
+    this.$('#over-submit').hidden = true;
+    this.setOverMessage('SCORE SUBMITTED');
+    if (this.current === 'over') this.openLeaderboard({ name, score });
+  }
+
+  /** Shows the top 10. `own` ({ name, score }) highlights a score just submitted. */
+  async openLeaderboard(own = null) {
+    this.openSub('leaderboard');
+    const list = this.$('#board-list');
+    const status = this.$('#board-status');
+    const request = ++this.boardRequest;
+    list.replaceChildren();
+    status.textContent = 'LOADING…';
+    status.hidden = false;
+
+    let rows = null;
+    try {
+      rows = await leaderboard.top();
+    } catch {
+      rows = null;
+    }
+    if (request !== this.boardRequest) return;
+
+    if (!rows) {
+      status.textContent = 'LEADERBOARD UNAVAILABLE. CHECK YOUR CONNECTION AND TRY AGAIN.';
+      return;
+    }
+    if (!rows.length) {
+      status.textContent = 'NO SCORES YET. BE THE FIRST!';
+      return;
+    }
+
+    let ownRow = null;
+    rows.forEach((row) => {
+      const item = document.createElement('li');
+      const name = document.createElement('span');
+      const score = document.createElement('b');
+      name.textContent = row.name;
+      score.textContent = row.score.toLocaleString();
+      item.append(name, score);
+      if (own && !ownRow && row.name === own.name && row.score === own.score) ownRow = item;
+      list.append(item);
+    });
+
+    if (ownRow) ownRow.classList.add('own');
+    status.textContent = own && !ownRow ? `YOUR ${own.score.toLocaleString()} DIDN'T REACH THE TOP 10` : '';
+    status.hidden = !status.textContent;
   }
 
   updateHighScore(value) {

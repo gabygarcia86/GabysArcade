@@ -285,7 +285,14 @@ export class Game {
     this.background.warpTarget = 0;
     this.audio.stopMusic();
     this.audio.play('gameOver');
-    this.ui.showGameOver({ score: this.score, best: this.highScore, stage: this.stage, kills: this.kills, newBest });
+    this.ui.showGameOver({
+      score: this.score,
+      best: this.highScore,
+      stage: this.stage,
+      kills: this.kills,
+      newBest,
+      canSubmit: this.score > 0 && this.startStage === 1, // ?stage= test runs skip the early stages
+    });
   }
 
   saveHighScore() {

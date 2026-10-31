@@ -15,13 +15,13 @@ python -m http.server 8000
 npx serve .
 ```
 
-Then open `http://localhost:8000/Random/galactic_squadron/` (or `http://localhost:8000/` if you served this folder).
+Then open `http://localhost:8000/games/galactic_squadron/` (or `http://localhost:8000/` if you served this folder).
 
 ## Deploying to GitHub Pages
 
 1. Commit the `galactic_squadron` folder to your repository.
 2. On GitHub, go to **Settings → Pages**, set **Source** to *Deploy from a branch*, and pick your branch and `/ (root)`.
-3. After the deploy finishes, the game is at `https://<user>.github.io/<repo>/Random/galactic_squadron/`.
+3. After the deploy finishes, the game is at `https://<user>.github.io/<repo>/games/galactic_squadron/`.
 
 All paths are relative, so the folder works at any URL depth.
 
@@ -66,6 +66,16 @@ Master, music and effects volume; mute; difficulty (Easy / Normal / Hard); start
 
 If the frame rate stays below ~40 FPS for a few seconds, the game switches to reduced effects automatically.
 
+## Online leaderboard
+
+The top 10 is stored in Supabase. Open it from **LEADERBOARD** on the main menu or **VIEW LEADERBOARD** on the game over screen. After a run with a score above zero, the game over screen also lets the player enter a name and submit. Each run can be submitted once.
+
+**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `galactic_squadron_scores` table and its access rules. The project address and publishable key are at the top of `js/leaderboard.js`.
+
+The publishable key is public by design. Visitors can read the board and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+
 ## Project structure
 
 ```
@@ -93,6 +103,7 @@ galactic_squadron/
     audio.js        Web Audio synthesized effects and step-sequenced music
     input.js        keyboard, mouse and touch input
     ui.js           responsive layout, menus, canvas HUD and banners
+    leaderboard.js  online top 10 (Supabase REST API)
     storage.js      localStorage wrapper that never throws
     utils.js        math helpers, object pool, spline path
 ```
@@ -127,12 +138,11 @@ The simulation runs at a fixed 120 Hz step, rendered with `requestAnimationFrame
 
 ## Testing aids
 
-- `?stage=7` starts a new game at that stage (7 is the first boss).
+- `?stage=7` starts a new game at that stage (7 is the first boss). Scores from these runs can't be submitted to the leaderboard.
 - `?debug=1` exposes the running game as `window.galacticSquadron` in the console.
 
 ## TODO
 
 - Custom sound fx, ships come in, light speed, explosions, lasers, boss battle
 - Music updates
-- Add leaderboard system
 - Fix sound on Apple Safari
