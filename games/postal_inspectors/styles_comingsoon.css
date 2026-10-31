@@ -1,0 +1,58 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: #000;
+}
+
+body {
+  overflow: hidden;
+}
+
+.coming-soon {
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  place-items: center;
+  background-color: #000;
+  background-image: url("images/ComingSoon.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.coming-soon__title {
+  margin: 0;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: clamp(2rem, 7vw, 5rem);
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 2px 12px #000, 0 0 4px #000;
+  animation: coming-soon-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes coming-soon-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coming-soon__title {
+    animation: none;
+  }
+}

@@ -111,6 +111,15 @@ window.ARCADE_CATALOG = {
       added: "",
     },
     {
+      folder: "postal_inspectors",
+      title: "Coming Soon - Postal Inspectors : Mail Call",
+      description: "In development.",
+      category: "Arcade",
+      tags: ["mobile", "beatem-up"],
+      added: "",
+      icon: "games/postal_inspectors/icons/icon-256.png",
+    },
+    {
       folder: "pumpkin_smash_AR",
       title: "Coming Soon - Pumpkin Smash — AR Halloween Hunt",
       description:
@@ -132,7 +141,14 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Sk8 Free",
       description: "In development.",
       category: "Arcade",
-      tags: [],
+      tags: [
+        "skateboarding",
+        "classic",
+        "arcade",
+        "leaderboard",
+        "endless runner",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -174,7 +190,14 @@ window.ARCADE_CATALOG = {
       description:
         "Swing from rooftop to rooftop through a bright city, scoop up stars, and see how far you can fly.",
       category: "Arcade",
-      tags: ["swinging", "city", "web-slinging", "timed", "leaderboard", "touch"],
+      tags: [
+        "swinging",
+        "city",
+        "web-slinging",
+        "timed",
+        "leaderboard",
+        "touch",
+      ],
       added: "",
     },
     {
@@ -189,7 +212,9 @@ window.ARCADE_CATALOG = {
         "retro",
         "themes",
         "keyboard",
-        "touch", "leaderboard"],
+        "touch",
+        "leaderboard",
+      ],
       added: "",
     },
     {
