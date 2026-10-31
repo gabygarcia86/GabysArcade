@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <title>Coming Soon - Droid Chomp</title>
     <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#04050f">
+    <meta name="description"
+      content="Droid-Chomp: a Star Wars droid maze chase across ten worlds. Collect the gears, dodge the Empire and dance about it.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
@@ -12,6 +20,43 @@
     <link rel="icon" type="image/png" sizes="256x256"
       href="icon/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="stylesheet" href="css/style.css">
   </head>
+  <body>
+    <main id="app">
+      <canvas id="game" aria-label="Droid-Chomp game view"></canvas>
+      <header id="hud"></header>
+      <div id="banner" hidden></div>
+      <div id="pad" hidden aria-label="Direction pad">
+        <span data-dir="0">&#9650;</span>
+        <span data-dir="1">&#9654;</span>
+        <span data-dir="2">&#9660;</span>
+        <span data-dir="3">&#9664;</span>
+      </div>
+      <div id="screens"></div>
+      <div id="toast" role="status"></div>
+    </main>
+    <noscript>Droid-Chomp needs JavaScript to run.</noscript>
 
+    <!-- Plain scripts, not ES modules, so the game also runs from file://. Order matters. -->
+    <script src="js/utils.js"></script>
+    <script src="js/LevelData.js"></script>
+    <script src="js/Maze.js"></script>
+    <script src="js/Actor.js"></script>
+    <script src="js/Player.js"></script>
+    <script src="js/EnemyAI.js"></script>
+    <script src="js/Enemy.js"></script>
+    <script src="js/CollisionManager.js"></script>
+    <script src="js/LevelManager.js"></script>
+    <script src="js/ScoreManager.js"></script>
+    <script src="js/AudioManager.js"></script>
+    <script src="js/InputManager.js"></script>
+    <script src="js/DroidArt.js"></script>
+    <script src="js/ThemeArt.js"></script>
+    <script src="js/AnimationManager.js"></script>
+    <script src="js/GameRenderer.js"></script>
+    <script src="js/UIManager.js"></script>
+    <script src="js/GameManager.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>

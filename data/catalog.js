@@ -25,6 +25,23 @@
 window.ARCADE_CATALOG = {
   games: [
     {
+      folder: "droid_chomp",
+      title: "Coming Soon - Droid Chomp",
+      description:
+        "Pick a droid, collect every gear and dodge the Empire's finest across ten maze worlds. Then dance.",
+      category: "Arcade",
+      tags: [
+        "maze",
+        "retro",
+        "droids",
+        "sci-fi",
+        "classic",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "galactic_squadron",
       title: "Galactic Squadron",
       description:
