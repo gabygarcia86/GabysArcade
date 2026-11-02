@@ -473,15 +473,15 @@ export class Game {
     this.ui.setMultipliers({
       total: multipliers.total,
       table: multipliers.tableFactor,
-      cranberry: multipliers.cranberryFactor,
-      gravy: multipliers.gravyFactor,
     });
-    this._refreshBoostChip();
+    this._refreshBoostChips();
   }
 
-  _refreshBoostChip() {
-    const { multipliers } = this;
-    this.ui.setCornucopia(multipliers.cornucopiaFactor, multipliers.boostSecondsLeft(this.roundElapsed));
+  _refreshBoostChips() {
+    const { multipliers, roundElapsed } = this;
+    for (const kind of ['cranberry', 'gravy', 'cornucopia']) {
+      this.ui.setBoost(kind, multipliers.factor(kind), multipliers.secondsLeft(kind, roundElapsed));
+    }
   }
 
   _landOnPlate(slice, plate) {
@@ -565,18 +565,18 @@ export class Game {
     layFlat(quaternion, 1);
     slice.targetQuaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
 
-    this.multipliers.addBowlHit(bowl.kind);
+    this.multipliers.addBowlHit(bowl.kind, this.roundElapsed);
     this._refreshMultipliers();
     bowl.splash();
     _point.set(bowl.x, bowl.fillHeight + 0.1, bowl.z);
     this.effects.splash(_point, bowl.kind);
     this.audio.play(bowl.kind);
     this.audio.play('multiplier');
-    const { multiplier } = bowl;
+    const { multiplier, seconds } = bowl;
     const name = bowl.kind === 'cranberry' ? 'CRANBERRY' : 'GRAVY';
-    this.ui.showBanner(`${name} BONUS! ${multiplier}X!`, { gold: true, duration: 1500 });
+    this.ui.showBanner(`${name} BONUS! ${multiplier}X FOR ${seconds} SECONDS!`, { gold: true, duration: 1500 });
     _point.y = 1;
-    this._popupAt(_point, `${multiplier}X`, `sauce-${bowl.kind}`);
+    this._popupAt(_point, `${multiplier}X<small>${seconds} seconds</small>`, `sauce-${bowl.kind}`);
   }
 
   _bounce(slice) {
@@ -830,7 +830,7 @@ export class Game {
   _updateClock(dt) {
     const timeLeft = ROUND.durationSeconds - this.roundElapsed;
     this.ui.setTime(timeLeft);
-    this._refreshBoostChip();
+    this._refreshBoostChips();
     const second = Math.ceil(timeLeft);
     if (second <= 5 && second > 0 && second !== this.lastTickSecond) {
       this.lastTickSecond = second;

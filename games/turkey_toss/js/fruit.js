@@ -7,7 +7,7 @@ import { CORNUCOPIA, PHYSICS, TABLE, FLOOR } from './config.js';
 const SPAWN_HEIGHT = 11;
 const SPREAD_X = 7.5;
 const SPREAD_NEAR_Z = 4;
-const SPREAD_FAR_Z = -12;
+const SPREAD_FAR_Z = TABLE.backZ - 2;
 const RESTITUTION = 0.42;
 const ROLL_DRAG = 0.74;
 const FADE_SECONDS = 0.3;

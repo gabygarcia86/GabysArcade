@@ -14,6 +14,7 @@ const MUST_SEE = [
   new THREE.Vector3(-3.5, 0, PLATES[0].z + PLATE.radius),
   new THREE.Vector3(3.5, 0, PLATES[6].z),
   new THREE.Vector3(-3.5, 0, PLATES[6].z),
+  new THREE.Vector3(0, 0, TABLE.backZ),
   new THREE.Vector3(0, 0, PLATES[8].z - PLATE.radius),
   new THREE.Vector3(0, 0, SERVING.z + 1.1),
 ];
@@ -108,7 +109,7 @@ function createRunnerTexture() {
       ctx.fillRect(0, p, size, width);
     }
   }
-  return canvasTexture(canvas, 2, 9);
+  return canvasTexture(canvas, 2, (TABLE.frontZ - TABLE.backZ) * 0.6);
 }
 
 function createWallTexture() {
@@ -267,6 +268,7 @@ class HornCurve extends THREE.Curve {
 }
 
 const hornRadius = (t) => 0.03 + 0.52 * t ** 1.5;
+const CORNUCOPIA_SCALE = 1.5;
 
 // A horn of plenty: a curled wicker tube with fruit spilling out of its mouth.
 function createCornucopia() {
@@ -366,17 +368,17 @@ export class GameScene {
     this.scene.add(new THREE.HemisphereLight(0xffe6c0, 0x5a2e16, 0.6));
 
     const key = new THREE.DirectionalLight(0xfff0d6, 2.1);
-    key.position.set(-4.5, 13, 5);
-    key.target.position.set(0, 0, -2);
+    key.position.set(-4.5, 14, 0);
+    key.target.position.set(0, 0, -5.5);
     key.castShadow = true;
     const shadowSize = IS_COARSE_POINTER ? 1024 : 2048;
     key.shadow.mapSize.set(shadowSize, shadowSize);
     key.shadow.camera.left = -9;
     key.shadow.camera.right = 9;
-    key.shadow.camera.top = 11;
-    key.shadow.camera.bottom = -11;
+    key.shadow.camera.top = 15;
+    key.shadow.camera.bottom = -15;
     key.shadow.camera.near = 1;
-    key.shadow.camera.far = 34;
+    key.shadow.camera.far = 40;
     key.shadow.bias = -0.0006;
     key.shadow.normalBias = 0.02;
     key.shadow.radius = 4;
@@ -406,7 +408,7 @@ export class GameScene {
       new THREE.PlaneGeometry(64, 15.8),
       new THREE.MeshStandardMaterial({ map: createWallTexture(), roughness: 0.85 }),
     );
-    wall.position.set(0, 4.6, -14.5);
+    wall.position.set(0, 4.6, backZ - 4.8);
     this.scene.add(wall);
 
     const topTexture = canvasTexture(createWoodTexture('#a0622c', '#3f1d09', 7), 1, 2);
@@ -429,7 +431,7 @@ export class GameScene {
     const legGeometry = new THREE.CylinderGeometry(0.2, 0.13, 3, 14);
     const legMaterial = new THREE.MeshStandardMaterial({ color: 0x6a3a1a, roughness: 0.6 });
     for (const x of [-1, 1]) {
-      for (const z of [frontZ - 0.7, backZ + 0.7]) {
+      for (const z of [frontZ - 0.7, centerZ, backZ + 0.7]) {
         const leg = new THREE.Mesh(legGeometry, legMaterial);
         leg.position.set(x * (halfWidth - 0.5), -1.7, z);
         leg.castShadow = true;
@@ -438,7 +440,7 @@ export class GameScene {
     }
 
     const rug = new THREE.Mesh(
-      new THREE.PlaneGeometry(17, 25).rotateX(-Math.PI / 2),
+      new THREE.PlaneGeometry(17, length + 10).rotateX(-Math.PI / 2),
       new THREE.MeshStandardMaterial({ map: createRugTexture(), roughness: 0.95 }),
     );
     rug.position.set(0, FLOOR.y + 0.01, centerZ);
@@ -457,16 +459,18 @@ export class GameScene {
     this.scene.add(runner);
   }
 
-  // Three chairs along each long side, as two instanced meshes.
+  // Chairs along each long side, as three instanced meshes.
   _buildChairs() {
     const material = new THREE.MeshStandardMaterial({ color: 0x6a3a1a, roughness: 0.55 });
-    const seats = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.16, 1.6), material, 6);
-    const backs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 2.3, 1.6), material, 6);
-    const legs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), material, 24);
+    const rows = [2.2, -2.1, -6.4, -10.7];
+    const count = rows.length * 2;
+    const seats = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.16, 1.6), material, count);
+    const backs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 2.3, 1.6), material, count);
+    const legs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 1.75, 0.14), material, count * 4);
     const matrix = new THREE.Matrix4();
     let index = 0;
     for (const side of [-1, 1]) {
-      for (const z of [2.2, -2.1, -6.4]) {
+      for (const z of rows) {
         const x = side * 5.1;
         seats.setMatrixAt(index, matrix.makeTranslation(x, -1.4, z));
         backs.setMatrixAt(index, matrix.makeTranslation(x + side * 0.72, -0.3, z));
@@ -492,8 +496,8 @@ export class GameScene {
     const pumpkins = [
       [0xe8761e, 0.42, -3.28, 3.9],
       [0xf09a2c, 0.3, -2.62, 4.45],
-      [0xe8761e, 0.46, 3.22, -8.25],
-      [0xf2c25a, 0.3, 2.45, -8.75],
+      [0xe8761e, 0.46, 3.22, TABLE.backZ + 1.45],
+      [0xf2c25a, 0.3, 2.45, TABLE.backZ + 0.95],
       [0xd9651a, 0.32, 3.38, 3.7],
     ];
     for (const [color, radius, x, z] of pumpkins) {
@@ -505,9 +509,9 @@ export class GameScene {
     }
 
     const cornucopia = createCornucopia();
-    cornucopia.position.set(-2.55, 0, -8.5);
+    cornucopia.position.set(-2.55, 0, TABLE.backZ + 1.2);
     cornucopia.rotation.y = 0.25;
-    cornucopia.scale.setScalar(1.15);
+    cornucopia.scale.setScalar(CORNUCOPIA_SCALE);
     cornucopia.updateMatrixWorld();
     this.scene.add(cornucopia);
     this.cornucopia = cornucopia;
@@ -515,7 +519,9 @@ export class GameScene {
     const curve = new HornCurve();
     for (const t of [0.3, 0.5, 0.7, 0.85, 1]) {
       const center = curve.getPoint(t).applyMatrix4(cornucopia.matrixWorld);
-      this.cornucopiaColliders.push([center.x, Math.max(center.y, 0.3), center.z, Math.max(0.3, hornRadius(t) * 1.3)]);
+      this.cornucopiaColliders.push([
+        center.x, Math.max(center.y, 0.3), center.z, Math.max(0.3, hornRadius(t) * CORNUCOPIA_SCALE * 1.1),
+      ]);
     }
 
     // Fallen leaves, one draw call for all of them.
@@ -523,7 +529,7 @@ export class GameScene {
     const leaves = new THREE.InstancedMesh(
       createLeafGeometry(),
       new THREE.MeshStandardMaterial({ roughness: 0.7, side: THREE.DoubleSide }),
-      30,
+      42,
     );
     const matrix = new THREE.Matrix4();
     const position = new THREE.Vector3();

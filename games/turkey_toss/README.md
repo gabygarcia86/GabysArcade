@@ -25,14 +25,14 @@ Built with plain HTML, CSS, JavaScript ES modules, [Three.js](https://threejs.or
 | Row 4 plates | 5 points |
 | Center back plate | 10 points |
 | All nine plates filled | Permanent **4X**, once |
-| Cranberry bowl | Permanent **2X**, adds another level on every hit |
-| Gravy bowl | Permanent **3X**, adds another level on every hit |
+| Cranberry bowl | **2X** for 10 seconds. Overlapping hits stack |
+| Gravy bowl | **3X** for 10 seconds. Overlapping hits stack |
 | Bounce off the giant turkey, then land on a plate | **10X** on that landing only |
 | Cornucopia | **2X** for 10 seconds, plus a shower of fruit. Overlapping hits stack |
 | Flying turkey | Flat **+100**, unaffected by multipliers |
 | Slice lands on the floor | Flat **-10**. The score never drops below zero |
 
-Multipliers combine by multiplying. Two cranberry hits, one gravy hit and a bounce make 2 × 2 × 3 × 10 = 120X, so a bounce onto the 10-point plate would be worth 1,200.
+Multipliers combine by multiplying. Two cranberry hits and one gravy hit inside the same 10 seconds, plus a bounce, make 2 × 2 × 3 × 10 = 120X, so a bounce onto the 10-point plate would be worth 1,200.
 
 The bonuses apply to landings after they're earned. The landing that fills the ninth plate scores before the 4X begins.
 
@@ -90,10 +90,10 @@ All gameplay numbers live in [`js/config.js`](js/config.js).
 | Plate positions and points | `PLATES` | |
 | Landing strictness | `PLATE.scoringFraction`, `settleSeconds`, `settleSpeed` | |
 | Slices kept per plate | `PLATE.maxStack` | `SLICE.poolSize` must exceed `maxStack` × 9 plus a few in flight. |
-| Bowl size, position and multiplier | `BOWLS.cranberry`, `BOWLS.gravy` | |
+| Bowl size, position and bonus | `BOWLS.cranberry`, `BOWLS.gravy` | `multiplier` and `seconds` set the bonus. |
 | Table bonus | `TABLE_COMPLETE.multiplier` | |
 | Bounce strength | `GIANT_TURKEY.minUpSpeed`, `maxUpSpeed` | |
-| Bounce aim help | `GIANT_TURKEY.plateAssist`, `assistScatter` | Set for roughly 2 in 3 bounces reaching a plate. |
+| Bounce aim help | `GIANT_TURKEY.plateAssist`, `assistScatter` | Set for roughly 3 in 4 bounces reaching a plate. |
 | Bounce bonus | `GIANT_TURKEY.bounceMultiplier` | |
 | Cornucopia bonus | `CORNUCOPIA.multiplier`, `seconds` | |
 | Fruit shower | `CORNUCOPIA.fruitPerHit`, `spreadSeconds`, `fruitPoolSize`, `lingerSeconds` | The fruit is only decoration and can't affect a throw. |
@@ -127,7 +127,7 @@ turkey_toss/
     ├── physics.js     cannon-es world, grip, trajectory preview, bowl and bounce logic
     ├── throwing.js    Pointer Events drag-to-aim and the aiming preview
     ├── scoring.js     Landing score, number formatting, results messages
-    ├── multipliers.js The round's permanent multipliers
+    ├── multipliers.js The round's multipliers and their timers
     ├── effects.js     Pooled particles: splashes, sparkles, feathers, leaf confetti
     ├── fruit.js       The pooled fruit shower from cornucopia hits
     ├── ui.js          DOM overlay helpers

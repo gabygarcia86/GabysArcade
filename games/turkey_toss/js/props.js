@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GIANT_TURKEY, FLYING_TURKEY, SERVING } from './config.js';
+import { GIANT_TURKEY, FLYING_TURKEY, SERVING, PLATE } from './config.js';
 
 function standard(color, roughness = 0.5, extra = {}) {
   return new THREE.MeshStandardMaterial({ color, roughness, metalness: 0, ...extra });
@@ -29,6 +29,8 @@ function canvasTexture(size, draw) {
 
 // ---------- Plates ----------
 
+// The plate model below is built for this radius, then scaled to PLATE.radius.
+const PLATE_MODEL_RADIUS = 0.74;
 const plateDishGeometry = lathe([
   [0, 0.02], [0.5, 0.022], [0.56, 0.04], [0.7, 0.095], [0.745, 0.1], [0.75, 0.085], [0.6, 0.015], [0, 0.005],
 ]);
@@ -83,6 +85,8 @@ export class Plate {
 
     this.group = new THREE.Group();
     this.group.position.set(def.x, 0, def.z);
+    const plateScale = PLATE.radius / PLATE_MODEL_RADIUS;
+    this.group.scale.set(plateScale, 1, plateScale);
     const special = def.points >= 10;
 
     const mat = new THREE.Mesh(placematGeometry, standard(0xffffff, 0.9, { map: placematTexture(special) }));
@@ -298,7 +302,8 @@ const TURKEY_COLLIDERS = [
 /** The cartoon roast at the center of the table. A bounce squashes it on a damped spring. */
 export class GiantTurkey {
   constructor(scene) {
-    this.colliders = TURKEY_COLLIDERS;
+    const { scale } = GIANT_TURKEY;
+    this.colliders = TURKEY_COLLIDERS.map((sphere) => sphere.map((value) => value * scale));
     this.squash = 0;
     this.squashVelocity = 0;
 
@@ -317,6 +322,7 @@ export class GiantTurkey {
     this._addGarnish(r);
 
     this.roast = new THREE.Group();
+    this.roast.scale.setScalar(scale);
     this.group.add(this.roast);
     const skin = new THREE.MeshPhysicalMaterial({
       map: turkeySkinTexture(), roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.35,
@@ -382,7 +388,7 @@ export class GiantTurkey {
   reset() {
     this.squash = 0;
     this.squashVelocity = 0;
-    this.roast.scale.setScalar(1);
+    this.roast.scale.setScalar(GIANT_TURKEY.scale);
   }
 
   update(dt, elapsed) {
@@ -396,7 +402,7 @@ export class GiantTurkey {
     const idle = 0.008 * Math.sin(elapsed * 2.2);
     const y = 1 - Math.max(-0.45, Math.min(0.45, this.squash)) + idle;
     const wide = 1 / Math.sqrt(Math.max(0.5, y));
-    this.roast.scale.set(wide, y, wide);
+    this.roast.scale.set(wide, y, wide).multiplyScalar(GIANT_TURKEY.scale);
   }
 }
 

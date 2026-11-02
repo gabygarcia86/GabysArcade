@@ -7,8 +7,8 @@ import { scoreLanding, addScore, formatNumber, resultMessage } from '../js/scori
 
 function withHits({ cranberry = 0, gravy = 0, table = false } = {}) {
   const multipliers = new Multipliers();
-  for (let i = 0; i < cranberry; i++) multipliers.addBowlHit('cranberry');
-  for (let i = 0; i < gravy; i++) multipliers.addBowlHit('gravy');
+  for (let i = 0; i < cranberry; i++) multipliers.addBowlHit('cranberry', 0);
+  for (let i = 0; i < gravy; i++) multipliers.addBowlHit('gravy', 0);
   if (table) multipliers.completeTable();
   return multipliers;
 }
@@ -75,7 +75,7 @@ test('reset clears everything for the next round', () => {
 });
 
 test('an unknown bowl is a bug, not a silent no-op', () => {
-  assert.throws(() => new Multipliers().addBowlHit('stuffing'));
+  assert.throws(() => new Multipliers().addBowlHit('stuffing', 0));
 });
 
 test('huge stacks stop at the largest exact score instead of losing precision', () => {
@@ -91,24 +91,54 @@ test('a cornucopia hit doubles scores until its 10 seconds run out', () => {
   multipliers.addCornucopiaHit(5);
   assert.equal(multipliers.total, 2);
   assert.equal(scoreLanding(5, multipliers).points, 10);
-  assert.equal(multipliers.boostSecondsLeft(8), 7);
+  assert.equal(multipliers.secondsLeft('cornucopia', 8), 7);
   assert.equal(multipliers.expireBoosts(14.9), false);
   assert.equal(multipliers.total, 2);
   assert.equal(multipliers.expireBoosts(15), true);
   assert.equal(multipliers.total, 1);
-  assert.equal(multipliers.boostSecondsLeft(15), 0);
+  assert.equal(multipliers.secondsLeft('cornucopia', 15), 0);
   assert.equal(multipliers.cornucopiaHits, 1);
 });
 
-test('overlapping cornucopia hits stack and end one at a time', () => {
+test('bowl bonuses last 10 seconds, but their hit counts stay for the results', () => {
   const multipliers = withHits({ cranberry: 1, gravy: 1 });
+  assert.equal(multipliers.total, 6);
+  assert.equal(multipliers.expireBoosts(9.9), false);
+  assert.equal(multipliers.total, 6);
+  assert.equal(multipliers.secondsLeft('gravy', 4), 6);
+  assert.equal(multipliers.expireBoosts(10), true);
+  assert.equal(multipliers.total, 1);
+  assert.equal(multipliers.cranberryHits, 1);
+  assert.equal(multipliers.gravyHits, 1);
+});
+
+test('overlapping bowl hits stack and end one at a time', () => {
+  const multipliers = new Multipliers();
+  multipliers.addBowlHit('gravy', 0);
+  multipliers.addBowlHit('gravy', 6);
+  assert.equal(multipliers.total, 9);
+  assert.equal(multipliers.secondsLeft('gravy', 6), 10);
+  multipliers.expireBoosts(10);
+  assert.equal(multipliers.total, 3);
+  multipliers.expireBoosts(16);
+  assert.equal(multipliers.total, 1);
+});
+
+test('the table bonus outlasts the timers', () => {
+  const multipliers = withHits({ cranberry: 1, table: true });
+  multipliers.expireBoosts(60);
+  assert.equal(multipliers.total, 4);
+});
+
+test('overlapping cornucopia hits stack and end one at a time', () => {
+  const multipliers = withHits({ table: true });
   multipliers.addCornucopiaHit(0);
   multipliers.addCornucopiaHit(4);
-  assert.equal(multipliers.total, 24);
+  assert.equal(multipliers.total, 16);
   multipliers.expireBoosts(11);
-  assert.equal(multipliers.total, 12);
+  assert.equal(multipliers.total, 8);
   multipliers.expireBoosts(14);
-  assert.equal(multipliers.total, 6);
+  assert.equal(multipliers.total, 4);
 });
 
 test('reset clears running cornucopia boosts', () => {

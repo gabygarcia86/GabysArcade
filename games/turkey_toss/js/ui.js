@@ -5,6 +5,8 @@ import { leaderboard, cleanName, loadName, saveName, NAME_MAX } from './leaderbo
 
 const $ = (id) => document.getElementById(id);
 
+const BOOST_LABELS = { cranberry: 'Cranberry', gravy: 'Gravy', cornucopia: 'Cornucopia' };
+
 const FLYING_TEXT = {
   [FlightPhase.WAITING]: 'Flying turkey: waiting',
   [FlightPhase.INCOMING]: 'Flying turkey: incoming!',
@@ -47,6 +49,7 @@ export class UI {
     this.musicSliders = Array.from(document.querySelectorAll('.volume-music'));
     this.currentScreen = 'menu';
     this.flyingPhase = null;
+    this.boostText = {};
     this._lastTime = null;
     this._bannerTimer = 0;
     this._calculationTimer = 0;
@@ -140,12 +143,12 @@ export class UI {
     }
   }
 
-  /** Shows the running cornucopia boost and its countdown, or nothing when none is running. */
-  setCornucopia(factor, secondsLeft) {
-    const text = factor > 1 ? `Cornucopia ×${formatNumber(factor)} ${Math.ceil(secondsLeft)}s` : '';
-    if (text === this.cornucopiaText) return;
-    this.cornucopiaText = text;
-    const chip = $('chip-cornucopia');
+  /** Shows a timed bonus and its countdown, or nothing when it isn't running. */
+  setBoost(kind, factor, secondsLeft) {
+    const text = factor > 1 ? `${BOOST_LABELS[kind]} ×${formatNumber(factor)} ${Math.ceil(secondsLeft)}s` : '';
+    if (text === this.boostText[kind]) return;
+    this.boostText[kind] = text;
+    const chip = $(`chip-${kind}`);
     chip.textContent = text;
     chip.classList.toggle('hidden', !text);
   }
@@ -166,19 +169,12 @@ export class UI {
     this.platesBox.classList.toggle('complete', count === 9);
   }
 
-  /** Shows the combined multiplier and one chip per active bonus. */
-  setMultipliers({ total, table, cranberry, gravy }) {
+  /** Shows the combined multiplier and whether the table bonus is active. */
+  setMultipliers({ total, table }) {
     const totalChip = $('hud-total');
     totalChip.textContent = `×${formatNumber(total)}`;
     totalChip.classList.toggle('active', total > 1);
     $('chip-table').classList.toggle('hidden', table <= 1);
-    const chip = (id, label, factor) => {
-      const element = $(id);
-      element.textContent = `${label} ×${formatNumber(factor)}`;
-      element.classList.toggle('hidden', factor <= 1);
-    };
-    chip('chip-cranberry', 'Cranberry', cranberry);
-    chip('chip-gravy', 'Gravy', gravy);
   }
 
   setFlyingStatus(phase) {

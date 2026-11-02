@@ -27,29 +27,31 @@ export const PHYSICS = {
   solverIterations: 6,
   // Fraction of horizontal speed kept on the first touch of the table or a plate, and per
   // physics step while touching. Low values are what let a thrown slice stop on a plate.
-  impactGrip: 0.22,
+  impactGrip: 0.14,
   contactGrip: 0.8,
   tableRestitution: 0.16,
   plateRestitution: 0.12,
   bowlRestitution: 0.35,
   decorRestitution: 0.3,
   // Slices that wander outside this box are removed.
-  bounds: { minX: -20, maxX: 20, minY: -6, minZ: -16, maxZ: 12 },
+  bounds: { minX: -26, maxX: 26, minY: -6, minZ: -26, maxZ: 12 },
   // Safety net: any throw still unresolved after this many seconds is a miss.
   maxFlightSeconds: 5,
 };
 
 export const LAUNCH = {
-  // Launch speed range (world units / s). Drag length maps linearly between these.
+  // Launch speed range (world units / s). Drag length sets how far a throw goes, so it
+  // feels the same at both ends of the table.
   minSpeed: 6,
-  maxSpeed: 14,
+  maxSpeed: 15.5,
   // Fixed launch elevation above the horizontal, in degrees. Drag length controls distance.
-  elevationDegrees: 55,
+  // Any steeper and throws to the far end of the table leave the top of the screen.
+  elevationDegrees: 45,
   // Maximum sideways aim, in degrees either side of straight ahead. Wide enough to reach
   // the closest plates, which sit well off to the sides.
   maxYawDegrees: 54,
   // Drag distance (as a fraction of the viewport height) that gives full power.
-  fullPowerDragFraction: 0.4,
+  fullPowerDragFraction: 0.45,
   // Drag distance (fraction of viewport height) below which a release cancels the throw.
   cancelDragFraction: 0.05,
   // Grab radius around the slice, in CSS pixels (in addition to the 3D raycast hit box).
@@ -62,7 +64,7 @@ export const LAUNCH = {
 export const TABLE = {
   halfWidth: 3.95,
   frontZ: 5.3,
-  backZ: -9.7,
+  backZ: -13,
 };
 
 export const FLOOR = {
@@ -93,7 +95,7 @@ export const SLICE = {
 };
 
 export const PLATE = {
-  radius: 0.74,
+  radius: 0.95,
   // Height of the physics surface above the table.
   surfaceY: 0.05,
   // A slice's center must be this far inside the plate's radius to count.
@@ -107,15 +109,15 @@ export const PLATE = {
 
 // The nine plates. Farther plates are worth more.
 export const PLATES = [
-  { id: 'left-1', x: -2.6, z: 1.3, points: 1 },
-  { id: 'right-1', x: 2.6, z: 1.3, points: 1 },
-  { id: 'left-2', x: -2.6, z: -0.9, points: 2 },
-  { id: 'right-2', x: 2.6, z: -0.9, points: 2 },
-  { id: 'left-3', x: -2.6, z: -3.1, points: 3 },
-  { id: 'right-3', x: 2.6, z: -3.1, points: 3 },
-  { id: 'left-4', x: -2.6, z: -5.3, points: 5 },
-  { id: 'right-4', x: 2.6, z: -5.3, points: 5 },
-  { id: 'center-back', x: 0, z: -8.0, points: 10 },
+  { id: 'left-1', x: -2.6, z: 0.6, points: 1 },
+  { id: 'right-1', x: 2.6, z: 0.6, points: 1 },
+  { id: 'left-2', x: -2.6, z: -2.5, points: 2 },
+  { id: 'right-2', x: 2.6, z: -2.5, points: 2 },
+  { id: 'left-3', x: -2.6, z: -5.6, points: 3 },
+  { id: 'right-3', x: 2.6, z: -5.6, points: 3 },
+  { id: 'left-4', x: -2.6, z: -8.7, points: 5 },
+  { id: 'right-4', x: 2.6, z: -8.7, points: 5 },
+  { id: 'center-back', x: 0, z: -11, points: 10 },
 ];
 
 // Permanent 4x once every plate holds a slice.
@@ -123,27 +125,29 @@ export const TABLE_COMPLETE = {
   multiplier: 4,
 };
 
-// Each hit multiplies scores by `multiplier` again for the rest of the round.
+// Each hit multiplies scores by `multiplier` for `seconds`. Hits stack while their timers overlap.
 export const BOWLS = {
   cranberry: {
     label: 'Cranberry',
     x: 0,
-    z: 1.05,
-    outerRadius: 0.8,
-    openingRadius: 0.68,
+    z: 0.2,
+    outerRadius: 0.95,
+    openingRadius: 0.83,
     rimHeight: 0.44,
     fillHeight: 0.33,
     multiplier: 2,
+    seconds: 10,
   },
   gravy: {
     label: 'Gravy',
     x: 0,
-    z: -5.35,
-    outerRadius: 0.86,
-    openingRadius: 0.74,
+    z: -8.1,
+    outerRadius: 1.05,
+    openingRadius: 0.92,
     rimHeight: 0.48,
     fillHeight: 0.36,
     multiplier: 3,
+    seconds: 10,
   },
 };
 
@@ -152,18 +156,20 @@ export const CORNUCOPIA = {
   multiplier: 2,
   seconds: 10,
   // Fruit dropped by one hit, and how long the drop lasts.
-  fruitPerHit: 44,
+  fruitPerHit: 60,
   spreadSeconds: 1.6,
   // Fruit on screen at once; the oldest is recycled when a new shower needs room.
-  fruitPoolSize: 90,
+  fruitPoolSize: 120,
   // How long a landed fruit stays before shrinking away.
   lingerSeconds: 5,
 };
 
 export const GIANT_TURKEY = {
   x: 0,
-  z: -2.05,
-  platterRadius: 1.72,
+  z: -3.6,
+  platterRadius: 2,
+  // Size of the roast. Its physics shape scales with it.
+  scale: 1.2,
   restitution: 0.8,
   // Landing on a plate after a bounce multiplies that one landing's points.
   bounceMultiplier: 10,
@@ -196,7 +202,7 @@ export const FLYING_TURKEY = {
   // Seconds to cross the screen, whatever the screen's shape.
   flightSeconds: 6.5,
   height: 3.3,
-  z: -1.4,
+  z: -3,
   // Bows of the flight path.
   curveHeight: 0.55,
   curveDepth: 1.1,

@@ -14,8 +14,10 @@ const _up = new THREE.Vector3(0, 1, 0);
  * share one code path. This is the Latke Toss control scheme.
  *
  * Mapping from screen drag to launch velocity:
- *  - Power: drag length / (fullPowerDragFraction * viewport height), clamped to 0..1, mapped
- *    linearly to LAUNCH.minSpeed..maxSpeed. Releasing below cancelDragFraction cancels.
+ *  - Power: drag length past the cancel distance, as a fraction of the distance from there to
+ *    fullPowerDragFraction * viewport height, clamped to 0..1, mapped
+ *    to LAUNCH.minSpeed..maxSpeed so distance grows evenly. Releasing below cancelDragFraction
+ *    cancels.
  *  - Direction: the drag direction on screen is projected onto the horizontal plane through
  *    the slice (via a camera ray), so the throw heads where the drag points *in the 3D
  *    scene*, correcting for perspective. The resulting yaw is clamped to +/- maxYawDegrees.
@@ -194,7 +196,9 @@ export class AimController {
 
     const maxYaw = THREE.MathUtils.degToRad(LAUNCH.maxYawDegrees);
     yaw = THREE.MathUtils.clamp(yaw, -maxYaw, maxYaw);
-    const power = THREE.MathUtils.clamp(dragLength / fullPowerPixels, 0, 1);
+    // Measured from the cancel point, so the shortest valid drag is the gentlest throw and
+    // no distance is out of reach.
+    const power = THREE.MathUtils.clamp((dragLength - cancelPixels) / (fullPowerPixels - cancelPixels), 0, 1);
 
     aim.valid = forward && dragLength >= cancelPixels;
     aim.power = aim.valid ? power : 0;
@@ -205,7 +209,10 @@ export class AimController {
 
 /** Fills target.speed and target.velocity for a power (0..1) and yaw (radians). */
 export function aimVelocity(power, yaw, target) {
-  target.speed = LAUNCH.minSpeed + (LAUNCH.maxSpeed - LAUNCH.minSpeed) * power;
+  // Throw distance grows with speed squared, so power blends the squares. That makes an
+  // inch of drag worth the same distance at both ends of the table.
+  const min = LAUNCH.minSpeed ** 2;
+  target.speed = Math.sqrt(min + (LAUNCH.maxSpeed ** 2 - min) * power);
   const elevation = THREE.MathUtils.degToRad(LAUNCH.elevationDegrees);
   const horizontalSpeed = Math.cos(elevation) * target.speed;
   target.velocity.set(
@@ -215,8 +222,9 @@ export function aimVelocity(power, yaw, target) {
   );
 }
 
-const TRAJECTORY_DOTS = 48;
-const TRAJECTORY_SAMPLE_SECONDS = 0.045;
+// Enough dots to reach the table on the longest throw.
+const TRAJECTORY_DOTS = 60;
+const TRAJECTORY_SAMPLE_SECONDS = 0.05;
 
 /** Aiming preview: a dotted arc and a power arrow on the table. */
 export class AimVisuals {

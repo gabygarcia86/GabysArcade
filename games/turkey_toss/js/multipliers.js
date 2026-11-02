@@ -3,11 +3,14 @@ import { BOWLS, TABLE_COMPLETE, GIANT_TURKEY, CORNUCOPIA } from './config.js';
 // Largest whole number JavaScript and the leaderboard both store exactly.
 export const MAX_VALUE = Number.MAX_SAFE_INTEGER;
 
+// The bonuses that run on a timer, and where each one's settings live.
+const TIMED = { cranberry: BOWLS.cranberry, gravy: BOWLS.gravy, cornucopia: CORNUCOPIA };
+
 /**
  * The round's multipliers, which combine by multiplying, so two cranberry hits and a gravy
- * hit give 2 x 2 x 3 = 12x. Those and the table bonus are permanent. Cornucopia boosts run
- * on a timer. The giant turkey's 10x isn't here: it belongs to one landing, not the round,
- * so scoring.js adds it per landing.
+ * hit give 2 x 2 x 3 = 12x. Cranberry, gravy and cornucopia hits each run on their own timer,
+ * so they stack only while the timers overlap. The table bonus is permanent. The giant
+ * turkey's 10x isn't here: it belongs to one landing, so scoring.js adds it per landing.
  */
 export class Multipliers {
   constructor() {
@@ -17,32 +20,45 @@ export class Multipliers {
   reset() {
     this.cranberryHits = 0;
     this.gravyHits = 0;
-    this.tableComplete = false;
     this.cornucopiaHits = 0;
-    this.boosts = []; // round time each cornucopia boost ends, soonest first
+    this.tableComplete = false;
+    // Round time each running boost ends, soonest first.
+    this.boosts = { cranberry: [], gravy: [], cornucopia: [] };
   }
 
-  addBowlHit(kind) {
+  addBowlHit(kind, now) {
     if (kind === 'cranberry') this.cranberryHits += 1;
     else if (kind === 'gravy') this.gravyHits += 1;
     else throw new Error(`Unknown bowl: ${kind}`);
+    this.boosts[kind].push(now + TIMED[kind].seconds);
   }
 
   addCornucopiaHit(now) {
     this.cornucopiaHits += 1;
-    this.boosts.push(now + CORNUCOPIA.seconds);
+    this.boosts.cornucopia.push(now + CORNUCOPIA.seconds);
   }
 
   /** Drops boosts that have run out. Returns true if any did. */
   expireBoosts(now) {
-    const before = this.boosts.length;
-    while (this.boosts.length > 0 && this.boosts[0] <= now) this.boosts.shift();
-    return this.boosts.length !== before;
+    let expired = false;
+    for (const ends of Object.values(this.boosts)) {
+      while (ends.length > 0 && ends[0] <= now) {
+        ends.shift();
+        expired = true;
+      }
+    }
+    return expired;
   }
 
-  /** Seconds until the last running boost ends, or 0 if none is running. */
-  boostSecondsLeft(now) {
-    return this.boosts.length > 0 ? Math.max(0, this.boosts[this.boosts.length - 1] - now) : 0;
+  /** Seconds until a bonus's last running boost ends, or 0 if none is running. */
+  secondsLeft(kind, now) {
+    const ends = this.boosts[kind];
+    return ends.length > 0 ? Math.max(0, ends[ends.length - 1] - now) : 0;
+  }
+
+  /** What a timed bonus is multiplying scores by right now. */
+  factor(kind) {
+    return TIMED[kind].multiplier ** this.boosts[kind].length;
   }
 
   /** Returns true the first time, so the announcement only plays once. */
@@ -52,25 +68,14 @@ export class Multipliers {
     return true;
   }
 
-  get cranberryFactor() {
-    return BOWLS.cranberry.multiplier ** this.cranberryHits;
-  }
-
-  get gravyFactor() {
-    return BOWLS.gravy.multiplier ** this.gravyHits;
-  }
-
   get tableFactor() {
     return this.tableComplete ? TABLE_COMPLETE.multiplier : 1;
   }
 
-  get cornucopiaFactor() {
-    return CORNUCOPIA.multiplier ** this.boosts.length;
-  }
-
   /** The combined multiplier right now, capped so it stays an exact whole number. */
   get total() {
-    return Math.min(MAX_VALUE, this.cranberryFactor * this.gravyFactor * this.tableFactor * this.cornucopiaFactor);
+    const timed = Object.keys(TIMED).reduce((product, kind) => product * this.factor(kind), 1);
+    return Math.min(MAX_VALUE, timed * this.tableFactor);
   }
 
   /** The total for one landing, including the bounce bonus if it earned one. */
