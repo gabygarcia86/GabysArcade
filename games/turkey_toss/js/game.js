@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import {
   ROUND, PHYSICS, LAUNCH, SERVING, SLICE, PLATE, PLATES, BOWLS, TABLE_COMPLETE, GIANT_TURKEY, FLYING_TURKEY,
+  CORNUCOPIA, FLOOR,
 } from './config.js';
 import { PhysicsWorld, Surface, bounceVelocity, enteredBowl, layFlat, segmentDistance } from './physics.js';
 import { Plate, Bowl, GiantTurkey, FlyingTurkey, FlightPhase, ServingPlatter } from './props.js';
 import { SlicePool } from './slices.js';
 import { Effects } from './effects.js';
+import { FruitShower } from './fruit.js';
 import { AimController, AimVisuals } from './throwing.js';
 import { Multipliers } from './multipliers.js';
 import { scoreLanding, addScore, formatNumber, resultMessage } from './scoring.js';
@@ -87,6 +89,8 @@ class Slice {
     this.bounces = 0;
     this.lastBounce = -1;
     this.thudded = false;
+    this.hitCornucopia = false; // each slice can only trigger the shower once
+    this.floored = false; // each slice only costs points once
     this.phase = Math.random() * 6.28; // desynchronizes the flop between slices
     this.bowlCenter = null;
   }
@@ -120,12 +124,15 @@ export class Game {
     this.giantTurkey = new GiantTurkey(this.scene);
     this.physics.addGiantTurkey(this.giantTurkey.colliders);
     for (const [x, y, z, radius] of gameScene.decorColliders) this.physics.addDecorSphere(x, y, z, radius);
+    for (const box of gameScene.decorBoxes) this.physics.addDecorBox(...box);
+    this.physics.addCornucopia(gameScene.cornucopiaColliders);
     this.flyingTurkey = new FlyingTurkey(this.scene);
 
     this.pool = new SlicePool(this.scene);
     this.serving = new ServingPlatter(this.scene, this.pool);
     this.slices = this.pool.all.map(() => new Slice(this.physics));
     this.effects = new Effects(this.scene);
+    this.fruit = new FruitShower(this.scene, this.audio, this._fruitObstacles(gameScene));
     this.aimVisuals = new AimVisuals(this.scene, LAUNCH_POSITION, REST_POSITION);
     this.multipliers = new Multipliers();
 
@@ -174,6 +181,16 @@ export class Game {
     this._resetRound();
     // Starts once the first click/tap unlocks audio.
     this.audio.music.playMenu();
+  }
+
+  // Everything falling fruit should bounce off, as [x, y, z, radius] spheres.
+  _fruitObstacles(gameScene) {
+    return [
+      ...gameScene.decorColliders,
+      ...gameScene.cornucopiaColliders,
+      ...this.giantTurkey.colliders.map(([x, y, z, radius]) => [x + GIANT_TURKEY.x, y, z + GIANT_TURKEY.z, radius]),
+      ...this.bowls.map((bowl) => [bowl.x, 0.1, bowl.z, bowl.outerRadius]),
+    ];
   }
 
   // UI click sounds for every button.
@@ -268,6 +285,10 @@ export class Game {
 
   _showGameOver() {
     this.state = GameState.GAME_OVER;
+    // Anything still moving can no longer change the score shown on the results.
+    for (const slice of this.slices) {
+      if (slice.state === SliceState.FLYING) this._miss(slice, false);
+    }
     const isNewBest = this.score > this.best;
     if (isNewBest) {
       this.best = this.score;
@@ -286,7 +307,9 @@ export class Game {
       plates: this._occupiedPlates(),
       cranberryHits: this.multipliers.cranberryHits,
       gravyHits: this.multipliers.gravyHits,
+      cornucopiaHits: this.multipliers.cornucopiaHits,
       bounces: this.stats.bounces,
+      floorDrops: this.stats.floorDrops,
       flyingHit: this.flyingTurkey.phase === FlightPhase.HIT,
     });
     this.audio.play('gameOver');
@@ -300,6 +323,8 @@ export class Game {
     for (const slice of this.slices) this._retire(slice);
     this.current = null;
     this.effects.clear();
+    this.fruit.clear();
+    this.gameScene.resetCornucopia();
     this.aimVisuals.hide();
     for (const plate of this.plates) plate.reset();
     for (const bowl of this.bowls) bowl.reset();
@@ -309,7 +334,7 @@ export class Game {
 
     this.score = 0;
     this.slicesLeft = ROUND.slices;
-    this.stats = { bounces: 0, highestMultiplier: 1 };
+    this.stats = { bounces: 0, floorDrops: 0, highestMultiplier: 1 };
     this.simTime = 0;
     this.roundElapsed = 0;
     this.accumulator = 0;
@@ -451,6 +476,12 @@ export class Game {
       cranberry: multipliers.cranberryFactor,
       gravy: multipliers.gravyFactor,
     });
+    this._refreshBoostChip();
+  }
+
+  _refreshBoostChip() {
+    const { multipliers } = this;
+    this.ui.setCornucopia(multipliers.cornucopiaFactor, multipliers.boostSecondsLeft(this.roundElapsed));
   }
 
   _landOnPlate(slice, plate) {
@@ -570,6 +601,38 @@ export class Game {
     this.audio.play('bounce');
   }
 
+  _hitCornucopia(slice) {
+    slice.hitCornucopia = true;
+    this.multipliers.addCornucopiaHit(this.roundElapsed);
+    this._refreshMultipliers();
+    this.gameScene.knockCornucopia();
+    this.fruit.rain();
+    const { multiplier, seconds } = CORNUCOPIA;
+    this.ui.showBanner(`CORNUCOPIA! ${multiplier}X FOR ${seconds} SECONDS!`, { gold: true, duration: 1800 });
+    const { position } = slice.physics;
+    _point.set(position.x, position.y + 0.5, position.z);
+    this.effects.sparkleBurst(_point, 18);
+    this._popupAt(_point, `${multiplier}X<small>${seconds} seconds</small>`, 'cornucopia');
+    this.audio.play('cornucopia');
+    this.audio.play('multiplier');
+  }
+
+  // A flat penalty, so it doesn't grow with the multipliers.
+  _hitFloor(slice) {
+    slice.floored = true;
+    const { position } = slice.physics;
+    this.audio.play('floor');
+    if (this.state === GameState.PLAYING || this.state === GameState.WIND_DOWN) {
+      this.stats.floorDrops += 1;
+      this.score = addScore(this.score, -FLOOR.penalty);
+      this.ui.setScore(this.score, true);
+      this.ui.flashPenalty();
+      _point.set(position.x, position.y + 0.4, position.z);
+      this._popupAt(_point, `-${FLOOR.penalty}<small>On the floor!</small>`, 'penalty');
+    }
+    if (slice.state === SliceState.FLYING) this._miss(slice, false);
+  }
+
   _hitFlyingTurkey(slice) {
     const turkey = this.flyingTurkey;
     turkey.markHit();
@@ -590,8 +653,10 @@ export class Game {
   _popupAt(world, html, className) {
     _screen.copy(world).project(this.camera);
     if (_screen.z > 1) return;
-    const x = (_screen.x + 1) * 0.5 * this.gameScene.viewportWidth;
-    const y = (1 - _screen.y) * 0.5 * this.gameScene.viewportHeight;
+    const { viewportWidth: width, viewportHeight: height } = this.gameScene;
+    // Kept on screen, because floor hits can happen outside the view on a portrait phone.
+    const x = THREE.MathUtils.clamp((_screen.x + 1) * 0.5 * width, 70, width - 70);
+    const y = THREE.MathUtils.clamp((1 - _screen.y) * 0.5 * height, 90, height - 40);
     this.ui.popup(x, y, html, className);
   }
 
@@ -602,6 +667,7 @@ export class Game {
     if (this.state === GameState.PLAYING) {
       this.roundElapsed += h;
       this._updateFlightSchedule();
+      if (this.multipliers.expireBoosts(this.roundElapsed)) this._refreshMultipliers();
       if (this.roundElapsed >= ROUND.durationSeconds) this._endRound('time');
     }
     this.simTime += h;
@@ -673,6 +739,11 @@ export class Game {
       }
     }
     if (body.contacts & Surface.TURKEY) this._bounce(slice);
+    if ((body.contacts & Surface.CORNUCOPIA) && !slice.hitCornucopia) this._hitCornucopia(slice);
+    if ((body.contacts & Surface.FLOOR) && !slice.floored) {
+      this._hitFloor(slice);
+      return;
+    }
 
     const speed = body.velocity.length();
     if (body.plate) {
@@ -697,7 +768,8 @@ export class Game {
     }
     slice.still = speed < PLATE.settleSpeed ? slice.still + h : 0;
     if (slice.still >= STILL_SECONDS || slice.flightTime > PHYSICS.maxFlightSeconds) {
-      this._miss(slice, true);
+      // A slice that already earned a shower hasn't really missed.
+      this._miss(slice, !slice.hitCornucopia);
     }
   }
 
@@ -707,6 +779,8 @@ export class Game {
       this._retire(slice);
       return;
     }
+    // A spent slice can still reach the floor, such as one knocked down by the flying turkey.
+    if ((slice.physics.contacts & Surface.FLOOR) && !slice.floored) this._hitFloor(slice);
     if (slice.timer > MISS_LINGER_SECONDS) {
       slice.fade += h / FADE_SECONDS;
       if (slice.fade >= 1) this._retire(slice);
@@ -747,13 +821,16 @@ export class Game {
     for (const plate of this.plates) plate.update(dt, elapsed, tableComplete);
     for (const bowl of this.bowls) bowl.update(dt);
     this.giantTurkey.update(dt, elapsed);
+    this.gameScene.update(dt, elapsed);
     this.effects.update(dt);
+    this.fruit.update(dt);
     this._renderSlices(alpha, dt);
   }
 
   _updateClock(dt) {
     const timeLeft = ROUND.durationSeconds - this.roundElapsed;
     this.ui.setTime(timeLeft);
+    this._refreshBoostChip();
     const second = Math.ceil(timeLeft);
     if (second <= 5 && second > 0 && second !== this.lastTickSecond) {
       this.lastTickSecond = second;

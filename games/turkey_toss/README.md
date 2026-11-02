@@ -9,7 +9,7 @@ Built with plain HTML, CSS, JavaScript ES modules, [Three.js](https://threejs.or
 1. Press **Start Game**. After a short "Ready? Go!" the 60-second clock starts.
 2. Press (or touch) the slice on the platter, **drag upward** to aim, and **release** to toss.
    - The drag direction sets where the slice heads. The drag length sets how far it flies.
-   - A dotted arc and a ring on the table show where it will land.
+   - A dotted arc shows where it will land.
    - A tiny drag, or a drag pointing back toward you, cancels the throw.
 3. A slice scores only if it **stops on a plate**. It then stays there for the rest of the round.
 4. The round ends when the clock or the 60 slices run out. Slices already in the air can still land.
@@ -28,7 +28,9 @@ Built with plain HTML, CSS, JavaScript ES modules, [Three.js](https://threejs.or
 | Cranberry bowl | Permanent **2X**, adds another level on every hit |
 | Gravy bowl | Permanent **3X**, adds another level on every hit |
 | Bounce off the giant turkey, then land on a plate | **10X** on that landing only |
-| Flying turkey | Flat **+20**, unaffected by multipliers |
+| Cornucopia | **2X** for 10 seconds, plus a shower of fruit. Overlapping hits stack |
+| Flying turkey | Flat **+100**, unaffected by multipliers |
+| Slice lands on the floor | Flat **-10**. The score never drops below zero |
 
 Multipliers combine by multiplying. Two cranberry hits, one gravy hit and a bounce make 2 × 2 × 3 × 10 = 120X, so a bounce onto the 10-point plate would be worth 1,200.
 
@@ -93,6 +95,10 @@ All gameplay numbers live in [`js/config.js`](js/config.js).
 | Bounce strength | `GIANT_TURKEY.minUpSpeed`, `maxUpSpeed` | |
 | Bounce aim help | `GIANT_TURKEY.plateAssist`, `assistScatter` | Set for roughly 2 in 3 bounces reaching a plate. |
 | Bounce bonus | `GIANT_TURKEY.bounceMultiplier` | |
+| Cornucopia bonus | `CORNUCOPIA.multiplier`, `seconds` | |
+| Fruit shower | `CORNUCOPIA.fruitPerHit`, `spreadSeconds`, `fruitPoolSize`, `lingerSeconds` | The fruit is only decoration and can't affect a throw. |
+| Floor penalty | `FLOOR.penalty` | |
+| Flying turkey bonus | `FLYING_TURKEY.bonusPoints` | |
 | Flying turkey timing and route | `FLYING_TURKEY.earliestSeconds`, `latestSeconds`, `flightSeconds`, `height`, `z` | |
 | Flying turkey fairness | `FLYING_TURKEY.hitRadius` | Larger than the model on purpose. |
 
@@ -123,6 +129,7 @@ turkey_toss/
     ├── scoring.js     Landing score, number formatting, results messages
     ├── multipliers.js The round's permanent multipliers
     ├── effects.js     Pooled particles: splashes, sparkles, feathers, leaf confetti
+    ├── fruit.js       The pooled fruit shower from cornucopia hits
     ├── ui.js          DOM overlay helpers
     ├── leaderboard.js Online top 10 (Supabase REST API)
     └── audio.js       Synthesized effects and music, volumes, mute
@@ -139,9 +146,10 @@ Each throw can only pay out once. A slice stays in the `FLYING` state until exac
 - **Plate:** its center has stayed inside the plate, nearly still, for `settleSeconds`. It leaves the physics world and stays on the plate, so it can't score again.
 - **Bowl:** its center dropped through the opening. The test sits slightly above the rim and checks the whole step's path, so fast throws can't skip it.
 - **Flying turkey:** its path passed within `hitRadius`. It then falls away and can't score anything else.
+- **Floor:** it reached the floor, which costs 10 points. This also applies to a slice that has already missed, but only once per slice.
 - **Miss:** it lay still somewhere else, left the play area or ran out of time.
 
-Bouncing off the giant turkey doesn't end the throw. It marks the slice so that a plate landing earns the 10X.
+Bouncing off the giant turkey doesn't end the throw. It marks the slice so that a plate landing earns the 10X. Hitting the cornucopia doesn't end it either, so a slice can start the fruit shower and still land.
 
 ## Browser support
 
@@ -149,9 +157,4 @@ Works in current versions of Chrome, Edge, Firefox and Safari on desktop, Androi
 
 ## TODO
 
-- Increase points for hitting the flying turkey to 100 points
-- Increase turkey slices to 100 slices
 - Update music to match theme
-- Hit cornucopia for 2x multiplier for 10 seconds and have a bunch of fruit fall from the sky
-- If turkey slice lands on floor, that's minus 2 points
-- Make aiming dots a darker color so its easier to see. and remove the circle at the end of the aiming.

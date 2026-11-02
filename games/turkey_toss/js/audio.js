@@ -361,6 +361,27 @@ export class AudioManager {
     vibrato.stop(t + 0.5);
   }
 
+  // A woody knock, then a tumbling run of soft notes as the fruit lets go.
+  _cornucopia(t) {
+    this._tone(t, { type: 'sine', from: 240, to: 130, duration: 0.14, peak: 0.34 });
+    this._noise(t, { duration: 0.1, peak: 0.2, filter: 'bandpass', from: 1500, q: 2 });
+    [880, 784, 659.3, 587.3, 523.3, 440].forEach((frequency, i) => {
+      this._tone(t + 0.1 + i * 0.07, { type: 'sine', from: frequency, to: frequency * 0.7, duration: 0.12, peak: 0.13 });
+    });
+  }
+
+  // One piece of fruit landing.
+  _fruit(t) {
+    this._tone(t, { type: 'sine', from: 260 + Math.random() * 220, to: 110, duration: 0.07, peak: 0.1 });
+  }
+
+  // A floppy splat on the floorboards and a sad little slide down.
+  _floor(t) {
+    this._noise(t, { duration: 0.13, peak: 0.28, filter: 'lowpass', from: 800, q: 0.7 });
+    this._tone(t, { type: 'sine', from: 120, to: 50, duration: 0.18, peak: 0.34 });
+    this._tone(t + 0.1, { type: 'triangle', from: 392, to: 233, duration: 0.3, peak: 0.13 });
+  }
+
   _gobble(t) {
     for (let call = 0; call < 2; call++) {
       for (let i = 0; i < 5; i++) {

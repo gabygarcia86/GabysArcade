@@ -194,6 +194,15 @@ body.can-grab #canvas-host canvas {
   animation: score-bump 0.45s ease-out;
 }
 
+.hud-score.penalty {
+  animation: score-penalty 0.5s ease-out;
+}
+
+@keyframes score-penalty {
+  0%, 60% { border-color: var(--danger); background: rgba(150, 30, 20, 0.85); }
+  100% { border-color: var(--panel-border); background: rgba(46, 22, 12, 0.8); }
+}
+
 @keyframes score-bump {
   0% { transform: scale(1); }
   30% { transform: scale(1.35); color: #fff6c9; }
@@ -249,6 +258,11 @@ body.can-grab #canvas-host canvas {
 .chip-gravy {
   background: var(--gravy);
   border-color: #dcaa6b;
+}
+
+.chip-cornucopia {
+  background: #5f7a2a;
+  border-color: #c8dc8a;
 }
 
 .chip-flying[data-phase="incoming"],
@@ -380,6 +394,16 @@ body.can-grab #canvas-host canvas {
 .popup.sauce-gravy {
   font-size: 48px;
   color: #f0c388;
+}
+
+.popup.cornucopia {
+  font-size: 48px;
+  color: #dff0a8;
+}
+
+.popup.penalty {
+  font-size: 40px;
+  color: #ff8a70;
 }
 
 .popup.miss {

@@ -218,12 +218,12 @@ export function aimVelocity(power, yaw, target) {
 const TRAJECTORY_DOTS = 48;
 const TRAJECTORY_SAMPLE_SECONDS = 0.045;
 
-/** Aiming preview: a dotted arc, a power arrow on the table, and a landing ring. */
+/** Aiming preview: a dotted arc and a power arrow on the table. */
 export class AimVisuals {
   constructor(scene, launchPosition, restPosition) {
     this.launchPosition = launchPosition;
     this.points = Array.from({ length: TRAJECTORY_DOTS }, () => new THREE.Vector3());
-    const dotGeometry = new THREE.SphereGeometry(0.06, 10, 8);
+    const dotGeometry = new THREE.SphereGeometry(0.07, 10, 8);
     // No depth test, so the arc stays readable where it passes behind the giant turkey.
     const dotMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false, depthTest: false,
@@ -232,8 +232,8 @@ export class AimVisuals {
     this.dots.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.dots.frustumCulled = false;
     this.dots.renderOrder = 4;
-    const near = new THREE.Color(0xfff3c4);
-    const far = new THREE.Color(0xff8a2a);
+    const near = new THREE.Color(0x2a0f05);
+    const far = new THREE.Color(0x6a1408);
     const color = new THREE.Color();
     for (let i = 0; i < TRAJECTORY_DOTS; i++) {
       this.dots.setColorAt(i, color.copy(near).lerp(far, i / TRAJECTORY_DOTS));
@@ -261,15 +261,6 @@ export class AimVisuals {
     this.arrow.visible = false;
     scene.add(this.arrow);
 
-    // Shows where the slice comes down, which is hard to judge from the arc alone.
-    this.marker = new THREE.Mesh(
-      new THREE.RingGeometry(0.2, 0.3, 32).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false, depthTest: false }),
-    );
-    this.marker.renderOrder = 3;
-    this.marker.visible = false;
-    scene.add(this.marker);
-
     this.lowPowerColor = new THREE.Color(0xf2c14e);
     this.highPowerColor = new THREE.Color(0xff5a36);
     this._matrix = new THREE.Matrix4();
@@ -294,10 +285,6 @@ export class AimVisuals {
     this.dots.count = total;
     this.dots.instanceMatrix.needsUpdate = true;
 
-    this.marker.position.copy(this.points[total - 1]);
-    this.marker.position.y = 0.11;
-    this.marker.visible = true;
-
     this.arrow.visible = true;
     this.arrow.rotation.y = -aim.yaw;
     this.arrow.scale.set(1, 1, 0.55 + aim.power * 0.9);
@@ -307,6 +294,5 @@ export class AimVisuals {
   hide() {
     this.dots.count = 0;
     this.arrow.visible = false;
-    this.marker.visible = false;
   }
 }

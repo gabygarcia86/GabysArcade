@@ -34,7 +34,7 @@ export const PHYSICS = {
   bowlRestitution: 0.35,
   decorRestitution: 0.3,
   // Slices that wander outside this box are removed.
-  bounds: { minX: -12, maxX: 12, minY: -3, minZ: -12, maxZ: 10 },
+  bounds: { minX: -20, maxX: 20, minY: -6, minZ: -16, maxZ: 12 },
   // Safety net: any throw still unresolved after this many seconds is a miss.
   maxFlightSeconds: 5,
 };
@@ -63,6 +63,13 @@ export const TABLE = {
   halfWidth: 3.95,
   frontZ: 5.3,
   backZ: -9.7,
+};
+
+export const FLOOR = {
+  // Height of the dining room floor. The table top is y = 0.
+  y: -3.2,
+  // Points lost when a slice lands on it. The score never drops below zero.
+  penalty: 10,
 };
 
 // The player's serving platter, and where throws start.
@@ -140,6 +147,19 @@ export const BOWLS = {
   },
 };
 
+// Each hit adds its own timed multiplier, so hits stack while their timers overlap.
+export const CORNUCOPIA = {
+  multiplier: 2,
+  seconds: 10,
+  // Fruit dropped by one hit, and how long the drop lasts.
+  fruitPerHit: 44,
+  spreadSeconds: 1.6,
+  // Fruit on screen at once; the oldest is recycled when a new shower needs room.
+  fruitPoolSize: 90,
+  // How long a landed fruit stays before shrinking away.
+  lingerSeconds: 5,
+};
+
 export const GIANT_TURKEY = {
   x: 0,
   z: -2.05,
@@ -167,7 +187,7 @@ export const GIANT_TURKEY = {
 };
 
 export const FLYING_TURKEY = {
-  bonusPoints: 20,
+  bonusPoints: 100,
   // It takes off at a random time between these two round times.
   earliestSeconds: 12,
   latestSeconds: 42,

@@ -1,5 +1,5 @@
 import * as CANNON from 'cannon-es';
-import { PHYSICS, TABLE, SLICE, PLATE, GIANT_TURKEY } from './config.js';
+import { PHYSICS, TABLE, FLOOR, SLICE, PLATE, GIANT_TURKEY } from './config.js';
 
 // Slices collide with the table and its contents, never with each other.
 const GROUP_SLICE = 1;
@@ -12,9 +12,11 @@ export const Surface = Object.freeze({
   BOWL: 4,
   TURKEY: 8,
   DECOR: 16,
+  CORNUCOPIA: 32,
+  FLOOR: 64,
 });
 
-const GROUND = Surface.TABLE | Surface.PLATE | Surface.DECOR;
+const GROUND = Surface.TABLE | Surface.PLATE | Surface.DECOR | Surface.CORNUCOPIA | Surface.FLOOR;
 const BOWL_CATCH_HEIGHT = 0.2;
 
 const _up = new CANNON.Vec3(0, 1, 0);
@@ -115,6 +117,10 @@ export class PhysicsWorld {
     const table = staticBody(Surface.TABLE, this.materials.table, 0, -0.5, (TABLE.frontZ + TABLE.backZ) / 2);
     table.addShape(new CANNON.Box(new CANNON.Vec3(width, 0.5, depth)));
     this.world.addBody(table);
+
+    const floor = staticBody(Surface.FLOOR, this.materials.table, 0, FLOOR.y - 1, 0);
+    floor.addShape(new CANNON.Box(new CANNON.Vec3(60, 1, 60)));
+    this.world.addBody(floor);
   }
 
   addPlate(plate) {
@@ -165,6 +171,22 @@ export class PhysicsWorld {
   addDecorSphere(x, y, z, radius) {
     const body = staticBody(Surface.DECOR, this.materials.decor, x, y, z);
     body.addShape(new CANNON.Sphere(radius));
+    this.world.addBody(body);
+  }
+
+  /** `size` and the position describe a box, so a stray slice can't fall through a chair. */
+  addDecorBox(x, y, z, sizeX, sizeY, sizeZ) {
+    const body = staticBody(Surface.DECOR, this.materials.decor, x, y, z);
+    body.addShape(new CANNON.Box(new CANNON.Vec3(sizeX / 2, sizeY / 2, sizeZ / 2)));
+    this.world.addBody(body);
+  }
+
+  /** `spheres` are [x, y, z, radius] in world space. */
+  addCornucopia(spheres) {
+    const body = staticBody(Surface.CORNUCOPIA, this.materials.decor, 0, 0, 0);
+    for (const [x, y, z, radius] of spheres) {
+      body.addShape(new CANNON.Sphere(radius), new CANNON.Vec3(x, y, z));
+    }
     this.world.addBody(body);
   }
 

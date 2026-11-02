@@ -86,6 +86,45 @@ test('huge stacks stop at the largest exact score instead of losing precision', 
   assert.ok(Number.isSafeInteger(addScore(MAX_VALUE, MAX_VALUE)));
 });
 
+test('a cornucopia hit doubles scores until its 10 seconds run out', () => {
+  const multipliers = new Multipliers();
+  multipliers.addCornucopiaHit(5);
+  assert.equal(multipliers.total, 2);
+  assert.equal(scoreLanding(5, multipliers).points, 10);
+  assert.equal(multipliers.boostSecondsLeft(8), 7);
+  assert.equal(multipliers.expireBoosts(14.9), false);
+  assert.equal(multipliers.total, 2);
+  assert.equal(multipliers.expireBoosts(15), true);
+  assert.equal(multipliers.total, 1);
+  assert.equal(multipliers.boostSecondsLeft(15), 0);
+  assert.equal(multipliers.cornucopiaHits, 1);
+});
+
+test('overlapping cornucopia hits stack and end one at a time', () => {
+  const multipliers = withHits({ cranberry: 1, gravy: 1 });
+  multipliers.addCornucopiaHit(0);
+  multipliers.addCornucopiaHit(4);
+  assert.equal(multipliers.total, 24);
+  multipliers.expireBoosts(11);
+  assert.equal(multipliers.total, 12);
+  multipliers.expireBoosts(14);
+  assert.equal(multipliers.total, 6);
+});
+
+test('reset clears running cornucopia boosts', () => {
+  const multipliers = new Multipliers();
+  multipliers.addCornucopiaHit(0);
+  multipliers.reset();
+  assert.equal(multipliers.total, 1);
+  assert.equal(multipliers.cornucopiaHits, 0);
+});
+
+test('the floor penalty can never make a score negative', () => {
+  assert.equal(addScore(10, -2), 8);
+  assert.equal(addScore(1, -2), 0);
+  assert.equal(addScore(0, -2), 0);
+});
+
 test('numbers stay readable', () => {
   assert.equal(formatNumber(6000), '6,000');
   assert.equal(formatNumber(1250000000), '1.25B');

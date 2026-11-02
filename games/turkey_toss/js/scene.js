@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { TABLE, PLATES, SERVING, PLATE, FLYING_TURKEY } from './config.js';
+import { TABLE, FLOOR, PLATES, SERVING, PLATE, FLYING_TURKEY } from './config.js';
 
 // Camera framing. The camera sits high behind the serving platter so the back plate and the
 // gravy bowl stay visible over the giant turkey.
@@ -259,15 +259,18 @@ function createPumpkin(color, radius) {
   return group;
 }
 
+class HornCurve extends THREE.Curve {
+  getPoint(t, target = new THREE.Vector3()) {
+    const a = t * 1.9;
+    return target.set(Math.cos(a) * (0.22 + 1.1 * t) - 0.3, 0.52 + 0.46 * Math.sin(t * 2.6) * (1 - t), Math.sin(a) * 0.5 * t);
+  }
+}
+
+const hornRadius = (t) => 0.03 + 0.52 * t ** 1.5;
+
 // A horn of plenty: a curled wicker tube with fruit spilling out of its mouth.
 function createCornucopia() {
   const group = new THREE.Group();
-  class HornCurve extends THREE.Curve {
-    getPoint(t, target = new THREE.Vector3()) {
-      const a = t * 1.9;
-      return target.set(Math.cos(a) * (0.22 + 1.1 * t) - 0.3, 0.52 + 0.46 * Math.sin(t * 2.6) * (1 - t), Math.sin(a) * 0.5 * t);
-    }
-  }
   const curve = new HornCurve();
   const segments = 60;
   const sides = 18;
@@ -279,7 +282,7 @@ function createCornucopia() {
   for (let ring = 0; ring <= segments; ring++) {
     const t = ring / segments;
     curve.getPoint(t, center);
-    const radius = 0.03 + 0.52 * t ** 1.5;
+    const radius = hornRadius(t);
     for (let side = 0; side <= sides; side++) {
       const i = ring * (sides + 1) + side;
       vertex.fromBufferAttribute(position, i).sub(center).multiplyScalar(radius).add(center);
@@ -344,6 +347,9 @@ export class GameScene {
     this.onResize = null;
     // Sphere colliders for the decorations, read by Game when it builds the physics world.
     this.decorColliders = [];
+    this.decorBoxes = [];
+    // Spheres along the horn in world space, a little generous so hits feel fair.
+    this.cornucopiaColliders = [];
 
     this._buildLights();
     this._buildRoom();
@@ -389,10 +395,10 @@ export class GameScene {
 
     const floorTexture = canvasTexture(createWoodTexture('#6b3a1e', '#2c1408', 8), 3, 4);
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(50, 50).rotateX(-Math.PI / 2),
+      new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2),
       new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.7 }),
     );
-    floor.position.set(0, -3.2, -2);
+    floor.position.set(0, FLOOR.y, -2);
     floor.receiveShadow = true;
     this.scene.add(floor);
 
@@ -435,7 +441,7 @@ export class GameScene {
       new THREE.PlaneGeometry(17, 25).rotateX(-Math.PI / 2),
       new THREE.MeshStandardMaterial({ map: createRugTexture(), roughness: 0.95 }),
     );
-    rug.position.set(0, -3.19, centerZ);
+    rug.position.set(0, FLOOR.y + 0.01, centerZ);
     rug.receiveShadow = true;
     this.scene.add(rug);
 
@@ -464,6 +470,7 @@ export class GameScene {
         const x = side * 5.1;
         seats.setMatrixAt(index, matrix.makeTranslation(x, -1.4, z));
         backs.setMatrixAt(index, matrix.makeTranslation(x + side * 0.72, -0.3, z));
+        this.decorBoxes.push([x, -1.4, z, 1.5, 0.16, 1.6], [x + side * 0.72, -0.3, z, 0.14, 2.3, 1.6]);
         let corner = 0;
         for (const lx of [-0.66, 0.66]) {
           for (const lz of [-0.72, 0.72]) {
@@ -501,8 +508,15 @@ export class GameScene {
     cornucopia.position.set(-2.55, 0, -8.5);
     cornucopia.rotation.y = 0.25;
     cornucopia.scale.setScalar(1.15);
+    cornucopia.updateMatrixWorld();
     this.scene.add(cornucopia);
-    this.decorColliders.push([-2.75, 0.5, -8.5, 0.55]);
+    this.cornucopia = cornucopia;
+    this.cornucopiaShake = 0;
+    const curve = new HornCurve();
+    for (const t of [0.3, 0.5, 0.7, 0.85, 1]) {
+      const center = curve.getPoint(t).applyMatrix4(cornucopia.matrixWorld);
+      this.cornucopiaColliders.push([center.x, Math.max(center.y, 0.3), center.z, Math.max(0.3, hornRadius(t) * 1.3)]);
+    }
 
     // Fallen leaves, one draw call for all of them.
     const leafColors = [0xd9531e, 0xe8891f, 0xc23a1c, 0xefb52d, 0xa8481c];
@@ -534,6 +548,23 @@ export class GameScene {
     }
     leaves.receiveShadow = true;
     this.scene.add(leaves);
+  }
+
+  knockCornucopia() {
+    this.cornucopiaShake = 1;
+  }
+
+  resetCornucopia() {
+    this.cornucopiaShake = 0;
+    this.cornucopia.rotation.set(0, 0.25, 0);
+  }
+
+  // A knocked cornucopia rocks on the table, then settles.
+  update(dt, elapsed) {
+    const shake = this.cornucopiaShake;
+    this.cornucopia.rotation.z = shake * 0.18 * Math.sin(elapsed * 34);
+    this.cornucopia.rotation.x = shake * 0.08 * Math.sin(elapsed * 27);
+    this.cornucopiaShake = Math.max(0, shake - dt * 1.6);
   }
 
   /** Half the visible width at the flying turkey's depth, so it starts just off screen. */

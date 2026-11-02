@@ -73,6 +73,7 @@
           <span class="chip chip-table hidden" id="chip-table">Table &times;4</span>
           <span class="chip chip-cranberry hidden" id="chip-cranberry"></span>
           <span class="chip chip-gravy hidden" id="chip-gravy"></span>
+          <span class="chip chip-cornucopia hidden" id="chip-cornucopia"></span>
           <span class="chip chip-flying" id="chip-flying">Flying turkey: waiting</span>
         </div>
         <p class="hud-calc hidden" id="hud-calc"></p>
@@ -133,8 +134,12 @@
             <li><b>Gravy bowl:</b> every hit adds a permanent <b>3X</b>.</li>
             <li><b>Giant turkey:</b> bounce off it and land on a plate for
               <b>10X</b> on that landing.</li>
+            <li><b>Cornucopia:</b> hit it for <b>2X</b> for 10 seconds, and a
+              shower of fruit.</li>
             <li><b>Flying turkey:</b> it crosses once per round. Hit it for
-              <b>+20</b>.</li>
+              <b>+100</b>.</li>
+            <li><b>Watch the edges:</b> a slice on the floor costs
+              <b>10 points</b>.</li>
           </ul>
           <p class="instructions">Multipliers stack by multiplying. You have 60
             seconds and 60 slices.</p>
@@ -188,8 +193,10 @@
             <div><dt>Plates completed</dt><dd id="stat-plates"></dd></div>
             <div><dt>Cranberry hits</dt><dd id="stat-cranberry"></dd></div>
             <div><dt>Gravy hits</dt><dd id="stat-gravy"></dd></div>
+            <div><dt>Cornucopia hits</dt><dd id="stat-cornucopia"></dd></div>
             <div><dt>Turkey bounces</dt><dd id="stat-bounces"></dd></div>
             <div><dt>Flying turkey</dt><dd id="stat-flying"></dd></div>
+            <div><dt>Slices on the floor</dt><dd id="stat-floor"></dd></div>
           </dl>
           <form id="score-form" class="score-form hidden" novalidate>
             <label for="score-name">Your name</label>

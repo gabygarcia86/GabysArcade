@@ -24,9 +24,9 @@ export function scoreLanding(platePoints, multipliers, { bounced = false } = {})
   };
 }
 
-/** Adds to a running total without passing the largest score the leaderboard can hold. */
+/** Adds to a running total, staying between zero and the largest score the leaderboard can hold. */
 export function addScore(score, points) {
-  return Math.min(MAX_VALUE, score + points);
+  return Math.min(MAX_VALUE, Math.max(0, score + points));
 }
 
 // Closing line on the results screen, best match first.

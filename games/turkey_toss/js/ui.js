@@ -1,3 +1,4 @@
+import { FLYING_TURKEY } from './config.js';
 import { FlightPhase } from './props.js';
 import { formatNumber } from './scoring.js';
 import { leaderboard, cleanName, loadName, saveName, NAME_MAX } from './leaderboard.js';
@@ -8,7 +9,7 @@ const FLYING_TEXT = {
   [FlightPhase.WAITING]: 'Flying turkey: waiting',
   [FlightPhase.INCOMING]: 'Flying turkey: incoming!',
   [FlightPhase.FLYING]: 'Flying turkey: hit it!',
-  [FlightPhase.HIT]: 'Flying turkey: hit! +20',
+  [FlightPhase.HIT]: `Flying turkey: hit! +${FLYING_TURKEY.bonusPoints}`,
   [FlightPhase.GONE]: 'Flying turkey: got away',
 };
 
@@ -139,6 +140,23 @@ export class UI {
     }
   }
 
+  /** Shows the running cornucopia boost and its countdown, or nothing when none is running. */
+  setCornucopia(factor, secondsLeft) {
+    const text = factor > 1 ? `Cornucopia ×${formatNumber(factor)} ${Math.ceil(secondsLeft)}s` : '';
+    if (text === this.cornucopiaText) return;
+    this.cornucopiaText = text;
+    const chip = $('chip-cornucopia');
+    chip.textContent = text;
+    chip.classList.toggle('hidden', !text);
+  }
+
+  flashPenalty() {
+    this.scoreBox.classList.remove('penalty');
+    // Force a reflow so the animation restarts on rapid hits.
+    void this.scoreBox.offsetWidth;
+    this.scoreBox.classList.add('penalty');
+  }
+
   setSlices(count) {
     this.slicesValue.textContent = String(count);
   }
@@ -259,6 +277,8 @@ export class UI {
     $('stat-plates').textContent = `${result.plates} / 9`;
     $('stat-cranberry').textContent = String(result.cranberryHits);
     $('stat-gravy').textContent = String(result.gravyHits);
+    $('stat-cornucopia').textContent = String(result.cornucopiaHits);
+    $('stat-floor').textContent = String(result.floorDrops);
     $('stat-bounces').textContent = String(result.bounces);
     $('stat-flying').textContent = result.flyingHit ? 'Hit!' : 'Missed';
 
