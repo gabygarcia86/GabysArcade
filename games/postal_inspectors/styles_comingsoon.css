@@ -21,10 +21,6 @@ body {
   min-height: 100svh;
   place-items: center;
   background-color: #000;
-  background-image: url("images/ComingSoon.jpg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
 }
 
 .coming-soon__title {
