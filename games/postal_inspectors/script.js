@@ -494,8 +494,8 @@ function triggerPlayerAction(type) {
 
   if (type === "shoot") {
     game.player.attackType = "shoot";
-    game.player.attackTimer = 0.22;
-    game.player.attackDuration = 0.22;
+    game.player.attackTimer = 0.4;
+    game.player.attackDuration = 0.4;
     game.player.attackHitFired = false;
     game.player.cooldown = 0.5;
     game.player.animation = "punch";
@@ -614,8 +614,6 @@ function applyPlayerHit() {
   if (attack !== "shoot" && hitMade) {
     game.player.attackType = null;
     game.player.animation = "static";
-  } else if (attack === "shoot") {
-    game.player.attackType = null;
   }
 }
 
