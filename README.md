@@ -13,7 +13,7 @@ It's a static site with no framework and no build step. Edit a file, push, and t
 - [Preview locally](#preview-locally)
 - [Publish to GitHub Pages](#publish-to-github-pages)
 - [Add a new game](#add-a-new-game)
-- [Update a game's title, description, category or tags](#update-a-games-title-description-category-or-tags)
+- [Update a game's title, description, categories or tags](#update-a-games-title-description-categories-or-tags)
 - [Add or update a thumbnail](#add-or-update-a-thumbnail)
 - [Add a new app](#add-a-new-app)
 - [Coming Soon games](#coming-soon-games)
@@ -114,7 +114,7 @@ In the repository on GitHub, **Settings → Pages** should show **Deploy from a 
      folder: "space_llamas",
      title: "Space Llamas",
      description: "Herd llamas through an asteroid field before the oxygen runs out.",
-     category: "Arcade",
+     categories: ["Arcade"],
      tags: ["space", "llamas", "touch"],
      added: "2026-11-15",
    },
@@ -122,14 +122,14 @@ In the repository on GitHub, **Settings → Pages** should show **Deploy from a 
 
 3. Run `node tools/check-catalog.mjs`, preview, and push.
 
-The game appears with its title, description, thumbnail and category. A new `category` value creates its own filter automatically.
+The game appears with its title, description, thumbnail and categories. To put a game in more than one category, list them all, like `categories: ["Shooter", "Arcade"]`. It shows a label for each one and appears under each filter. A new category name creates its own filter automatically.
 
 | Field | Required | What it does |
 | --- | --- | --- |
 | `folder` | Yes | Folder name inside `games/`, with exact capitals. Also the game's unique ID, so renaming it resets that game's favorites |
 | `title` | Yes | Backup name, used only if the game's `<title>` can't be read. Keep it the same as the `<title>` |
 | `description` | Yes | Card text, also searchable. About 100 characters fits best |
-| `category` | Yes | Card label and filter |
+| `categories` | Yes | List of card labels and filters. Always a list, even for one category |
 | `tags` | No | Extra search words, not displayed |
 | `added` | No | Real date as `YYYY-MM-DD`. Leave `""` if you don't know it |
 | `url` | No | Only if the start page isn't `games/<folder>/index.html` |
@@ -137,10 +137,10 @@ The game appears with its title, description, thumbnail and category. A new `cat
 
 **About "Recently added":** this sort option stays hidden until at least two games have an `added` date. All current games are blank because Git only shows when they were copied into this repository, not when they were made. Fill in real dates if you want the option.
 
-## Update a game's title, description, category or tags
+## Update a game's title, description, categories or tags
 
 - **Title:** change the `<title>` in the game's `index.html`, and update `title` in `data/catalog.js` to match.
-- **Description, category or tags:** edit the entry in `data/catalog.js`.
+- **Description, categories or tags:** edit the entry in `data/catalog.js`.
 
 ## Add or update a thumbnail
 
@@ -161,7 +161,7 @@ Apps work like games, using the `apps` list in `data/catalog.js`:
   folder: "pixel_painter",
   title: "Pixel Painter",
   description: "Draw pixel art and save it as an image.",
-  category: "Creativity",
+  categories: ["Creativity"],
   tags: ["art", "pixels"],
   added: "",
 },

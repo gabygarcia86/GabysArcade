@@ -2,8 +2,51 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const WORLD_WIDTH = 2560;
 const PLAYER_GROUND_Y = 570;
-const PLAYER_MIN_Y = 300;
-const PLAYER_MAX_Y = 640;
+const CHARACTER_SCALE = 2;
+const CHARACTER_HEIGHT = 110 * CHARACTER_SCALE;
+const PUNCH_HAND_X = 0.94;
+const PUNCH_HAND_Y = 0.37;
+const SHOOT_COOLDOWN = 1;
+const RAPID_FIRE_INTERVAL = 0.2;
+const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN_BEEP_DURATION = 0.18;
+const MAX_ENEMIES = 10;
+const ENEMY_SPAWN_RATE = 2;
+const ENEMY_EDGE_PEEK = 40;
+const FINAL_WAVE_SECONDS = 30;
+const FINAL_WAVE_MAX_ENEMIES = 6;
+const POWER_UP_SIZE = 84;
+const POWER_UP_LIFETIME = 12;
+const POWER_UP_BLINK_TIME = 3;
+const POWER_UP_FIRST_DELAY = 6;
+const POWER_UP_INTERVAL_MIN = 9;
+const POWER_UP_INTERVAL_MAX = 13;
+const POWER_UP_MAX_ON_STREET = 3;
+const POWER_UP_SPACING = 170;
+const POWER_UP_RETRY_DELAY = 4;
+const POWER_UP_LOW_HEALTH = 40;
+const POWER_UP_LIMITS = { health: 8, strength: 8, rapidFire: 5, speed: 5 };
+const POWER_UP_GLOW = {
+  health: "255, 50, 80",
+  strength: "255, 190, 40",
+  rapidFire: "60, 190, 255",
+  speed: "80, 255, 130",
+};
+const POWER_UP_EFFECT_DURATION = 0.9;
+const HEALTH_POWER_UP_AMOUNT = 25;
+const POWER_UP_LABELS = {
+  health: `+${HEALTH_POWER_UP_AMOUNT}`,
+  strength: "2X DAMAGE",
+  rapidFire: "RAPID FIRE",
+  speed: "2X SPEED",
+};
+const BOOST_DURATIONS = { strength: 15, rapidFire: 10, speed: 10 };
+const STRENGTH_MULTIPLIER = 2;
+const SPEED_MULTIPLIER = 2;
+const FEET_MIN_Y = 410;
+const FEET_MAX_Y = 750;
+const PLAYER_MIN_Y = FEET_MIN_Y - CHARACTER_HEIGHT;
+const PLAYER_MAX_Y = FEET_MAX_Y - CHARACTER_HEIGHT;
 const ENEMY_DEATH_FRAME_DURATION = 0.12;
 const HIT_EFFECT_FRAME_DURATION = 0.07;
 const PLAYER_JUMP_LAND_DURATION = 0.1;
@@ -166,6 +209,7 @@ const game = {
   state: "loading",
   score: 0,
   timer: 180,
+  countdownBeep: null,
   loadingProgress: 0,
   loadingIconPath: null,
   lastFrame: 0,
@@ -175,6 +219,10 @@ const game = {
   enemies: [],
   projectiles: [],
   effects: [],
+  powerUps: [],
+  powerUpEffects: [],
+  powerUpTimer: 0,
+  powerUpCounts: { health: 0, strength: 0, rapidFire: 0, speed: 0 },
   player: null,
   spawnTimer: 0,
   overReason: null,
@@ -197,10 +245,19 @@ const input = {
 };
 
 const assets = { images: {}, sounds: {} };
+const powerUpArt = {};
+let audioContext = null;
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
     Array.isArray(value) ? value : [value],
+  );
+}
+
+function isActionHeld(name) {
+  return (
+    input.actionKeys.has(name) ||
+    Array.from(game.actionPointerIds.values()).includes(name)
   );
 }
 
@@ -314,6 +371,23 @@ function playSound(path) {
   sound.play().catch(() => {});
 }
 
+function playCountdownBeep() {
+  if (!audioContext || game.muted) return;
+  if (audioContext.state === "suspended") audioContext.resume();
+  const start = audioContext.currentTime;
+  const end = start + COUNTDOWN_BEEP_DURATION;
+  const tone = audioContext.createOscillator();
+  const volume = audioContext.createGain();
+  tone.type = "square";
+  tone.frequency.value = 880;
+  volume.gain.setValueAtTime(0.15, start);
+  volume.gain.exponentialRampToValueAtTime(0.001, end);
+  tone.connect(volume);
+  volume.connect(audioContext.destination);
+  tone.start(start);
+  tone.stop(end);
+}
+
 function toggleMute() {
   game.muted = !game.muted;
   Object.values(assets.sounds).forEach((sound) => {
@@ -331,6 +405,8 @@ function toggleMute() {
 function unlockAudio() {
   if (game.audioUnlocked) return;
   game.audioUnlocked = true;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (AudioContextClass) audioContext = new AudioContextClass();
   const music = assets.sounds[ASSET_PATHS.music];
   if (music && (game.state === "start" || game.state === "playing")) {
     music.muted = game.muted;
@@ -341,19 +417,24 @@ function unlockAudio() {
 function resetGameState() {
   game.score = 0;
   game.timer = 180;
+  game.countdownBeep = null;
   game.cameraX = 0;
   game.enemies = [];
   game.projectiles = [];
   game.effects = [];
+  game.powerUps = [];
+  game.powerUpEffects = [];
+  game.powerUpTimer = POWER_UP_FIRST_DELAY;
+  game.powerUpCounts = { health: 0, strength: 0, rapidFire: 0, speed: 0 };
   game.spawnTimer = 0;
   game.overReason = null;
   game.gameOverDelay = 0;
   game.gameOverTriggered = false;
   game.player = {
     x: GAME_WIDTH / 2,
-    y: GAME_HEIGHT / 2,
-    width: 66,
-    height: 110,
+    y: PLAYER_MIN_Y + 60,
+    width: 66 * CHARACTER_SCALE,
+    height: CHARACTER_HEIGHT,
     speed: 240,
     facing: 1,
     health: 100,
@@ -371,14 +452,16 @@ function resetGameState() {
     hurtFlash: 0,
     speechIndex: null,
     speechTimer: 0,
+    boosts: { strength: 0, rapidFire: 0, speed: 0 },
+    shootCooldown: 0,
     dead: false,
   };
 }
 
 function startNewGame() {
   resetGameState();
-  spawnEnemy(true);
-  game.spawnTimer = 9;
+  for (let i = 0; i < ENEMY_SPAWN_RATE; i += 1) spawnEnemy(true);
+  game.spawnTimer = 9 / ENEMY_SPAWN_RATE;
   setState("playing");
   playSound(ASSET_PATHS.gameStart);
 }
@@ -406,13 +489,13 @@ function getEnemyFrame(enemy) {
 }
 
 function spawnEnemy(nearPlayer = false) {
-  if (game.enemies.length >= 5) return;
+  if (game.enemies.length >= MAX_ENEMIES) return;
   const fromLeft = Math.random() < 0.5;
   const enemy = {
     x: fromLeft ? -40 : WORLD_WIDTH + 40,
     y: PLAYER_MIN_Y + Math.random() * (PLAYER_MAX_Y - PLAYER_MIN_Y),
-    width: 64,
-    height: 110,
+    width: 64 * CHARACTER_SCALE,
+    height: CHARACTER_HEIGHT,
     speed: 110,
     health: 10,
     facing: fromLeft ? 1 : -1,
@@ -439,7 +522,8 @@ function spawnEnemy(nearPlayer = false) {
       enemy.facing = fromLeft ? 1 : -1;
     } else {
       const playerSide = game.player.x < WORLD_WIDTH / 2 ? 1 : -1;
-      enemy.x = playerSide > 0 ? WORLD_WIDTH + 34 : -34;
+      const offscreen = 34 * CHARACTER_SCALE;
+      enemy.x = playerSide > 0 ? WORLD_WIDTH + offscreen : -offscreen;
       enemy.facing = playerSide > 0 ? -1 : 1;
     }
   }
@@ -495,6 +579,11 @@ function triggerPlayerAction(type) {
   }
 
   if (type === "shoot") {
+    if (game.player.shootCooldown > 0) return;
+    if (game.player.boosts.rapidFire > 0) {
+      fireRapidShot();
+      return;
+    }
     game.player.attackType = "shoot";
     game.player.attackTimer = 0.4;
     game.player.attackDuration = 0.4;
@@ -503,17 +592,38 @@ function triggerPlayerAction(type) {
     game.player.animation = "punch";
     game.player.animFrame = 0;
     game.player.animTimer = 0;
-    playSound(ASSET_PATHS.playerShootSfx);
-    game.projectiles.push({
-      x: game.player.x + (game.player.facing > 0 ? 34 : -5),
-      y: game.player.y + 28,
-      w: 25,
-      h: 18,
-      vx: game.player.facing * 640,
-      ttl: 1.5,
-      rotation: 0,
-    });
   }
+}
+
+function fireRapidShot() {
+  const player = game.player;
+  spawnProjectile();
+  player.shootCooldown = RAPID_FIRE_INTERVAL;
+  player.attackType = "shoot";
+  player.attackTimer = RAPID_FIRE_INTERVAL;
+  player.attackDuration = RAPID_FIRE_INTERVAL;
+  player.attackHitFired = true;
+  player.animation = "punch";
+  player.animFrame = 2;
+  player.animTimer = 0;
+}
+
+function spawnProjectile() {
+  const player = game.player;
+  const w = 25 * CHARACTER_SCALE;
+  const h = 18 * CHARACTER_SCALE;
+  const handX = player.facing > 0 ? PUNCH_HAND_X : 1 - PUNCH_HAND_X;
+  player.shootCooldown = SHOOT_COOLDOWN;
+  playSound(ASSET_PATHS.playerShootSfx);
+  game.projectiles.push({
+    x: player.x + player.width * handX - w / 2,
+    y: player.y - player.jumpHeight + player.height * PUNCH_HAND_Y - h / 2,
+    w,
+    h,
+    vx: player.facing * 640,
+    ttl: 1.5,
+    rotation: 0,
+  });
 }
 
 function damagePlayer(amount) {
@@ -553,7 +663,10 @@ function handleEnemyAttack(enemy) {
   )
     return;
   const dist = Math.abs(enemy.x - game.player.x);
-  if (dist < 92 && Math.abs(enemy.y - game.player.y) < 90) {
+  if (
+    dist < 92 * CHARACTER_SCALE &&
+    Math.abs(enemy.y - game.player.y) < 90 * CHARACTER_SCALE
+  ) {
     enemy.attackType = Math.random() < 0.6 ? "punch" : "kick";
     enemy.attackTimer = enemy.attackType === "punch" ? 0.46 : 0.56;
     enemy.attackDuration = enemy.attackTimer;
@@ -568,32 +681,42 @@ function handleEnemyAttack(enemy) {
 
 function resolveEnemyAttack(enemy) {
   if (!enemy.attackType || enemy.dead) return;
-  const dist = Math.abs(enemy.x - game.player.x);
-  const laneDistance = Math.abs(enemy.y - game.player.y);
+  const dist = Math.abs(enemy.x - game.player.x) / CHARACTER_SCALE;
+  const laneDistance = Math.abs(enemy.y - game.player.y) / CHARACTER_SCALE;
   if (enemy.attackType === "punch" && dist < 76 && laneDistance < 70) {
-    damagePlayer(4);
+    damagePlayer(5);
   } else if (enemy.attackType === "kick" && dist < 95 && laneDistance < 80) {
-    damagePlayer(6);
+    damagePlayer(7);
   }
   enemy.attackType = null;
+}
+
+function getPlayerDamage(amount) {
+  return game.player.boosts.strength > 0 ? amount * STRENGTH_MULTIPLIER : amount;
 }
 
 function applyPlayerHit() {
   if (!game.player.attackType || game.player.attackHitFired) return;
   const attack = game.player.attackType;
   game.player.attackHitFired = true;
-  const range = attack === "punch" ? 70 : attack === "kick" ? 90 : 220;
+  if (attack === "shoot") spawnProjectile();
+  const range =
+    attack === "punch"
+      ? 70 * CHARACTER_SCALE
+      : attack === "kick"
+        ? 90 * CHARACTER_SCALE
+        : 220;
   let hitMade = false;
 
   for (const enemy of game.enemies) {
     if (enemy.dead) continue;
     const dx = Math.abs(enemy.x - game.player.x);
     const dy = Math.abs(enemy.y - game.player.y);
-    if (dx < range && dy < 90) {
+    if (dx < range && dy < 90 * CHARACTER_SCALE) {
       const damage = attack === "punch" ? 4 : attack === "kick" ? 6 : 0;
-      enemy.health -= damage;
+      enemy.health -= getPlayerDamage(damage);
       enemy.hurtFlash = 0.2;
-      spawnHitEffect(enemy.x, enemy.y + enemy.height / 2);
+      spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
       if (enemy.health <= 0) {
         enemy.dead = true;
         enemy.deathTimer =
@@ -625,6 +748,7 @@ function applyPlayerHit() {
 function updatePlayer(dt) {
   const player = game.player;
   player.cooldown = Math.max(0, player.cooldown - dt);
+  player.shootCooldown = Math.max(0, player.shootCooldown - dt);
   player.hurtFlash = Math.max(0, player.hurtFlash - dt);
   player.speechTimer = Math.max(0, player.speechTimer - dt);
   if (player.speechTimer === 0) player.speechIndex = null;
@@ -636,8 +760,10 @@ function updatePlayer(dt) {
   if (len > 0.2) {
     const nx = dx / Math.max(len, 1);
     const ny = dy / Math.max(len, 1);
-    player.x += nx * player.speed * dt;
-    player.y += ny * player.speed * dt;
+    const speed =
+      player.speed * (player.boosts.speed > 0 ? SPEED_MULTIPLIER : 1);
+    player.x += nx * speed * dt;
+    player.y += ny * speed * dt;
     player.x = clamp(player.x, player.width / 2, WORLD_WIDTH - player.width / 2);
     player.y = clamp(player.y, PLAYER_MIN_Y, PLAYER_MAX_Y);
     if (dx !== 0) player.facing = dx > 0 ? 1 : -1;
@@ -684,6 +810,10 @@ function updatePlayer(dt) {
       if (player.attackType) player.attackType = null;
       if (!player.dead) player.animation = "static";
     }
+  }
+
+  if (player.boosts.rapidFire > 0 && isActionHeld("shoot")) {
+    triggerPlayerAction("shoot");
   }
 
   if (player.animation === "hit") {
@@ -811,7 +941,7 @@ function updateEnemies(dt) {
       const dy = game.player.y - enemy.y;
       const distance = Math.hypot(dx, dy);
       if (dx !== 0) enemy.facing = dx > 0 ? 1 : -1;
-      if (distance > 55) {
+      if (distance > 55 * CHARACTER_SCALE) {
         enemy.x += (dx / distance) * enemy.speed * dt;
         enemy.y += (dy / distance) * enemy.speed * dt;
         enemy.y = clamp(enemy.y, PLAYER_MIN_Y, PLAYER_MAX_Y);
@@ -834,11 +964,11 @@ function updateProjectiles(dt) {
 
     for (const enemy of game.enemies) {
       if (enemy.dead) continue;
-      const hitX = Math.abs(p.x - enemy.x) < 30;
-      const hitY = Math.abs(p.y - enemy.y) < 40;
+      const hitX = Math.abs(p.x - enemy.x) < 30 * CHARACTER_SCALE;
+      const hitY = Math.abs(p.y - enemy.y) < 40 * CHARACTER_SCALE;
       if (hitX && hitY) {
-        enemy.health -= 3.35;
-        spawnHitEffect(enemy.x, enemy.y + enemy.height / 2);
+        enemy.health -= getPlayerDamage(3.35);
+        spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
         if (enemy.health <= 0) {
           enemy.dead = true;
           enemy.deathTimer =
@@ -877,6 +1007,170 @@ function updateEffects(dt) {
   }
 }
 
+function isPowerUpAvailable(type) {
+  return (
+    game.powerUpCounts[type] < POWER_UP_LIMITS[type] &&
+    !game.powerUps.some((powerUp) => powerUp.type === type)
+  );
+}
+
+function choosePowerUpType() {
+  const player = game.player;
+  const wantsHealth =
+    player.health <= player.maxHealth - HEALTH_POWER_UP_AMOUNT &&
+    isPowerUpAvailable("health");
+  if (wantsHealth && player.health <= 50) return "health";
+
+  const options = Object.keys(player.boosts).filter(
+    (type) => player.boosts[type] <= 0 && isPowerUpAvailable(type),
+  );
+  if (wantsHealth) options.push("health");
+  if (options.length === 0) return null;
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function spawnPowerUp() {
+  const type = choosePowerUpType();
+  if (!type) return false;
+
+  const taken = [
+    ...game.powerUps,
+    {
+      x: game.player.x + game.player.width / 2,
+      y: game.player.y + game.player.height,
+    },
+  ];
+  let spot = null;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const x = game.cameraX + 280 + Math.random() * 620;
+    const y = FEET_MIN_Y + 30 + Math.random() * 220;
+    const crowded = taken.some(
+      (item) => Math.hypot(item.x - x, item.y - y) < POWER_UP_SPACING,
+    );
+    if (!crowded) {
+      spot = { x, y };
+      break;
+    }
+  }
+  if (!spot) return false;
+
+  game.powerUpCounts[type] += 1;
+  game.powerUps.push({
+    type,
+    ...spot,
+    age: 0,
+    ttl: POWER_UP_LIFETIME,
+  });
+  return true;
+}
+
+function collectPowerUp(powerUp) {
+  const player = game.player;
+  if (powerUp.type === "health") {
+    player.health = clamp(
+      player.health + HEALTH_POWER_UP_AMOUNT,
+      0,
+      player.maxHealth,
+    );
+  } else {
+    player.boosts[powerUp.type] = BOOST_DURATIONS[powerUp.type];
+    if (powerUp.type === "rapidFire") player.shootCooldown = 0;
+  }
+  game.powerUpEffects.push({
+    type: powerUp.type,
+    x: powerUp.x,
+    y: powerUp.y - POWER_UP_SIZE / 2,
+    text: POWER_UP_LABELS[powerUp.type],
+    age: 0,
+  });
+  playSound(ASSET_PATHS.btnClick);
+}
+
+function updatePowerUps(dt) {
+  const player = game.player;
+  for (const type of Object.keys(player.boosts)) {
+    player.boosts[type] = Math.max(0, player.boosts[type] - dt);
+  }
+
+  game.powerUpTimer -= player.health <= POWER_UP_LOW_HEALTH ? dt * 2 : dt;
+  if (game.powerUpTimer <= 0) {
+    const spawned =
+      game.powerUps.length < POWER_UP_MAX_ON_STREET && spawnPowerUp();
+    game.powerUpTimer = spawned
+      ? POWER_UP_INTERVAL_MIN +
+        Math.random() * (POWER_UP_INTERVAL_MAX - POWER_UP_INTERVAL_MIN)
+      : POWER_UP_RETRY_DELAY;
+  }
+
+  const playerX = player.x + player.width / 2;
+  const playerFeetY = player.y + player.height;
+  for (let i = game.powerUps.length - 1; i >= 0; i -= 1) {
+    const powerUp = game.powerUps[i];
+    powerUp.age += dt;
+    powerUp.ttl -= dt;
+    if (
+      Math.abs(powerUp.x - playerX) < 90 &&
+      Math.abs(powerUp.y - playerFeetY) < 80
+    ) {
+      collectPowerUp(powerUp);
+      game.powerUps.splice(i, 1);
+    } else if (powerUp.ttl <= 0) {
+      game.powerUps.splice(i, 1);
+    }
+  }
+
+  for (let i = game.powerUpEffects.length - 1; i >= 0; i -= 1) {
+    const effect = game.powerUpEffects[i];
+    effect.age += dt;
+    if (effect.age >= POWER_UP_EFFECT_DURATION) {
+      game.powerUpEffects.splice(i, 1);
+    }
+  }
+}
+
+function getEnemySpawnInterval() {
+  const interval =
+    game.timer > 120
+      ? 9
+      : game.timer > 60
+        ? 7
+        : game.timer > FINAL_WAVE_SECONDS
+          ? 5
+          : 7;
+  return interval / ENEMY_SPAWN_RATE;
+}
+
+function keepEnemyOnScreen() {
+  const viewLeft = game.cameraX;
+  const viewRight = viewLeft + GAME_WIDTH;
+  const alive = game.enemies.filter((enemy) => !enemy.dead);
+  const onScreen = alive.some(
+    (enemy) => enemy.x + enemy.width > viewLeft && enemy.x < viewRight,
+  );
+  if (onScreen) return;
+
+  let closest = null;
+  for (const enemy of alive) {
+    if (
+      !closest ||
+      Math.abs(enemy.x - game.player.x) < Math.abs(closest.x - game.player.x)
+    ) {
+      closest = enemy;
+    }
+  }
+  if (!closest) {
+    spawnEnemy();
+    closest = game.enemies[game.enemies.length - 1];
+    if (!closest || closest.dead) return;
+  }
+
+  const fromLeft = closest.x < viewLeft;
+  closest.x = fromLeft
+    ? viewLeft - closest.width + ENEMY_EDGE_PEEK
+    : viewRight - ENEMY_EDGE_PEEK;
+  closest.facing = fromLeft ? 1 : -1;
+}
+
 function update(dt) {
   if (game.state === "gameOverTime" || game.state === "gameOverDead") {
     game.gameOverDelay = Math.max(0, game.gameOverDelay - dt);
@@ -895,16 +1189,24 @@ function update(dt) {
     return;
   }
 
+  const secondsLeft = Math.ceil(game.timer);
+  if (secondsLeft <= COUNTDOWN_SECONDS && secondsLeft !== game.countdownBeep) {
+    game.countdownBeep = secondsLeft;
+    playCountdownBeep();
+  }
+
   updatePlayer(dt);
   updateEnemies(dt);
   updateProjectiles(dt);
   updateEffects(dt);
+  updatePowerUps(dt);
 
-  const interval = game.timer > 120 ? 9 : game.timer > 60 ? 7 : 5;
+  const enemyLimit =
+    game.timer <= FINAL_WAVE_SECONDS ? FINAL_WAVE_MAX_ENEMIES : MAX_ENEMIES;
   game.spawnTimer -= dt;
-  if (game.spawnTimer <= 0 && game.enemies.length < 5) {
+  if (game.spawnTimer <= 0 && game.enemies.length < enemyLimit) {
     spawnEnemy();
-    game.spawnTimer = interval;
+    game.spawnTimer = getEnemySpawnInterval();
   }
 
   game.cameraX = clamp(
@@ -912,6 +1214,8 @@ function update(dt) {
     0,
     WORLD_WIDTH - GAME_WIDTH,
   );
+
+  keepEnemyOnScreen();
 }
 
 function drawLoadingScreen() {
@@ -964,7 +1268,318 @@ function drawStartScreen() {
   }
 }
 
+function createArtCanvas(size) {
+  const artCanvas = document.createElement("canvas");
+  artCanvas.width = size;
+  artCanvas.height = size;
+  const art = artCanvas.getContext("2d");
+  art.translate(size / 2, size / 2);
+  return { artCanvas, art };
+}
+
+function paintHealthIcon(art) {
+  const heart = new Path2D();
+  heart.moveTo(0, 66);
+  heart.bezierCurveTo(-92, 6, -74, -62, -30, -62);
+  heart.bezierCurveTo(-12, -62, 0, -48, 0, -36);
+  heart.bezierCurveTo(0, -48, 12, -62, 30, -62);
+  heart.bezierCurveTo(74, -62, 92, 6, 0, 66);
+
+  const fill = art.createRadialGradient(-20, -30, 6, 0, 0, 90);
+  fill.addColorStop(0, "#ff9a9a");
+  fill.addColorStop(0.45, "#e8152f");
+  fill.addColorStop(1, "#6e0012");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#1c0406";
+  art.fillStyle = fill;
+  art.fill(heart);
+  art.stroke(heart);
+
+  art.fillStyle = "#1c0406";
+  art.fillRect(-14, -35, 28, 72);
+  art.fillRect(-36, -13, 72, 28);
+  art.fillStyle = "#fff";
+  art.fillRect(-9, -30, 18, 62);
+  art.fillRect(-31, -8, 62, 18);
+
+  art.fillStyle = "rgba(255, 255, 255, 0.55)";
+  art.beginPath();
+  art.ellipse(-38, -38, 15, 9, -0.7, 0, Math.PI * 2);
+  art.fill();
+}
+
+function paintStrengthIcon(art) {
+  const spikes = 12;
+  const burst = new Path2D();
+  for (let i = 0; i < spikes * 2; i += 1) {
+    const radius = i % 2 === 0 ? 80 : 52;
+    const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+    burst.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+  }
+  burst.closePath();
+
+  const fill = art.createRadialGradient(0, -8, 8, 0, 0, 84);
+  fill.addColorStop(0, "#fff6b0");
+  fill.addColorStop(0.5, "#ffc21a");
+  fill.addColorStop(1, "#d65a00");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#1c0e02";
+  art.fillStyle = fill;
+  art.fill(burst);
+  art.stroke(burst);
+
+  art.font = "italic 900 66px Arial, sans-serif";
+  art.textAlign = "center";
+  art.textBaseline = "middle";
+  art.lineWidth = 11;
+  art.strokeText("2X", -2, 3);
+  art.fillStyle = "#fff";
+  art.fillText("2X", -2, 3);
+}
+
+function paintEnvelope(art, x, y) {
+  art.save();
+  art.translate(x, y);
+  art.rotate(-0.16);
+  art.lineJoin = "round";
+  art.lineWidth = 5;
+  art.strokeStyle = "#04121f";
+  art.fillStyle = "#f4fbff";
+  art.fillRect(-32, -21, 64, 42);
+  art.strokeRect(-32, -21, 64, 42);
+  art.beginPath();
+  art.moveTo(-32, -21);
+  art.lineTo(0, 5);
+  art.lineTo(32, -21);
+  art.stroke();
+  art.restore();
+}
+
+function paintRapidFireIcon(art) {
+  const hexagon = new Path2D();
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (i / 6) * Math.PI * 2;
+    hexagon.lineTo(Math.cos(angle) * 80, Math.sin(angle) * 80);
+  }
+  hexagon.closePath();
+
+  const fill = art.createRadialGradient(-16, -24, 6, 0, 0, 88);
+  fill.addColorStop(0, "#9fe4ff");
+  fill.addColorStop(0.5, "#1590e6");
+  fill.addColorStop(1, "#06316e");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#04121f";
+  art.fillStyle = fill;
+  art.fill(hexagon);
+  art.stroke(hexagon);
+
+  art.lineWidth = 6;
+  art.lineCap = "round";
+  art.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  for (const lineY of [-44, 44]) {
+    art.beginPath();
+    art.moveTo(-52, lineY + 8);
+    art.lineTo(-22, lineY);
+    art.stroke();
+  }
+
+  paintEnvelope(art, -26, 22);
+  paintEnvelope(art, 2, 2);
+  paintEnvelope(art, 28, -20);
+}
+
+function paintSpeedIcon(art) {
+  const bolt = new Path2D();
+  bolt.moveTo(6, -84);
+  bolt.lineTo(-68, 14);
+  bolt.lineTo(-16, 14);
+  bolt.lineTo(-38, 84);
+  bolt.lineTo(70, -22);
+  bolt.lineTo(18, -22);
+  bolt.lineTo(56, -84);
+  bolt.closePath();
+
+  const fill = art.createLinearGradient(0, -84, 0, 84);
+  fill.addColorStop(0, "#d8ffd0");
+  fill.addColorStop(0.5, "#35e06a");
+  fill.addColorStop(1, "#057a36");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#031a0c";
+  art.fillStyle = fill;
+  art.fill(bolt);
+  art.stroke(bolt);
+
+  art.lineCap = "round";
+  art.lineWidth = 6;
+  art.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  art.beginPath();
+  art.moveTo(14, -68);
+  art.lineTo(-36, 0);
+  art.stroke();
+}
+
+function createPowerUpArt(type) {
+  const { artCanvas: icon, art } = createArtCanvas(POWER_UP_SIZE * 2);
+  const painters = {
+    health: paintHealthIcon,
+    strength: paintStrengthIcon,
+    rapidFire: paintRapidFireIcon,
+    speed: paintSpeedIcon,
+  };
+  painters[type](art);
+
+  const glowSize = POWER_UP_SIZE * 4;
+  const { artCanvas: glow, art: glowArt } = createArtCanvas(glowSize);
+  const fade = glowArt.createRadialGradient(0, 0, 0, 0, 0, glowSize / 2);
+  fade.addColorStop(0, `rgba(${POWER_UP_GLOW[type]}, 1)`);
+  fade.addColorStop(0.45, `rgba(${POWER_UP_GLOW[type]}, 0.5)`);
+  fade.addColorStop(1, `rgba(${POWER_UP_GLOW[type]}, 0)`);
+  glowArt.fillStyle = fade;
+  glowArt.fillRect(-glowSize / 2, -glowSize / 2, glowSize, glowSize);
+
+  const { artCanvas: rays, art: raysArt } = createArtCanvas(glowSize);
+  raysArt.fillStyle = fade;
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (i / 8) * Math.PI * 2;
+    raysArt.beginPath();
+    raysArt.moveTo(0, 0);
+    raysArt.lineTo(
+      Math.cos(angle - 0.13) * glowSize,
+      Math.sin(angle - 0.13) * glowSize,
+    );
+    raysArt.lineTo(
+      Math.cos(angle + 0.13) * glowSize,
+      Math.sin(angle + 0.13) * glowSize,
+    );
+    raysArt.closePath();
+    raysArt.fill();
+  }
+
+  const { artCanvas: halo, art: haloArt } = createArtCanvas(glowSize);
+  haloArt.shadowColor = `rgb(${POWER_UP_GLOW[type]})`;
+  haloArt.shadowBlur = 44;
+  for (let i = 0; i < 3; i += 1) {
+    haloArt.drawImage(icon, -POWER_UP_SIZE, -POWER_UP_SIZE);
+  }
+
+  return { icon, glow, rays, halo };
+}
+
+function getPowerUpArt(type) {
+  if (!powerUpArt[type]) powerUpArt[type] = createPowerUpArt(type);
+  return powerUpArt[type];
+}
+
+function drawPowerUp(powerUp) {
+  const art = getPowerUpArt(powerUp.type);
+  const blinking = powerUp.ttl < POWER_UP_BLINK_TIME;
+  if (blinking && Math.floor(powerUp.ttl * 6) % 2 === 0) return;
+
+  const screenX = powerUp.x - game.cameraX;
+  const groundY = powerUp.y;
+  const iconY = groundY - POWER_UP_SIZE * 0.8 + Math.sin(powerUp.age * 3) * 7;
+  const grow = clamp(powerUp.age / 0.25, 0, 1);
+  const pulse = 0.85 + Math.sin(powerUp.age * 5) * 0.15;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.beginPath();
+  ctx.ellipse(screenX, groundY, 40 * grow, 12 * grow, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.translate(screenX, iconY);
+  ctx.scale(grow, grow);
+  ctx.globalCompositeOperation = "lighter";
+  ctx.save();
+  ctx.rotate(powerUp.age * 0.8);
+  ctx.globalAlpha = 0.8 * pulse;
+  const raySize = POWER_UP_SIZE * 3.6;
+  ctx.drawImage(art.rays, -raySize / 2, -raySize / 2, raySize, raySize);
+  ctx.restore();
+  ctx.globalAlpha = pulse;
+  const glowSize = POWER_UP_SIZE * 3 * pulse;
+  ctx.drawImage(art.glow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+  ctx.drawImage(art.halo, -POWER_UP_SIZE, -POWER_UP_SIZE, POWER_UP_SIZE * 2, POWER_UP_SIZE * 2);
+
+  ctx.fillStyle = "#fff";
+  for (let i = 0; i < 4; i += 1) {
+    const angle = powerUp.age * 1.6 + (i * Math.PI) / 2;
+    const orbit = POWER_UP_SIZE * 0.62;
+    const sparkle = 2.5 + Math.sin(powerUp.age * 7 + i * 2) * 1.5;
+    ctx.beginPath();
+    ctx.arc(
+      Math.cos(angle) * orbit,
+      Math.sin(angle) * orbit * 0.7,
+      sparkle,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 1;
+  ctx.drawImage(art.icon, -POWER_UP_SIZE / 2, -POWER_UP_SIZE / 2, POWER_UP_SIZE, POWER_UP_SIZE);
+  ctx.restore();
+}
+
+function drawPowerUpEffect(effect) {
+  const progress = effect.age / POWER_UP_EFFECT_DURATION;
+  const screenX = effect.x - game.cameraX;
+
+  ctx.save();
+  ctx.globalAlpha = 1 - progress;
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = `rgb(${POWER_UP_GLOW[effect.type]})`;
+  ctx.lineWidth = 10 * (1 - progress) + 1;
+  ctx.beginPath();
+  ctx.arc(screenX, effect.y, 40 + progress * 130, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.font = "italic 900 40px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#1c0406";
+  ctx.fillStyle = "#fff";
+  ctx.shadowColor = `rgb(${POWER_UP_GLOW[effect.type]})`;
+  ctx.shadowBlur = 20;
+  const textY = effect.y - 40 - progress * 70;
+  ctx.strokeText(effect.text, screenX, textY);
+  ctx.shadowBlur = 0;
+  ctx.fillText(effect.text, screenX, textY);
+  ctx.restore();
+}
+
+function drawBoostTimers(healthX) {
+  const barX = healthX + 50;
+  const barW = 196;
+  const barH = 12;
+  let rowY = 76;
+  for (const [type, timeLeft] of Object.entries(game.player.boosts)) {
+    if (timeLeft <= 0) continue;
+    const barY = rowY + 12;
+    ctx.drawImage(getPowerUpArt(type).icon, healthX + 8, rowY, 36, 36);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
+    ctx.fillStyle = `rgb(${POWER_UP_GLOW[type]})`;
+    ctx.fillRect(barX, barY, barW * (timeLeft / BOOST_DURATIONS[type]), barH);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`${Math.ceil(timeLeft)}s`, barX + barW + 10, barY + 12);
+    rowY += 38;
+  }
+}
+
 function drawWorld() {
+  for (const powerUp of game.powerUps) drawPowerUp(powerUp);
+
   for (const enemy of game.enemies) {
     const img = getEnemyFrame(enemy);
     const drawX = enemy.x - game.cameraX;
@@ -1026,14 +1641,20 @@ function drawWorld() {
   ctx.drawImage(playerImg, 0, 0, game.player.width, game.player.height);
   ctx.restore();
 
+  for (const effect of game.powerUpEffects) drawPowerUpEffect(effect);
+
   if (game.player.speechIndex !== null && game.player.speechTimer > 0) {
     const speechPath = ASSET_PATHS.playerSpeech[game.player.speechIndex];
     const speechImg = assets.images[speechPath];
     if (speechImg) {
+      const speechWidth = speechImg.width * CHARACTER_SCALE;
+      const speechHeight = speechImg.height * CHARACTER_SCALE;
       ctx.drawImage(
         speechImg,
-        px + (game.player.width - speechImg.width) / 2 + 32,
-        py - speechImg.height + 20,
+        px + (game.player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
+        Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
+        speechWidth,
+        speechHeight,
       );
     }
   }
@@ -1078,6 +1699,8 @@ function drawHUD() {
     ctx.drawImage(healthFill, healthX + 11, healthY + 11);
     ctx.restore();
   }
+
+  drawBoostTimers(healthX);
 
   const pauseIcon =
     game.state === "paused"
@@ -1142,14 +1765,16 @@ function drawHUD() {
   actions.forEach(({ name, src, rect }) => {
     const img = assets.images[src];
     if (!img) return;
-    const pressed =
-      input.actionKeys.has(name) ||
-      Array.from(game.actionPointerIds.values()).includes(name);
-    const scale = pressed ? 0.9 : 1;
+    const scale = isActionHeld(name) ? 0.9 : 1;
     const drawWidth = rect.w * scale;
     const drawHeight = rect.h * scale;
     const centerX = rect.x + rect.w / 2;
     const centerY = rect.y + rect.h / 2;
+    const coolingDown =
+      name === "shoot" &&
+      game.player.shootCooldown > 0 &&
+      game.player.boosts.rapidFire <= 0;
+    ctx.globalAlpha = coolingDown ? 0.35 : 1;
     ctx.drawImage(
       img,
       centerX - drawWidth / 2,
@@ -1157,6 +1782,7 @@ function drawHUD() {
       drawWidth,
       drawHeight,
     );
+    ctx.globalAlpha = 1;
   });
 
   if (game.state === "paused") {

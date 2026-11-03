@@ -42,7 +42,15 @@ function checkSection(entries, baseFolder) {
     if (!existsSync(entryPage)) errors.push(`${label}: missing entry page`);
     if (!existsSync(icon)) warnings.push(`${label}: missing icon, the card will show its initial`);
     if (!entry.description) warnings.push(`${label}: no description`);
-    if (!entry.category) warnings.push(`${label}: no category, it will be filed under "Other"`);
+    if (entry.category) errors.push(`${label}: use categories: ["${entry.category}"] instead of category`);
+    const categories = entry.categories ?? [];
+    if (!Array.isArray(categories)) {
+      errors.push(`${label}: categories must be a list, like ["Arcade"]`);
+    } else if (categories.length === 0) {
+      warnings.push(`${label}: no categories, it will be filed under "Other"`);
+    } else if (new Set(categories).size !== categories.length) {
+      errors.push(`${label}: categories lists the same name twice`);
+    }
     if (entry.added && !/^\d{4}-\d{2}-\d{2}$/.test(entry.added)) {
       errors.push(`${label}: added must look like YYYY-MM-DD`);
     }

@@ -7,7 +7,8 @@
  *   title        Fallback only. The arcade shows the <title> from the game's index.html,
  *                and uses this value if that page can't be read.
  *   description  One or two sentences shown on the card. Searchable.
- *   category     Label and filter. New categories appear in the filter bar automatically.
+ *   categories   List of labels and filters, such as ["Shooter", "Arcade"]. The game appears
+ *                under each one. New categories appear in the filter bar automatically.
  *   tags         Extra search words. Not displayed.
  *   added        Optional date as "YYYY-MM-DD". Leave it "" unless you know the real date.
  *                The "Recently added" sort appears once two or more games have a date.
@@ -29,7 +30,7 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Droid Chomp",
       description:
         "Pick a droid, collect every gear and dodge the Empire's finest across ten maze worlds. Then dance.",
-      category: "Arcade",
+      categories: ["Arcade"],
       tags: [
         "maze",
         "retro",
@@ -47,7 +48,7 @@ window.ARCADE_CATALOG = {
       title: "Galactic Squadron",
       description:
         "An arcade space shooter with diving enemy squadrons and a capital-ship boss every seventh stage.",
-      category: "Shooter",
+      categories: ["Shooter", "Arcade"],
       tags: [
         "space",
         "sci-fi",
@@ -64,7 +65,7 @@ window.ARCADE_CATALOG = {
       title: "Galactic Squadron Racer",
       description:
         "Pick a ship from the Galactic Squadron fleet and race three AI rivals on ten top-down circuits.",
-      category: "Racing",
+      categories: ["Racing", "Arcade"],
       tags: [
         "space",
         "sci-fi",
@@ -82,7 +83,7 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Jedi Story",
       description:
         "Build your Jedi and battle across ten worlds in a lightsaber platformer with five Sith boss fights.",
-      category: "Arcade",
+      categories: ["Arcade", "Platformer", "RPG"],
       tags: [
         "platformer",
         "action",
@@ -101,7 +102,7 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Latke Toss",
       description:
         "A 60-second 3D Hanukkah challenge. Toss as many latkes as you can into a pot of hot oil.",
-      category: "Arcade",
+      categories: ["Arcade", "Holiday"],
       tags: ["holiday", "hanukkah", "3d", "timed", "leaderboard", "touch"],
       added: "",
     },
@@ -110,7 +111,7 @@ window.ARCADE_CATALOG = {
       title: "Halloween Photo Scavenger Hunt",
       description:
         "A Halloween carnival photo scavenger hunt. Fill all ten spooky challenges with your own pictures.",
-      category: "Real World",
+      categories: ["Real World"],
       tags: [
         "halloween",
         "photo",
@@ -126,7 +127,7 @@ window.ARCADE_CATALOG = {
       title: "Parks & Playgrounds Photo Scavenger Hunt",
       description:
         "Head to a park or playground and take on ten outdoor photo challenges.",
-      category: "Real World",
+      categories: ["Real World"],
       tags: [
         "outdoors",
         "park",
@@ -142,9 +143,25 @@ window.ARCADE_CATALOG = {
     {
       folder: "postal_inspectors",
       title: "Coming Soon - Postal Inspectors : Mail Call",
-      description: "In development.",
-      category: "Arcade",
-      tags: ["mobile", "beatem-up"],
+      description:
+        "Stop the mail thieves! Punch, kick and hurl envelopes to survive three minutes on the city streets.",
+      categories: ["Arcade", "Beat'em Up"],
+      tags: [
+        "beatem-up",
+        "beat em up",
+        "brawler",
+        "fighting",
+        "action",
+        "side-scroller",
+        "city",
+        "mail",
+        "postal",
+        "power-ups",
+        "timed",
+        "mobile",
+        "keyboard",
+        "touch",
+      ],
       added: "",
       icon: "games/postal_inspectors/icons/icon-256.png",
     },
@@ -153,7 +170,7 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Pumpkin Smash — AR Halloween Hunt",
       description:
         "A mobile AR Halloween hunt. Explore your surroundings to find and smash five hidden pumpkins.",
-      category: "Real World",
+      categories: ["Real World", "Holiday", "AR"],
       tags: [
         "halloween",
         "ar",
@@ -169,7 +186,7 @@ window.ARCADE_CATALOG = {
       folder: "sk8_free",
       title: "Coming Soon - Sk8 Free",
       description: "In development.",
-      category: "Arcade",
+      categories: ["Arcade", "Sports", "Endless Runner"],
       tags: [
         "skateboarding",
         "classic",
@@ -185,7 +202,7 @@ window.ARCADE_CATALOG = {
       title: "Skateboard Ninjas",
       description:
         "A 60-second side-scrolling skate run. Ollie, flip, grab and grind while dodging angry Karens.",
-      category: "Arcade",
+      categories: ["Arcade", "Sports"],
       tags: [
         "skateboarding",
         "ninja",
@@ -201,7 +218,7 @@ window.ARCADE_CATALOG = {
       title: "Skateboard Ninjas 2 : Downhill Jam",
       description:
         "An endless 3D downhill runner. Grind rails and throw ninja stars at Karens and rival ninjas.",
-      category: "Arcade",
+      categories: ["Arcade", "Sports", "Endless Runner"],
       tags: [
         "skateboarding",
         "ninja",
@@ -218,7 +235,7 @@ window.ARCADE_CATALOG = {
       title: "Skyline Slinger",
       description:
         "Swing from rooftop to rooftop through a bright city, scoop up stars, and see how far you can fly.",
-      category: "Arcade",
+      categories: ["Arcade", "Platformer"],
       tags: [
         "swinging",
         "city",
@@ -234,7 +251,7 @@ window.ARCADE_CATALOG = {
       title: "Stack Attack",
       description:
         "A retro falling-block puzzle game with 17 themes. Stack and clear lines as gravity speeds up.",
-      category: "Puzzle",
+      categories: ["Puzzle", "Arcade"],
       tags: [
         "blocks",
         "falling blocks",
@@ -251,7 +268,7 @@ window.ARCADE_CATALOG = {
       title: "Touch the Beat",
       description:
         "A neon four-lane rhythm game built for phones. Tap each lane as its note crosses the pad.",
-      category: "Rhythm",
+      categories: ["Rhythm"],
       tags: [
         "music",
         "neon",
@@ -269,7 +286,7 @@ window.ARCADE_CATALOG = {
       title: "Coming Soon - Turkey Toss",
       description:
         "A 60-second 3D Thanksgiving feast. Land turkey slices on plates, stack multipliers and bounce off the giant roast.",
-      category: "Arcade",
+      categories: ["Arcade", "Holiday"],
       tags: ["holiday", "thanksgiving", "3d", "timed", "leaderboard", "touch"],
       added: "",
     },
@@ -281,7 +298,7 @@ window.ARCADE_CATALOG = {
       title: "3D Wonder Studio",
       description:
         "Sculpt, paint and export your own 3D models, starting from a ball of digital clay.",
-      category: "Creativity",
+      categories: ["Creativity"],
       tags: [
         "3d",
         "sculpting",
@@ -299,7 +316,7 @@ window.ARCADE_CATALOG = {
       title: "Drawing Studio",
       description:
         "Draw, fill and erase on a simple canvas with brush sizes and a color palette, then save your picture.",
-      category: "Creativity",
+      categories: ["Creativity"],
       tags: ["art", "drawing", "painting", "kids"],
       added: "2026-10-10",
     },
