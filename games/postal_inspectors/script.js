@@ -6,6 +6,20 @@ const CHARACTER_SCALE = 2;
 const CHARACTER_HEIGHT = 110 * CHARACTER_SCALE;
 const PUNCH_HAND_X = 0.94;
 const PUNCH_HAND_Y = 0.37;
+const POWER_UP_SIZE = 84;
+const POWER_UP_LIFETIME = 12;
+const POWER_UP_BLINK_TIME = 3;
+const POWER_UP_FIRST_DELAY = 20;
+const POWER_UP_INTERVAL_MIN = 28;
+const POWER_UP_INTERVAL_MAX = 38;
+const POWER_UP_RETRY_DELAY = 4;
+const POWER_UP_LOW_HEALTH = 40;
+const POWER_UP_LIMITS = { health: 3, strength: 3 };
+const POWER_UP_GLOW = { health: "255, 50, 80", strength: "255, 190, 40" };
+const POWER_UP_EFFECT_DURATION = 0.9;
+const HEALTH_POWER_UP_AMOUNT = 25;
+const STRENGTH_DURATION = 15;
+const STRENGTH_MULTIPLIER = 2;
 const FEET_MIN_Y = 410;
 const FEET_MAX_Y = 750;
 const PLAYER_MIN_Y = FEET_MIN_Y - CHARACTER_HEIGHT;
@@ -181,6 +195,10 @@ const game = {
   enemies: [],
   projectiles: [],
   effects: [],
+  powerUps: [],
+  powerUpEffects: [],
+  powerUpTimer: 0,
+  powerUpCounts: { health: 0, strength: 0 },
   player: null,
   spawnTimer: 0,
   overReason: null,
@@ -203,6 +221,7 @@ const input = {
 };
 
 const assets = { images: {}, sounds: {} };
+const powerUpArt = {};
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
@@ -351,6 +370,10 @@ function resetGameState() {
   game.enemies = [];
   game.projectiles = [];
   game.effects = [];
+  game.powerUps = [];
+  game.powerUpEffects = [];
+  game.powerUpTimer = POWER_UP_FIRST_DELAY;
+  game.powerUpCounts = { health: 0, strength: 0 };
   game.spawnTimer = 0;
   game.overReason = null;
   game.gameOverDelay = 0;
@@ -377,6 +400,7 @@ function resetGameState() {
     hurtFlash: 0,
     speechIndex: null,
     speechTimer: 0,
+    strengthTimer: 0,
     dead: false,
   };
 }
@@ -595,6 +619,10 @@ function resolveEnemyAttack(enemy) {
   enemy.attackType = null;
 }
 
+function getPlayerDamage(amount) {
+  return game.player.strengthTimer > 0 ? amount * STRENGTH_MULTIPLIER : amount;
+}
+
 function applyPlayerHit() {
   if (!game.player.attackType || game.player.attackHitFired) return;
   const attack = game.player.attackType;
@@ -614,7 +642,7 @@ function applyPlayerHit() {
     const dy = Math.abs(enemy.y - game.player.y);
     if (dx < range && dy < 90 * CHARACTER_SCALE) {
       const damage = attack === "punch" ? 4 : attack === "kick" ? 6 : 0;
-      enemy.health -= damage;
+      enemy.health -= getPlayerDamage(damage);
       enemy.hurtFlash = 0.2;
       spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
       if (enemy.health <= 0) {
@@ -860,7 +888,7 @@ function updateProjectiles(dt) {
       const hitX = Math.abs(p.x - enemy.x) < 30 * CHARACTER_SCALE;
       const hitY = Math.abs(p.y - enemy.y) < 40 * CHARACTER_SCALE;
       if (hitX && hitY) {
-        enemy.health -= 3.35;
+        enemy.health -= getPlayerDamage(3.35);
         spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
         if (enemy.health <= 0) {
           enemy.dead = true;
@@ -900,6 +928,102 @@ function updateEffects(dt) {
   }
 }
 
+function choosePowerUpType() {
+  const player = game.player;
+  const wantsHealth =
+    player.health <= player.maxHealth - HEALTH_POWER_UP_AMOUNT &&
+    game.powerUpCounts.health < POWER_UP_LIMITS.health;
+  const wantsStrength =
+    player.strengthTimer <= 0 &&
+    game.powerUpCounts.strength < POWER_UP_LIMITS.strength;
+
+  if (wantsHealth && wantsStrength) {
+    return player.health <= 50 || Math.random() < 0.5 ? "health" : "strength";
+  }
+  if (wantsHealth) return "health";
+  return wantsStrength ? "strength" : null;
+}
+
+function spawnPowerUp() {
+  const type = choosePowerUpType();
+  if (!type) return false;
+
+  const playerX = game.player.x + game.player.width / 2;
+  let x = game.cameraX + 280 + Math.random() * 620;
+  if (Math.abs(x - playerX) < 220) {
+    x += playerX < game.cameraX + GAME_WIDTH / 2 ? 320 : -320;
+  }
+  game.powerUpCounts[type] += 1;
+  game.powerUps.push({
+    type,
+    x: clamp(x, game.cameraX + 280, game.cameraX + 900),
+    y: FEET_MIN_Y + 30 + Math.random() * 220,
+    age: 0,
+    ttl: POWER_UP_LIFETIME,
+  });
+  return true;
+}
+
+function collectPowerUp(powerUp) {
+  const player = game.player;
+  if (powerUp.type === "health") {
+    player.health = clamp(
+      player.health + HEALTH_POWER_UP_AMOUNT,
+      0,
+      player.maxHealth,
+    );
+  } else {
+    player.strengthTimer = STRENGTH_DURATION;
+  }
+  game.powerUpEffects.push({
+    type: powerUp.type,
+    x: powerUp.x,
+    y: powerUp.y - POWER_UP_SIZE / 2,
+    text: powerUp.type === "health" ? `+${HEALTH_POWER_UP_AMOUNT}` : "2X DAMAGE",
+    age: 0,
+  });
+  playSound(ASSET_PATHS.btnClick);
+}
+
+function updatePowerUps(dt) {
+  const player = game.player;
+  player.strengthTimer = Math.max(0, player.strengthTimer - dt);
+
+  game.powerUpTimer -= player.health <= POWER_UP_LOW_HEALTH ? dt * 2 : dt;
+  if (game.powerUpTimer <= 0) {
+    const spawned = game.powerUps.length === 0 && spawnPowerUp();
+    game.powerUpTimer = spawned
+      ? POWER_UP_INTERVAL_MIN +
+        Math.random() * (POWER_UP_INTERVAL_MAX - POWER_UP_INTERVAL_MIN)
+      : POWER_UP_RETRY_DELAY;
+  }
+
+  const playerX = player.x + player.width / 2;
+  const playerFeetY = player.y + player.height;
+  for (let i = game.powerUps.length - 1; i >= 0; i -= 1) {
+    const powerUp = game.powerUps[i];
+    powerUp.age += dt;
+    powerUp.ttl -= dt;
+    if (
+      Math.abs(powerUp.x - playerX) < 90 &&
+      Math.abs(powerUp.y - playerFeetY) < 80
+    ) {
+      collectPowerUp(powerUp);
+      game.powerUps.splice(i, 1);
+    } else if (powerUp.ttl <= 0) {
+      game.powerUps.splice(i, 1);
+    }
+  }
+
+  for (let i = game.powerUpEffects.length - 1; i >= 0; i -= 1) {
+    const effect = game.powerUpEffects[i];
+    effect.age += dt;
+    if (effect.age >= POWER_UP_EFFECT_DURATION) {
+      game.powerUpEffects.splice(i, 1);
+    }
+  }
+}
+
 function update(dt) {
   if (game.state === "gameOverTime" || game.state === "gameOverDead") {
     game.gameOverDelay = Math.max(0, game.gameOverDelay - dt);
@@ -922,6 +1046,7 @@ function update(dt) {
   updateEnemies(dt);
   updateProjectiles(dt);
   updateEffects(dt);
+  updatePowerUps(dt);
 
   const interval = game.timer > 120 ? 9 : game.timer > 60 ? 7 : 5;
   game.spawnTimer -= dt;
@@ -987,7 +1112,228 @@ function drawStartScreen() {
   }
 }
 
+function createArtCanvas(size) {
+  const artCanvas = document.createElement("canvas");
+  artCanvas.width = size;
+  artCanvas.height = size;
+  const art = artCanvas.getContext("2d");
+  art.translate(size / 2, size / 2);
+  return { artCanvas, art };
+}
+
+function paintHealthIcon(art) {
+  const heart = new Path2D();
+  heart.moveTo(0, 66);
+  heart.bezierCurveTo(-92, 6, -74, -62, -30, -62);
+  heart.bezierCurveTo(-12, -62, 0, -48, 0, -36);
+  heart.bezierCurveTo(0, -48, 12, -62, 30, -62);
+  heart.bezierCurveTo(74, -62, 92, 6, 0, 66);
+
+  const fill = art.createRadialGradient(-20, -30, 6, 0, 0, 90);
+  fill.addColorStop(0, "#ff9a9a");
+  fill.addColorStop(0.45, "#e8152f");
+  fill.addColorStop(1, "#6e0012");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#1c0406";
+  art.fillStyle = fill;
+  art.fill(heart);
+  art.stroke(heart);
+
+  art.fillStyle = "#1c0406";
+  art.fillRect(-14, -35, 28, 72);
+  art.fillRect(-36, -13, 72, 28);
+  art.fillStyle = "#fff";
+  art.fillRect(-9, -30, 18, 62);
+  art.fillRect(-31, -8, 62, 18);
+
+  art.fillStyle = "rgba(255, 255, 255, 0.55)";
+  art.beginPath();
+  art.ellipse(-38, -38, 15, 9, -0.7, 0, Math.PI * 2);
+  art.fill();
+}
+
+function paintStrengthIcon(art) {
+  const spikes = 12;
+  const burst = new Path2D();
+  for (let i = 0; i < spikes * 2; i += 1) {
+    const radius = i % 2 === 0 ? 80 : 52;
+    const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+    burst.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+  }
+  burst.closePath();
+
+  const fill = art.createRadialGradient(0, -8, 8, 0, 0, 84);
+  fill.addColorStop(0, "#fff6b0");
+  fill.addColorStop(0.5, "#ffc21a");
+  fill.addColorStop(1, "#d65a00");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#1c0e02";
+  art.fillStyle = fill;
+  art.fill(burst);
+  art.stroke(burst);
+
+  art.font = "italic 900 66px Arial, sans-serif";
+  art.textAlign = "center";
+  art.textBaseline = "middle";
+  art.lineWidth = 11;
+  art.strokeText("2X", -2, 3);
+  art.fillStyle = "#fff";
+  art.fillText("2X", -2, 3);
+}
+
+function createPowerUpArt(type) {
+  const { artCanvas: icon, art } = createArtCanvas(POWER_UP_SIZE * 2);
+  if (type === "health") paintHealthIcon(art);
+  else paintStrengthIcon(art);
+
+  const glowSize = POWER_UP_SIZE * 4;
+  const { artCanvas: glow, art: glowArt } = createArtCanvas(glowSize);
+  const fade = glowArt.createRadialGradient(0, 0, 0, 0, 0, glowSize / 2);
+  fade.addColorStop(0, `rgba(${POWER_UP_GLOW[type]}, 1)`);
+  fade.addColorStop(0.45, `rgba(${POWER_UP_GLOW[type]}, 0.5)`);
+  fade.addColorStop(1, `rgba(${POWER_UP_GLOW[type]}, 0)`);
+  glowArt.fillStyle = fade;
+  glowArt.fillRect(-glowSize / 2, -glowSize / 2, glowSize, glowSize);
+
+  const { artCanvas: rays, art: raysArt } = createArtCanvas(glowSize);
+  raysArt.fillStyle = fade;
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (i / 8) * Math.PI * 2;
+    raysArt.beginPath();
+    raysArt.moveTo(0, 0);
+    raysArt.lineTo(
+      Math.cos(angle - 0.13) * glowSize,
+      Math.sin(angle - 0.13) * glowSize,
+    );
+    raysArt.lineTo(
+      Math.cos(angle + 0.13) * glowSize,
+      Math.sin(angle + 0.13) * glowSize,
+    );
+    raysArt.closePath();
+    raysArt.fill();
+  }
+
+  const { artCanvas: halo, art: haloArt } = createArtCanvas(glowSize);
+  haloArt.shadowColor = `rgb(${POWER_UP_GLOW[type]})`;
+  haloArt.shadowBlur = 44;
+  for (let i = 0; i < 3; i += 1) {
+    haloArt.drawImage(icon, -POWER_UP_SIZE, -POWER_UP_SIZE);
+  }
+
+  return { icon, glow, rays, halo };
+}
+
+function getPowerUpArt(type) {
+  if (!powerUpArt[type]) powerUpArt[type] = createPowerUpArt(type);
+  return powerUpArt[type];
+}
+
+function drawPowerUp(powerUp) {
+  const art = getPowerUpArt(powerUp.type);
+  const blinking = powerUp.ttl < POWER_UP_BLINK_TIME;
+  if (blinking && Math.floor(powerUp.ttl * 6) % 2 === 0) return;
+
+  const screenX = powerUp.x - game.cameraX;
+  const groundY = powerUp.y;
+  const iconY = groundY - POWER_UP_SIZE * 0.8 + Math.sin(powerUp.age * 3) * 7;
+  const grow = clamp(powerUp.age / 0.25, 0, 1);
+  const pulse = 0.85 + Math.sin(powerUp.age * 5) * 0.15;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.beginPath();
+  ctx.ellipse(screenX, groundY, 40 * grow, 12 * grow, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.translate(screenX, iconY);
+  ctx.scale(grow, grow);
+  ctx.globalCompositeOperation = "lighter";
+  ctx.save();
+  ctx.rotate(powerUp.age * 0.8);
+  ctx.globalAlpha = 0.8 * pulse;
+  const raySize = POWER_UP_SIZE * 3.6;
+  ctx.drawImage(art.rays, -raySize / 2, -raySize / 2, raySize, raySize);
+  ctx.restore();
+  ctx.globalAlpha = pulse;
+  const glowSize = POWER_UP_SIZE * 3 * pulse;
+  ctx.drawImage(art.glow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+  ctx.drawImage(art.halo, -POWER_UP_SIZE, -POWER_UP_SIZE, POWER_UP_SIZE * 2, POWER_UP_SIZE * 2);
+
+  ctx.fillStyle = "#fff";
+  for (let i = 0; i < 4; i += 1) {
+    const angle = powerUp.age * 1.6 + (i * Math.PI) / 2;
+    const orbit = POWER_UP_SIZE * 0.62;
+    const sparkle = 2.5 + Math.sin(powerUp.age * 7 + i * 2) * 1.5;
+    ctx.beginPath();
+    ctx.arc(
+      Math.cos(angle) * orbit,
+      Math.sin(angle) * orbit * 0.7,
+      sparkle,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 1;
+  ctx.drawImage(art.icon, -POWER_UP_SIZE / 2, -POWER_UP_SIZE / 2, POWER_UP_SIZE, POWER_UP_SIZE);
+  ctx.restore();
+}
+
+function drawPowerUpEffect(effect) {
+  const progress = effect.age / POWER_UP_EFFECT_DURATION;
+  const screenX = effect.x - game.cameraX;
+
+  ctx.save();
+  ctx.globalAlpha = 1 - progress;
+  ctx.globalCompositeOperation = "lighter";
+  ctx.strokeStyle = `rgb(${POWER_UP_GLOW[effect.type]})`;
+  ctx.lineWidth = 10 * (1 - progress) + 1;
+  ctx.beginPath();
+  ctx.arc(screenX, effect.y, 40 + progress * 130, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.font = "italic 900 40px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#1c0406";
+  ctx.fillStyle = "#fff";
+  ctx.shadowColor = `rgb(${POWER_UP_GLOW[effect.type]})`;
+  ctx.shadowBlur = 20;
+  const textY = effect.y - 40 - progress * 70;
+  ctx.strokeText(effect.text, screenX, textY);
+  ctx.shadowBlur = 0;
+  ctx.fillText(effect.text, screenX, textY);
+  ctx.restore();
+}
+
+function drawStrengthTimer(healthX) {
+  const timeLeft = game.player.strengthTimer;
+  if (timeLeft <= 0) return;
+
+  const barX = healthX + 56;
+  const barY = 92;
+  const barW = 190;
+  const barH = 14;
+  ctx.drawImage(getPowerUpArt("strength").icon, healthX + 6, 78, 46, 46);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+  ctx.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
+  ctx.fillStyle = `rgb(${POWER_UP_GLOW.strength})`;
+  ctx.fillRect(barX, barY, barW * (timeLeft / STRENGTH_DURATION), barH);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 22px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(`${Math.ceil(timeLeft)}s`, barX + barW + 12, barY + 14);
+}
+
 function drawWorld() {
+  for (const powerUp of game.powerUps) drawPowerUp(powerUp);
+
   for (const enemy of game.enemies) {
     const img = getEnemyFrame(enemy);
     const drawX = enemy.x - game.cameraX;
@@ -1049,6 +1395,8 @@ function drawWorld() {
   ctx.drawImage(playerImg, 0, 0, game.player.width, game.player.height);
   ctx.restore();
 
+  for (const effect of game.powerUpEffects) drawPowerUpEffect(effect);
+
   if (game.player.speechIndex !== null && game.player.speechTimer > 0) {
     const speechPath = ASSET_PATHS.playerSpeech[game.player.speechIndex];
     const speechImg = assets.images[speechPath];
@@ -1105,6 +1453,8 @@ function drawHUD() {
     ctx.drawImage(healthFill, healthX + 11, healthY + 11);
     ctx.restore();
   }
+
+  drawStrengthTimer(healthX);
 
   const pauseIcon =
     game.state === "paused"
