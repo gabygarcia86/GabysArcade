@@ -16,11 +16,12 @@ window.Arcade = (function () {
 
   function normalizeEntry(entry, baseFolder) {
     const base = `${baseFolder}/${entry.folder}`;
+    const categories = [].concat(entry.categories || []).filter(Boolean);
     return {
       id: entry.folder,
       title: entry.title || entry.folder.replace(/[_-]+/g, " "),
       description: entry.description || "",
-      category: entry.category || "Other",
+      categories: categories.length ? categories : ["Other"],
       tags: Array.isArray(entry.tags) ? entry.tags : [],
       added: entry.added || "",
       url: entry.url || `${base}/index.html`,

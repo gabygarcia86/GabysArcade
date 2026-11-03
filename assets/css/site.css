@@ -756,6 +756,12 @@ main {
   margin-top: auto;
 }
 
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .tag {
   padding: 2px 9px;
   font-family: var(--font-display);
@@ -772,6 +778,7 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  margin-left: auto;
   font-family: var(--font-display);
   font-size: 0.86rem;
   font-weight: 600;

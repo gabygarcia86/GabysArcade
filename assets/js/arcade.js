@@ -53,6 +53,13 @@
         aria-label="${verb} ${escapeHtml(game.title)} ${preposition} favorites">${ICONS.star}</button>`;
   }
 
+  function categoryTags(entry) {
+    const tags = entry.categories
+      .map((name) => `<span class="tag">${escapeHtml(name)}</span>`)
+      .join("");
+    return `<span class="card-tags">${tags}</span>`;
+  }
+
   function gameCard(game) {
     return `
       <article class="card">
@@ -65,7 +72,7 @@
           </h3>
           <p class="card-desc">${escapeHtml(game.description)}</p>
           <div class="card-meta">
-            <span class="tag">${escapeHtml(game.category)}</span>
+            ${categoryTags(game)}
             <span class="card-cta" aria-hidden="true">Play ${ICONS.arrow}</span>
           </div>
         </div>
@@ -103,7 +110,7 @@
           </h3>
           <p class="card-desc">${escapeHtml(app.description)}</p>
           <div class="card-meta">
-            <span class="tag">${escapeHtml(app.category)}</span>
+            ${categoryTags(app)}
             <span class="card-cta" aria-hidden="true">Launch ${ICONS.arrow}</span>
           </div>
         </div>
@@ -111,7 +118,7 @@
   }
 
   function matchesQuery(game, query) {
-    const searchable = [game.title, game.description, game.category, ...game.tags]
+    const searchable = [game.title, game.description, ...game.categories, ...game.tags]
       .join(" ")
       .toLowerCase();
     return query
@@ -126,7 +133,9 @@
 
     const categoryCounts = new Map();
     games.forEach((game) => {
-      categoryCounts.set(game.category, (categoryCounts.get(game.category) || 0) + 1);
+      game.categories.forEach((name) => {
+        categoryCounts.set(name, (categoryCounts.get(name) || 0) + 1);
+      });
     });
     const categories = [...categoryCounts.keys()].sort((a, b) => a.localeCompare(b));
 
@@ -171,7 +180,7 @@
     function render() {
       const focusedFavorite = document.activeElement?.dataset?.fav;
       const visible = games
-        .filter((game) => state.category === "All" || game.category === state.category)
+        .filter((game) => state.category === "All" || game.categories.includes(state.category))
         .filter((game) => matchesQuery(game, state.query))
         .sort(SORTS[state.sort].compare);
 
