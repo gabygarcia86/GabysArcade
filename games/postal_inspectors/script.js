@@ -2,8 +2,14 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const WORLD_WIDTH = 2560;
 const PLAYER_GROUND_Y = 570;
-const PLAYER_MIN_Y = 300;
-const PLAYER_MAX_Y = 640;
+const CHARACTER_SCALE = 2;
+const CHARACTER_HEIGHT = 110 * CHARACTER_SCALE;
+const PUNCH_HAND_X = 0.94;
+const PUNCH_HAND_Y = 0.37;
+const FEET_MIN_Y = 410;
+const FEET_MAX_Y = 750;
+const PLAYER_MIN_Y = FEET_MIN_Y - CHARACTER_HEIGHT;
+const PLAYER_MAX_Y = FEET_MAX_Y - CHARACTER_HEIGHT;
 const ENEMY_DEATH_FRAME_DURATION = 0.12;
 const HIT_EFFECT_FRAME_DURATION = 0.07;
 const PLAYER_JUMP_LAND_DURATION = 0.1;
@@ -351,9 +357,9 @@ function resetGameState() {
   game.gameOverTriggered = false;
   game.player = {
     x: GAME_WIDTH / 2,
-    y: GAME_HEIGHT / 2,
-    width: 66,
-    height: 110,
+    y: PLAYER_MIN_Y + 60,
+    width: 66 * CHARACTER_SCALE,
+    height: CHARACTER_HEIGHT,
     speed: 240,
     facing: 1,
     health: 100,
@@ -411,8 +417,8 @@ function spawnEnemy(nearPlayer = false) {
   const enemy = {
     x: fromLeft ? -40 : WORLD_WIDTH + 40,
     y: PLAYER_MIN_Y + Math.random() * (PLAYER_MAX_Y - PLAYER_MIN_Y),
-    width: 64,
-    height: 110,
+    width: 64 * CHARACTER_SCALE,
+    height: CHARACTER_HEIGHT,
     speed: 110,
     health: 10,
     facing: fromLeft ? 1 : -1,
@@ -439,7 +445,8 @@ function spawnEnemy(nearPlayer = false) {
       enemy.facing = fromLeft ? 1 : -1;
     } else {
       const playerSide = game.player.x < WORLD_WIDTH / 2 ? 1 : -1;
-      enemy.x = playerSide > 0 ? WORLD_WIDTH + 34 : -34;
+      const offscreen = 34 * CHARACTER_SCALE;
+      enemy.x = playerSide > 0 ? WORLD_WIDTH + offscreen : -offscreen;
       enemy.facing = playerSide > 0 ? -1 : 1;
     }
   }
@@ -503,17 +510,24 @@ function triggerPlayerAction(type) {
     game.player.animation = "punch";
     game.player.animFrame = 0;
     game.player.animTimer = 0;
-    playSound(ASSET_PATHS.playerShootSfx);
-    game.projectiles.push({
-      x: game.player.x + (game.player.facing > 0 ? 34 : -5),
-      y: game.player.y + 28,
-      w: 25,
-      h: 18,
-      vx: game.player.facing * 640,
-      ttl: 1.5,
-      rotation: 0,
-    });
   }
+}
+
+function spawnProjectile() {
+  const player = game.player;
+  const w = 25 * CHARACTER_SCALE;
+  const h = 18 * CHARACTER_SCALE;
+  const handX = player.facing > 0 ? PUNCH_HAND_X : 1 - PUNCH_HAND_X;
+  playSound(ASSET_PATHS.playerShootSfx);
+  game.projectiles.push({
+    x: player.x + player.width * handX - w / 2,
+    y: player.y - player.jumpHeight + player.height * PUNCH_HAND_Y - h / 2,
+    w,
+    h,
+    vx: player.facing * 640,
+    ttl: 1.5,
+    rotation: 0,
+  });
 }
 
 function damagePlayer(amount) {
@@ -553,7 +567,10 @@ function handleEnemyAttack(enemy) {
   )
     return;
   const dist = Math.abs(enemy.x - game.player.x);
-  if (dist < 92 && Math.abs(enemy.y - game.player.y) < 90) {
+  if (
+    dist < 92 * CHARACTER_SCALE &&
+    Math.abs(enemy.y - game.player.y) < 90 * CHARACTER_SCALE
+  ) {
     enemy.attackType = Math.random() < 0.6 ? "punch" : "kick";
     enemy.attackTimer = enemy.attackType === "punch" ? 0.46 : 0.56;
     enemy.attackDuration = enemy.attackTimer;
@@ -568,8 +585,8 @@ function handleEnemyAttack(enemy) {
 
 function resolveEnemyAttack(enemy) {
   if (!enemy.attackType || enemy.dead) return;
-  const dist = Math.abs(enemy.x - game.player.x);
-  const laneDistance = Math.abs(enemy.y - game.player.y);
+  const dist = Math.abs(enemy.x - game.player.x) / CHARACTER_SCALE;
+  const laneDistance = Math.abs(enemy.y - game.player.y) / CHARACTER_SCALE;
   if (enemy.attackType === "punch" && dist < 76 && laneDistance < 70) {
     damagePlayer(4);
   } else if (enemy.attackType === "kick" && dist < 95 && laneDistance < 80) {
@@ -582,18 +599,24 @@ function applyPlayerHit() {
   if (!game.player.attackType || game.player.attackHitFired) return;
   const attack = game.player.attackType;
   game.player.attackHitFired = true;
-  const range = attack === "punch" ? 70 : attack === "kick" ? 90 : 220;
+  if (attack === "shoot") spawnProjectile();
+  const range =
+    attack === "punch"
+      ? 70 * CHARACTER_SCALE
+      : attack === "kick"
+        ? 90 * CHARACTER_SCALE
+        : 220;
   let hitMade = false;
 
   for (const enemy of game.enemies) {
     if (enemy.dead) continue;
     const dx = Math.abs(enemy.x - game.player.x);
     const dy = Math.abs(enemy.y - game.player.y);
-    if (dx < range && dy < 90) {
+    if (dx < range && dy < 90 * CHARACTER_SCALE) {
       const damage = attack === "punch" ? 4 : attack === "kick" ? 6 : 0;
       enemy.health -= damage;
       enemy.hurtFlash = 0.2;
-      spawnHitEffect(enemy.x, enemy.y + enemy.height / 2);
+      spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
       if (enemy.health <= 0) {
         enemy.dead = true;
         enemy.deathTimer =
@@ -811,7 +834,7 @@ function updateEnemies(dt) {
       const dy = game.player.y - enemy.y;
       const distance = Math.hypot(dx, dy);
       if (dx !== 0) enemy.facing = dx > 0 ? 1 : -1;
-      if (distance > 55) {
+      if (distance > 55 * CHARACTER_SCALE) {
         enemy.x += (dx / distance) * enemy.speed * dt;
         enemy.y += (dy / distance) * enemy.speed * dt;
         enemy.y = clamp(enemy.y, PLAYER_MIN_Y, PLAYER_MAX_Y);
@@ -834,11 +857,11 @@ function updateProjectiles(dt) {
 
     for (const enemy of game.enemies) {
       if (enemy.dead) continue;
-      const hitX = Math.abs(p.x - enemy.x) < 30;
-      const hitY = Math.abs(p.y - enemy.y) < 40;
+      const hitX = Math.abs(p.x - enemy.x) < 30 * CHARACTER_SCALE;
+      const hitY = Math.abs(p.y - enemy.y) < 40 * CHARACTER_SCALE;
       if (hitX && hitY) {
         enemy.health -= 3.35;
-        spawnHitEffect(enemy.x, enemy.y + enemy.height / 2);
+        spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
         if (enemy.health <= 0) {
           enemy.dead = true;
           enemy.deathTimer =
@@ -1030,10 +1053,14 @@ function drawWorld() {
     const speechPath = ASSET_PATHS.playerSpeech[game.player.speechIndex];
     const speechImg = assets.images[speechPath];
     if (speechImg) {
+      const speechWidth = speechImg.width * CHARACTER_SCALE;
+      const speechHeight = speechImg.height * CHARACTER_SCALE;
       ctx.drawImage(
         speechImg,
-        px + (game.player.width - speechImg.width) / 2 + 32,
-        py - speechImg.height + 20,
+        px + (game.player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
+        Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
+        speechWidth,
+        speechHeight,
       );
     }
   }
