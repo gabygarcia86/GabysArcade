@@ -6,20 +6,43 @@ const CHARACTER_SCALE = 2;
 const CHARACTER_HEIGHT = 110 * CHARACTER_SCALE;
 const PUNCH_HAND_X = 0.94;
 const PUNCH_HAND_Y = 0.37;
+const SHOOT_COOLDOWN = 1;
+const RAPID_FIRE_INTERVAL = 0.2;
+const COUNTDOWN_SECONDS = 5;
+const COUNTDOWN_BEEP_DURATION = 0.18;
+const MAX_ENEMIES = 10;
+const ENEMY_SPAWN_RATE = 2;
+const ENEMY_EDGE_PEEK = 40;
+const FINAL_WAVE_SECONDS = 30;
+const FINAL_WAVE_MAX_ENEMIES = 6;
 const POWER_UP_SIZE = 84;
 const POWER_UP_LIFETIME = 12;
 const POWER_UP_BLINK_TIME = 3;
-const POWER_UP_FIRST_DELAY = 20;
-const POWER_UP_INTERVAL_MIN = 28;
-const POWER_UP_INTERVAL_MAX = 38;
+const POWER_UP_FIRST_DELAY = 6;
+const POWER_UP_INTERVAL_MIN = 9;
+const POWER_UP_INTERVAL_MAX = 13;
+const POWER_UP_MAX_ON_STREET = 3;
+const POWER_UP_SPACING = 170;
 const POWER_UP_RETRY_DELAY = 4;
 const POWER_UP_LOW_HEALTH = 40;
-const POWER_UP_LIMITS = { health: 3, strength: 3 };
-const POWER_UP_GLOW = { health: "255, 50, 80", strength: "255, 190, 40" };
+const POWER_UP_LIMITS = { health: 8, strength: 8, rapidFire: 5, speed: 5 };
+const POWER_UP_GLOW = {
+  health: "255, 50, 80",
+  strength: "255, 190, 40",
+  rapidFire: "60, 190, 255",
+  speed: "80, 255, 130",
+};
 const POWER_UP_EFFECT_DURATION = 0.9;
 const HEALTH_POWER_UP_AMOUNT = 25;
-const STRENGTH_DURATION = 15;
+const POWER_UP_LABELS = {
+  health: `+${HEALTH_POWER_UP_AMOUNT}`,
+  strength: "2X DAMAGE",
+  rapidFire: "RAPID FIRE",
+  speed: "2X SPEED",
+};
+const BOOST_DURATIONS = { strength: 15, rapidFire: 10, speed: 10 };
 const STRENGTH_MULTIPLIER = 2;
+const SPEED_MULTIPLIER = 2;
 const FEET_MIN_Y = 410;
 const FEET_MAX_Y = 750;
 const PLAYER_MIN_Y = FEET_MIN_Y - CHARACTER_HEIGHT;
@@ -186,6 +209,7 @@ const game = {
   state: "loading",
   score: 0,
   timer: 180,
+  countdownBeep: null,
   loadingProgress: 0,
   loadingIconPath: null,
   lastFrame: 0,
@@ -198,7 +222,7 @@ const game = {
   powerUps: [],
   powerUpEffects: [],
   powerUpTimer: 0,
-  powerUpCounts: { health: 0, strength: 0 },
+  powerUpCounts: { health: 0, strength: 0, rapidFire: 0, speed: 0 },
   player: null,
   spawnTimer: 0,
   overReason: null,
@@ -222,10 +246,18 @@ const input = {
 
 const assets = { images: {}, sounds: {} };
 const powerUpArt = {};
+let audioContext = null;
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
     Array.isArray(value) ? value : [value],
+  );
+}
+
+function isActionHeld(name) {
+  return (
+    input.actionKeys.has(name) ||
+    Array.from(game.actionPointerIds.values()).includes(name)
   );
 }
 
@@ -339,6 +371,23 @@ function playSound(path) {
   sound.play().catch(() => {});
 }
 
+function playCountdownBeep() {
+  if (!audioContext || game.muted) return;
+  if (audioContext.state === "suspended") audioContext.resume();
+  const start = audioContext.currentTime;
+  const end = start + COUNTDOWN_BEEP_DURATION;
+  const tone = audioContext.createOscillator();
+  const volume = audioContext.createGain();
+  tone.type = "square";
+  tone.frequency.value = 880;
+  volume.gain.setValueAtTime(0.15, start);
+  volume.gain.exponentialRampToValueAtTime(0.001, end);
+  tone.connect(volume);
+  volume.connect(audioContext.destination);
+  tone.start(start);
+  tone.stop(end);
+}
+
 function toggleMute() {
   game.muted = !game.muted;
   Object.values(assets.sounds).forEach((sound) => {
@@ -356,6 +405,8 @@ function toggleMute() {
 function unlockAudio() {
   if (game.audioUnlocked) return;
   game.audioUnlocked = true;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (AudioContextClass) audioContext = new AudioContextClass();
   const music = assets.sounds[ASSET_PATHS.music];
   if (music && (game.state === "start" || game.state === "playing")) {
     music.muted = game.muted;
@@ -366,6 +417,7 @@ function unlockAudio() {
 function resetGameState() {
   game.score = 0;
   game.timer = 180;
+  game.countdownBeep = null;
   game.cameraX = 0;
   game.enemies = [];
   game.projectiles = [];
@@ -373,7 +425,7 @@ function resetGameState() {
   game.powerUps = [];
   game.powerUpEffects = [];
   game.powerUpTimer = POWER_UP_FIRST_DELAY;
-  game.powerUpCounts = { health: 0, strength: 0 };
+  game.powerUpCounts = { health: 0, strength: 0, rapidFire: 0, speed: 0 };
   game.spawnTimer = 0;
   game.overReason = null;
   game.gameOverDelay = 0;
@@ -400,15 +452,16 @@ function resetGameState() {
     hurtFlash: 0,
     speechIndex: null,
     speechTimer: 0,
-    strengthTimer: 0,
+    boosts: { strength: 0, rapidFire: 0, speed: 0 },
+    shootCooldown: 0,
     dead: false,
   };
 }
 
 function startNewGame() {
   resetGameState();
-  spawnEnemy(true);
-  game.spawnTimer = 9;
+  for (let i = 0; i < ENEMY_SPAWN_RATE; i += 1) spawnEnemy(true);
+  game.spawnTimer = 9 / ENEMY_SPAWN_RATE;
   setState("playing");
   playSound(ASSET_PATHS.gameStart);
 }
@@ -436,7 +489,7 @@ function getEnemyFrame(enemy) {
 }
 
 function spawnEnemy(nearPlayer = false) {
-  if (game.enemies.length >= 5) return;
+  if (game.enemies.length >= MAX_ENEMIES) return;
   const fromLeft = Math.random() < 0.5;
   const enemy = {
     x: fromLeft ? -40 : WORLD_WIDTH + 40,
@@ -526,6 +579,11 @@ function triggerPlayerAction(type) {
   }
 
   if (type === "shoot") {
+    if (game.player.shootCooldown > 0) return;
+    if (game.player.boosts.rapidFire > 0) {
+      fireRapidShot();
+      return;
+    }
     game.player.attackType = "shoot";
     game.player.attackTimer = 0.4;
     game.player.attackDuration = 0.4;
@@ -537,11 +595,25 @@ function triggerPlayerAction(type) {
   }
 }
 
+function fireRapidShot() {
+  const player = game.player;
+  spawnProjectile();
+  player.shootCooldown = RAPID_FIRE_INTERVAL;
+  player.attackType = "shoot";
+  player.attackTimer = RAPID_FIRE_INTERVAL;
+  player.attackDuration = RAPID_FIRE_INTERVAL;
+  player.attackHitFired = true;
+  player.animation = "punch";
+  player.animFrame = 2;
+  player.animTimer = 0;
+}
+
 function spawnProjectile() {
   const player = game.player;
   const w = 25 * CHARACTER_SCALE;
   const h = 18 * CHARACTER_SCALE;
   const handX = player.facing > 0 ? PUNCH_HAND_X : 1 - PUNCH_HAND_X;
+  player.shootCooldown = SHOOT_COOLDOWN;
   playSound(ASSET_PATHS.playerShootSfx);
   game.projectiles.push({
     x: player.x + player.width * handX - w / 2,
@@ -612,15 +684,15 @@ function resolveEnemyAttack(enemy) {
   const dist = Math.abs(enemy.x - game.player.x) / CHARACTER_SCALE;
   const laneDistance = Math.abs(enemy.y - game.player.y) / CHARACTER_SCALE;
   if (enemy.attackType === "punch" && dist < 76 && laneDistance < 70) {
-    damagePlayer(4);
+    damagePlayer(5);
   } else if (enemy.attackType === "kick" && dist < 95 && laneDistance < 80) {
-    damagePlayer(6);
+    damagePlayer(7);
   }
   enemy.attackType = null;
 }
 
 function getPlayerDamage(amount) {
-  return game.player.strengthTimer > 0 ? amount * STRENGTH_MULTIPLIER : amount;
+  return game.player.boosts.strength > 0 ? amount * STRENGTH_MULTIPLIER : amount;
 }
 
 function applyPlayerHit() {
@@ -676,6 +748,7 @@ function applyPlayerHit() {
 function updatePlayer(dt) {
   const player = game.player;
   player.cooldown = Math.max(0, player.cooldown - dt);
+  player.shootCooldown = Math.max(0, player.shootCooldown - dt);
   player.hurtFlash = Math.max(0, player.hurtFlash - dt);
   player.speechTimer = Math.max(0, player.speechTimer - dt);
   if (player.speechTimer === 0) player.speechIndex = null;
@@ -687,8 +760,10 @@ function updatePlayer(dt) {
   if (len > 0.2) {
     const nx = dx / Math.max(len, 1);
     const ny = dy / Math.max(len, 1);
-    player.x += nx * player.speed * dt;
-    player.y += ny * player.speed * dt;
+    const speed =
+      player.speed * (player.boosts.speed > 0 ? SPEED_MULTIPLIER : 1);
+    player.x += nx * speed * dt;
+    player.y += ny * speed * dt;
     player.x = clamp(player.x, player.width / 2, WORLD_WIDTH - player.width / 2);
     player.y = clamp(player.y, PLAYER_MIN_Y, PLAYER_MAX_Y);
     if (dx !== 0) player.facing = dx > 0 ? 1 : -1;
@@ -735,6 +810,10 @@ function updatePlayer(dt) {
       if (player.attackType) player.attackType = null;
       if (!player.dead) player.animation = "static";
     }
+  }
+
+  if (player.boosts.rapidFire > 0 && isActionHeld("shoot")) {
+    triggerPlayerAction("shoot");
   }
 
   if (player.animation === "hit") {
@@ -928,36 +1007,57 @@ function updateEffects(dt) {
   }
 }
 
+function isPowerUpAvailable(type) {
+  return (
+    game.powerUpCounts[type] < POWER_UP_LIMITS[type] &&
+    !game.powerUps.some((powerUp) => powerUp.type === type)
+  );
+}
+
 function choosePowerUpType() {
   const player = game.player;
   const wantsHealth =
     player.health <= player.maxHealth - HEALTH_POWER_UP_AMOUNT &&
-    game.powerUpCounts.health < POWER_UP_LIMITS.health;
-  const wantsStrength =
-    player.strengthTimer <= 0 &&
-    game.powerUpCounts.strength < POWER_UP_LIMITS.strength;
+    isPowerUpAvailable("health");
+  if (wantsHealth && player.health <= 50) return "health";
 
-  if (wantsHealth && wantsStrength) {
-    return player.health <= 50 || Math.random() < 0.5 ? "health" : "strength";
-  }
-  if (wantsHealth) return "health";
-  return wantsStrength ? "strength" : null;
+  const options = Object.keys(player.boosts).filter(
+    (type) => player.boosts[type] <= 0 && isPowerUpAvailable(type),
+  );
+  if (wantsHealth) options.push("health");
+  if (options.length === 0) return null;
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 function spawnPowerUp() {
   const type = choosePowerUpType();
   if (!type) return false;
 
-  const playerX = game.player.x + game.player.width / 2;
-  let x = game.cameraX + 280 + Math.random() * 620;
-  if (Math.abs(x - playerX) < 220) {
-    x += playerX < game.cameraX + GAME_WIDTH / 2 ? 320 : -320;
+  const taken = [
+    ...game.powerUps,
+    {
+      x: game.player.x + game.player.width / 2,
+      y: game.player.y + game.player.height,
+    },
+  ];
+  let spot = null;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const x = game.cameraX + 280 + Math.random() * 620;
+    const y = FEET_MIN_Y + 30 + Math.random() * 220;
+    const crowded = taken.some(
+      (item) => Math.hypot(item.x - x, item.y - y) < POWER_UP_SPACING,
+    );
+    if (!crowded) {
+      spot = { x, y };
+      break;
+    }
   }
+  if (!spot) return false;
+
   game.powerUpCounts[type] += 1;
   game.powerUps.push({
     type,
-    x: clamp(x, game.cameraX + 280, game.cameraX + 900),
-    y: FEET_MIN_Y + 30 + Math.random() * 220,
+    ...spot,
     age: 0,
     ttl: POWER_UP_LIFETIME,
   });
@@ -973,13 +1073,14 @@ function collectPowerUp(powerUp) {
       player.maxHealth,
     );
   } else {
-    player.strengthTimer = STRENGTH_DURATION;
+    player.boosts[powerUp.type] = BOOST_DURATIONS[powerUp.type];
+    if (powerUp.type === "rapidFire") player.shootCooldown = 0;
   }
   game.powerUpEffects.push({
     type: powerUp.type,
     x: powerUp.x,
     y: powerUp.y - POWER_UP_SIZE / 2,
-    text: powerUp.type === "health" ? `+${HEALTH_POWER_UP_AMOUNT}` : "2X DAMAGE",
+    text: POWER_UP_LABELS[powerUp.type],
     age: 0,
   });
   playSound(ASSET_PATHS.btnClick);
@@ -987,11 +1088,14 @@ function collectPowerUp(powerUp) {
 
 function updatePowerUps(dt) {
   const player = game.player;
-  player.strengthTimer = Math.max(0, player.strengthTimer - dt);
+  for (const type of Object.keys(player.boosts)) {
+    player.boosts[type] = Math.max(0, player.boosts[type] - dt);
+  }
 
   game.powerUpTimer -= player.health <= POWER_UP_LOW_HEALTH ? dt * 2 : dt;
   if (game.powerUpTimer <= 0) {
-    const spawned = game.powerUps.length === 0 && spawnPowerUp();
+    const spawned =
+      game.powerUps.length < POWER_UP_MAX_ON_STREET && spawnPowerUp();
     game.powerUpTimer = spawned
       ? POWER_UP_INTERVAL_MIN +
         Math.random() * (POWER_UP_INTERVAL_MAX - POWER_UP_INTERVAL_MIN)
@@ -1024,6 +1128,49 @@ function updatePowerUps(dt) {
   }
 }
 
+function getEnemySpawnInterval() {
+  const interval =
+    game.timer > 120
+      ? 9
+      : game.timer > 60
+        ? 7
+        : game.timer > FINAL_WAVE_SECONDS
+          ? 5
+          : 7;
+  return interval / ENEMY_SPAWN_RATE;
+}
+
+function keepEnemyOnScreen() {
+  const viewLeft = game.cameraX;
+  const viewRight = viewLeft + GAME_WIDTH;
+  const alive = game.enemies.filter((enemy) => !enemy.dead);
+  const onScreen = alive.some(
+    (enemy) => enemy.x + enemy.width > viewLeft && enemy.x < viewRight,
+  );
+  if (onScreen) return;
+
+  let closest = null;
+  for (const enemy of alive) {
+    if (
+      !closest ||
+      Math.abs(enemy.x - game.player.x) < Math.abs(closest.x - game.player.x)
+    ) {
+      closest = enemy;
+    }
+  }
+  if (!closest) {
+    spawnEnemy();
+    closest = game.enemies[game.enemies.length - 1];
+    if (!closest || closest.dead) return;
+  }
+
+  const fromLeft = closest.x < viewLeft;
+  closest.x = fromLeft
+    ? viewLeft - closest.width + ENEMY_EDGE_PEEK
+    : viewRight - ENEMY_EDGE_PEEK;
+  closest.facing = fromLeft ? 1 : -1;
+}
+
 function update(dt) {
   if (game.state === "gameOverTime" || game.state === "gameOverDead") {
     game.gameOverDelay = Math.max(0, game.gameOverDelay - dt);
@@ -1042,17 +1189,24 @@ function update(dt) {
     return;
   }
 
+  const secondsLeft = Math.ceil(game.timer);
+  if (secondsLeft <= COUNTDOWN_SECONDS && secondsLeft !== game.countdownBeep) {
+    game.countdownBeep = secondsLeft;
+    playCountdownBeep();
+  }
+
   updatePlayer(dt);
   updateEnemies(dt);
   updateProjectiles(dt);
   updateEffects(dt);
   updatePowerUps(dt);
 
-  const interval = game.timer > 120 ? 9 : game.timer > 60 ? 7 : 5;
+  const enemyLimit =
+    game.timer <= FINAL_WAVE_SECONDS ? FINAL_WAVE_MAX_ENEMIES : MAX_ENEMIES;
   game.spawnTimer -= dt;
-  if (game.spawnTimer <= 0 && game.enemies.length < 5) {
+  if (game.spawnTimer <= 0 && game.enemies.length < enemyLimit) {
     spawnEnemy();
-    game.spawnTimer = interval;
+    game.spawnTimer = getEnemySpawnInterval();
   }
 
   game.cameraX = clamp(
@@ -1060,6 +1214,8 @@ function update(dt) {
     0,
     WORLD_WIDTH - GAME_WIDTH,
   );
+
+  keepEnemyOnScreen();
 }
 
 function drawLoadingScreen() {
@@ -1183,10 +1339,98 @@ function paintStrengthIcon(art) {
   art.fillText("2X", -2, 3);
 }
 
+function paintEnvelope(art, x, y) {
+  art.save();
+  art.translate(x, y);
+  art.rotate(-0.16);
+  art.lineJoin = "round";
+  art.lineWidth = 5;
+  art.strokeStyle = "#04121f";
+  art.fillStyle = "#f4fbff";
+  art.fillRect(-32, -21, 64, 42);
+  art.strokeRect(-32, -21, 64, 42);
+  art.beginPath();
+  art.moveTo(-32, -21);
+  art.lineTo(0, 5);
+  art.lineTo(32, -21);
+  art.stroke();
+  art.restore();
+}
+
+function paintRapidFireIcon(art) {
+  const hexagon = new Path2D();
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (i / 6) * Math.PI * 2;
+    hexagon.lineTo(Math.cos(angle) * 80, Math.sin(angle) * 80);
+  }
+  hexagon.closePath();
+
+  const fill = art.createRadialGradient(-16, -24, 6, 0, 0, 88);
+  fill.addColorStop(0, "#9fe4ff");
+  fill.addColorStop(0.5, "#1590e6");
+  fill.addColorStop(1, "#06316e");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#04121f";
+  art.fillStyle = fill;
+  art.fill(hexagon);
+  art.stroke(hexagon);
+
+  art.lineWidth = 6;
+  art.lineCap = "round";
+  art.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  for (const lineY of [-44, 44]) {
+    art.beginPath();
+    art.moveTo(-52, lineY + 8);
+    art.lineTo(-22, lineY);
+    art.stroke();
+  }
+
+  paintEnvelope(art, -26, 22);
+  paintEnvelope(art, 2, 2);
+  paintEnvelope(art, 28, -20);
+}
+
+function paintSpeedIcon(art) {
+  const bolt = new Path2D();
+  bolt.moveTo(6, -84);
+  bolt.lineTo(-68, 14);
+  bolt.lineTo(-16, 14);
+  bolt.lineTo(-38, 84);
+  bolt.lineTo(70, -22);
+  bolt.lineTo(18, -22);
+  bolt.lineTo(56, -84);
+  bolt.closePath();
+
+  const fill = art.createLinearGradient(0, -84, 0, 84);
+  fill.addColorStop(0, "#d8ffd0");
+  fill.addColorStop(0.5, "#35e06a");
+  fill.addColorStop(1, "#057a36");
+  art.lineJoin = "round";
+  art.lineWidth = 8;
+  art.strokeStyle = "#031a0c";
+  art.fillStyle = fill;
+  art.fill(bolt);
+  art.stroke(bolt);
+
+  art.lineCap = "round";
+  art.lineWidth = 6;
+  art.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  art.beginPath();
+  art.moveTo(14, -68);
+  art.lineTo(-36, 0);
+  art.stroke();
+}
+
 function createPowerUpArt(type) {
   const { artCanvas: icon, art } = createArtCanvas(POWER_UP_SIZE * 2);
-  if (type === "health") paintHealthIcon(art);
-  else paintStrengthIcon(art);
+  const painters = {
+    health: paintHealthIcon,
+    strength: paintStrengthIcon,
+    rapidFire: paintRapidFireIcon,
+    speed: paintSpeedIcon,
+  };
+  painters[type](art);
 
   const glowSize = POWER_UP_SIZE * 4;
   const { artCanvas: glow, art: glowArt } = createArtCanvas(glowSize);
@@ -1312,23 +1556,25 @@ function drawPowerUpEffect(effect) {
   ctx.restore();
 }
 
-function drawStrengthTimer(healthX) {
-  const timeLeft = game.player.strengthTimer;
-  if (timeLeft <= 0) return;
-
-  const barX = healthX + 56;
-  const barY = 92;
-  const barW = 190;
-  const barH = 14;
-  ctx.drawImage(getPowerUpArt("strength").icon, healthX + 6, 78, 46, 46);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-  ctx.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
-  ctx.fillStyle = `rgb(${POWER_UP_GLOW.strength})`;
-  ctx.fillRect(barX, barY, barW * (timeLeft / STRENGTH_DURATION), barH);
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 22px Arial";
-  ctx.textAlign = "left";
-  ctx.fillText(`${Math.ceil(timeLeft)}s`, barX + barW + 12, barY + 14);
+function drawBoostTimers(healthX) {
+  const barX = healthX + 50;
+  const barW = 196;
+  const barH = 12;
+  let rowY = 76;
+  for (const [type, timeLeft] of Object.entries(game.player.boosts)) {
+    if (timeLeft <= 0) continue;
+    const barY = rowY + 12;
+    ctx.drawImage(getPowerUpArt(type).icon, healthX + 8, rowY, 36, 36);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    ctx.fillRect(barX - 3, barY - 3, barW + 6, barH + 6);
+    ctx.fillStyle = `rgb(${POWER_UP_GLOW[type]})`;
+    ctx.fillRect(barX, barY, barW * (timeLeft / BOOST_DURATIONS[type]), barH);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`${Math.ceil(timeLeft)}s`, barX + barW + 10, barY + 12);
+    rowY += 38;
+  }
 }
 
 function drawWorld() {
@@ -1454,7 +1700,7 @@ function drawHUD() {
     ctx.restore();
   }
 
-  drawStrengthTimer(healthX);
+  drawBoostTimers(healthX);
 
   const pauseIcon =
     game.state === "paused"
@@ -1519,14 +1765,16 @@ function drawHUD() {
   actions.forEach(({ name, src, rect }) => {
     const img = assets.images[src];
     if (!img) return;
-    const pressed =
-      input.actionKeys.has(name) ||
-      Array.from(game.actionPointerIds.values()).includes(name);
-    const scale = pressed ? 0.9 : 1;
+    const scale = isActionHeld(name) ? 0.9 : 1;
     const drawWidth = rect.w * scale;
     const drawHeight = rect.h * scale;
     const centerX = rect.x + rect.w / 2;
     const centerY = rect.y + rect.h / 2;
+    const coolingDown =
+      name === "shoot" &&
+      game.player.shootCooldown > 0 &&
+      game.player.boosts.rapidFire <= 0;
+    ctx.globalAlpha = coolingDown ? 0.35 : 1;
     ctx.drawImage(
       img,
       centerX - drawWidth / 2,
@@ -1534,6 +1782,7 @@ function drawHUD() {
       drawWidth,
       drawHeight,
     );
+    ctx.globalAlpha = 1;
   });
 
   if (game.state === "paused") {
