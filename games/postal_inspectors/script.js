@@ -6,6 +6,7 @@ const PLAYER_MIN_Y = 300;
 const PLAYER_MAX_Y = 640;
 const ENEMY_DEATH_FRAME_DURATION = 0.12;
 const HIT_EFFECT_FRAME_DURATION = 0.07;
+const PLAYER_JUMP_LAND_DURATION = 0.1;
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -456,6 +457,7 @@ function triggerPlayerAction(type) {
     return;
 
   if (type === "jump") {
+    if (game.player.jumpTime > 0 || game.player.animation === "jump") return;
     game.player.jumpTime = 0.7;
     game.player.jumpHeight = 0;
     game.player.cooldown = 0.45;
@@ -515,12 +517,15 @@ function triggerPlayerAction(type) {
 }
 
 function damagePlayer(amount) {
-  if (game.player.dead) return;
+  if (
+    game.player.dead ||
+    game.player.jumpTime > 0 ||
+    game.player.animation === "jump"
+  )
+    return;
   game.player.health = clamp(game.player.health - amount, 0, 100);
   game.player.hurtFlash = 0.25;
   game.player.attackType = null;
-  game.player.jumpTime = 0;
-  game.player.jumpHeight = 0;
   game.player.animation = "hit";
   game.player.animFrame = 0;
   game.player.animTimer = 0;
@@ -659,7 +664,12 @@ function updatePlayer(dt) {
     player.jumpHeight = Math.sin(t * Math.PI) * 110;
     if (player.jumpTime <= 0) {
       player.jumpHeight = 0;
-      player.animation = "static";
+      if (player.animation === "jump") {
+        player.animFrame = ASSET_PATHS.playerJump.length - 1;
+        player.animTimer = 0;
+      } else {
+        player.animation = "static";
+      }
     }
   }
 
@@ -714,9 +724,18 @@ function updatePlayer(dt) {
     }
   } else if (player.animation === "jump") {
     player.animTimer += dt;
-    if (player.animTimer > 0.08) {
+    if (player.jumpTime <= 0) {
+      if (player.animTimer >= PLAYER_JUMP_LAND_DURATION) {
+        player.animation = len > 0.2 ? "walk" : "static";
+        player.animFrame = 0;
+        player.animTimer = 0;
+      }
+    } else if (
+      player.animTimer > 0.08 &&
+      player.animFrame < ASSET_PATHS.playerJump.length - 2
+    ) {
       player.animTimer = 0;
-      player.animFrame = (player.animFrame + 1) % ASSET_PATHS.playerJump.length;
+      player.animFrame += 1;
     }
   } else {
     player.animFrame = 0;
