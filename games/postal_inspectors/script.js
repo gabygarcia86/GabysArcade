@@ -70,7 +70,7 @@ const HIT_EFFECT_FRAME_DURATION = 0.07;
 const PLAYER_JUMP_LAND_DURATION = 0.1;
 
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: false });
 const portraitOverlay = document.getElementById("portraitOverlay");
 const gameShell = document.getElementById("game-shell");
 
@@ -282,6 +282,8 @@ const powerUpArt = {};
 let audioContext = null;
 let noiseBuffer = null;
 let rainSound = null;
+const soundBuffers = {};
+let portraitOverlayShown = null;
 let windSound = null;
 
 function flattenAssetList() {
@@ -328,6 +330,35 @@ function makeSound(src) {
   return sound;
 }
 
+function decodeImage(path, img) {
+  if (window.createImageBitmap) {
+    return createImageBitmap(img)
+      .then((bitmap) => {
+        assets.images[path] = bitmap;
+      })
+      .catch(() => {});
+  }
+  return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+}
+
+function loadSoundBuffers() {
+  for (const path of Object.keys(assets.sounds)) {
+    if (path === ASSET_PATHS.music) continue;
+    fetch(path)
+      .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject()))
+      .then(
+        (data) =>
+          new Promise((resolve, reject) => {
+            audioContext.decodeAudioData(data, resolve, reject);
+          }),
+      )
+      .then((buffer) => {
+        soundBuffers[path] = buffer;
+      })
+      .catch(() => {});
+  }
+}
+
 function preloadAssets() {
   game.loadingIconPath =
     ASSET_PATHS.loadingIcons[
@@ -353,7 +384,9 @@ function preloadAssets() {
     if (path.endsWith(".png") || path.endsWith(".jpg")) {
       const img = makeImage(path);
       assets.images[path] = img;
-      img.onload = markDone;
+      img.onload = () => {
+        decodeImage(path, img).finally(markDone);
+      };
       img.onerror = markDone;
       return;
     }
@@ -405,8 +438,18 @@ function setState(nextState) {
 }
 
 function playSound(path) {
+  if (game.muted) return;
+  const buffer = soundBuffers[path];
+  if (buffer && audioContext) {
+    if (audioContext.state === "suspended") audioContext.resume();
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+    return;
+  }
   const sound = assets.sounds[path];
-  if (!sound || game.muted) return;
+  if (!sound) return;
   sound.currentTime = 0;
   sound.play().catch(() => {});
 }
@@ -479,9 +522,12 @@ function updateNoiseLoop(loop, volume, highpassHz, lowpassHz) {
     lowpass.connect(gain);
     gain.connect(audioContext.destination);
     source.start();
-    loop = { gain };
+    loop = { gain, volume: 0 };
   }
-  loop.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+  if (Math.abs(loop.volume - volume) > 0.002) {
+    loop.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+    loop.volume = volume;
+  }
   return loop;
 }
 
@@ -532,7 +578,10 @@ function unlockAudio() {
   if (game.audioUnlocked) return;
   game.audioUnlocked = true;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (AudioContextClass) audioContext = new AudioContextClass();
+  if (AudioContextClass) {
+    audioContext = new AudioContextClass();
+    loadSoundBuffers();
+  }
   const music = assets.sounds[ASSET_PATHS.music];
   if (music && (game.state === "start" || game.state === "playing")) {
     music.muted = game.muted;
@@ -1934,14 +1983,14 @@ function drawPowerUpEffect(effect) {
   ctx.font = "italic 900 40px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.lineJoin = "round";
+  const textY = effect.y - 40 - progress * 70;
+  ctx.lineWidth = 18;
+  ctx.strokeStyle = `rgba(${POWER_UP_GLOW[effect.type]}, 0.45)`;
+  ctx.strokeText(effect.text, screenX, textY);
   ctx.lineWidth = 8;
   ctx.strokeStyle = "#1c0406";
   ctx.fillStyle = "#fff";
-  ctx.shadowColor = `rgb(${POWER_UP_GLOW[effect.type]})`;
-  ctx.shadowBlur = 20;
-  const textY = effect.y - 40 - progress * 70;
   ctx.strokeText(effect.text, screenX, textY);
-  ctx.shadowBlur = 0;
   ctx.fillText(effect.text, screenX, textY);
   ctx.restore();
 }
@@ -2303,7 +2352,6 @@ function drawWeather() {
   ctx.save();
   ctx.strokeStyle = `rgba(190, 210, 235, ${0.28 + weather.intensity * 0.17})`;
   ctx.lineWidth = 1.6;
-  ctx.lineCap = "round";
   ctx.beginPath();
   const active = getActiveRaindrops(weather);
   for (let i = 0; i < active; i += 1) {
@@ -2382,21 +2430,25 @@ function drawGameOver() {
   }
 }
 
+function showPortraitOverlay(shown) {
+  if (shown === portraitOverlayShown) return;
+  portraitOverlayShown = shown;
+  portraitOverlay.style.display = shown ? "flex" : "none";
+}
+
 function render() {
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   if (isPortrait()) {
     const img = assets.images[ASSET_PATHS.rotatePhone];
     if (img) {
       ctx.drawImage(img, GAME_WIDTH / 2 - 150, GAME_HEIGHT / 2 - 150, 300, 300);
     }
-    portraitOverlay.style.display = "flex";
+    showPortraitOverlay(true);
     return;
   }
 
-  portraitOverlay.style.display = "none";
+  showPortraitOverlay(false);
 
   if (game.state === "loading") drawLoadingScreen();
   else if (game.state === "start") drawStartScreen();
@@ -2644,7 +2696,7 @@ function resizeCanvas() {
 
 function animationLoop(time) {
   if (!game.lastFrame) game.lastFrame = time;
-  const dt = Math.min((time - game.lastFrame) / 1000, 0.033);
+  const dt = Math.min((time - game.lastFrame) / 1000, 0.05);
   game.lastFrame = time;
 
   if (game.state === "start") {
