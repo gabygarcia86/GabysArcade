@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#7b2cbf">
+    <meta name="description"
+      content="Make your own cartoons! Draw frame by frame, add stickers, sounds and effects, then export a GIF or video. No sign-up, no ads.">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16"
+      href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+      href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>Gaby's Animation Studio</title>
+    <link rel="preload" href="assets/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+    <link rel="stylesheet" href="css/timeline.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script src="js/util.js" defer></script>
+    <script src="js/model.js" defer></script>
+    <script src="js/undo-redo.js" defer></script>
+    <script src="js/icons.js" defer></script>
+    <script src="js/stickers.js" defer></script>
+    <script src="js/effects.js" defer></script>
+    <script src="js/render.js" defer></script>
+    <script src="js/canvas.js" defer></script>
+    <script src="js/onion-skin.js" defer></script>
+    <script src="js/drawing-tools.js" defer></script>
+    <script src="js/selection.js" defer></script>
+    <script src="js/colors.js" defer></script>
+    <script src="js/audio.js" defer></script>
+    <script src="js/animation-engine.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/project-manager.js" defer></script>
+    <script src="js/gif-encoder.js" defer></script>
+    <script src="js/zip.js" defer></script>
+    <script src="js/export-manager.js" defer></script>
+    <script src="js/templates.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/panels.js" defer></script>
+    <script src="js/timeline.js" defer></script>
+    <script src="js/screens.js" defer></script>
+    <script src="js/keyboard-shortcuts.js" defer></script>
+    <script src="js/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar" id="topbar"></header>
+
+    <div class="workspace" id="workspace">
+      <nav class="rail" id="rail" aria-label="Tools"></nav>
+      <aside class="panel" id="panel" aria-label="Tool options"></aside>
+      <main class="stage" id="stage" aria-label="Animation canvas" data-tool="pencil"></main>
+    </div>
+
+    <footer class="timeline" id="timeline" aria-label="Timeline"></footer>
+
+    <noscript>
+      <p class="noscript">Gaby's Animation Studio needs JavaScript to run. Please turn it on and reload the page.</p>
+    </noscript>
+  </body>
+</html>

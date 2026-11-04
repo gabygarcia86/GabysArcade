@@ -8,8 +8,10 @@ import { FUN_PARTS, TEMPLATES } from "./templates.js";
 import { CHALLENGES, TUTORIALS } from "./tutorials.js";
 
 const TOOL_GROUPS = [
-  { title: "Move", tools: [
-    { id: "select", label: "Move", icon: "move", color: "#45b7ff", tip: "Pick things, then move, turn or resize them." },
+  { title: "Transform", tools: [
+    { id: "select", mode: "translate", label: "Move", icon: "move", color: "#45b7ff", tip: "Move: pick things and slide them around. (W)" },
+    { id: "select", mode: "rotate", label: "Rotate", icon: "rotate", color: "#8f7bff", tip: "Rotate: pick things and turn them. (E)" },
+    { id: "select", mode: "scale", label: "Scale", icon: "scale", color: "#3fd6a0", tip: "Scale: pick things and make them bigger or smaller. (R)" },
   ] },
   { title: "Sculpt", tools: [
     { id: "draw", label: "Add Clay", icon: "draw", color: "#7ed957", tip: "Draw: push clay out of the surface. Hold Ctrl to dig instead." },
@@ -79,7 +81,7 @@ export class UI {
     app.on("objects", later("list"));
     app.on("objects", later("empty"));
     app.on("symmetry", later("symmetry"));
-    app.on("gizmo", later("props"));
+    app.on("gizmo", later("tools"));
     app.on("transform", later("transform"));
     app.on("stats", later("stats"));
     app.on("history", (message) => {
@@ -156,7 +158,7 @@ export class UI {
     more.addEventListener("click", () => more.classList.remove("is-open"));
 
     document.getElementById("topbar").append(
-      h("a", { class: "brand", href: "../../index.html", tip: "Back to Gaby's Arcade", "aria-label": "Back to Gaby's Arcade" },
+      h("a", { class: "brand", href: "../../apps.html", tip: "Back to the Apps page", "aria-label": "Back to the Apps page" },
         h("img", { src: "icon/icon-128.png", alt: "", width: 40, height: 40 }),
         h("span", { class: "brand-text" }, "3D Wonder Studio")),
       h("div", { class: "project-box" }, this.nameInput, this.saveState),
@@ -190,10 +192,13 @@ export class UI {
       for (const tool of group.tools) {
         const btn = h("button", {
           class: "tool", type: "button", tip: tool.tip, "aria-label": tool.label, style: `--tool:${tool.color}`,
-          onclick: () => this.app.setTool(tool.id),
+          onclick: () => {
+            this.app.setTool(tool.id);
+            if (tool.mode) this.app.objects.setGizmoMode(tool.mode);
+          },
         }, h("span", { class: "tool-icon", html: icon(tool.icon, 24) }), h("span", { class: "tool-label" }, tool.label));
-        btn.dataset.tool = tool.id;
-        this.toolButtons[tool.id] = btn;
+        btn.dataset.tool = tool.mode ? `${tool.id}-${tool.mode}` : tool.id;
+        this.toolButtons[btn.dataset.tool] = { btn, tool };
         row.append(btn);
       }
       root.append(h("section", { class: "tool-group" }, h("h2", {}, group.title), row));
@@ -201,9 +206,11 @@ export class UI {
   }
 
   _markTool() {
-    for (const [id, btn] of Object.entries(this.toolButtons)) {
-      btn.classList.toggle("is-active", id === this.app.tool);
-      btn.setAttribute("aria-pressed", String(id === this.app.tool));
+    const { mode } = this.app.objects.gizmo;
+    for (const { btn, tool } of Object.values(this.toolButtons)) {
+      const active = tool.id === this.app.tool && (!tool.mode || tool.mode === mode);
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", String(active));
     }
   }
 
@@ -246,7 +253,6 @@ export class UI {
     if (painting) sections.push(this._paintSection());
     else if (app.tool !== "select") sections.push(this._brushSection());
     if (app.tool !== "select") sections.push(this._symmetrySection());
-    if (app.tool === "select") sections.push(this._moveModeSection());
     if (app.objects.focus) sections.push(this._objectSection(app.objects.focus));
     else if (app.tool === "select") sections.push(this._section("Nothing picked", h("p", { class: "muted" }, "Tap an object to pick it, or add a shape from the bottom bar.")));
     root.replaceChildren(...sections);
@@ -333,13 +339,6 @@ export class UI {
       btn.classList.toggle("is-active", s.enabled && s.axes[key]);
       btn.setAttribute("aria-pressed", String(s.enabled && s.axes[key]));
     }
-  }
-
-  _moveModeSection() {
-    const { app } = this;
-    const { gizmo } = app.objects;
-    return this._section("Handles",
-      this._chips([["translate", "Move"], ["rotate", "Turn"], ["scale", "Resize"]], gizmo.mode, (mode) => app.objects.setGizmoMode(mode)));
   }
 
   _objectSection(object) {
@@ -966,7 +965,7 @@ export class UI {
           ["Bigger / smaller brush", "] / ["],
           ["Smooth with any brush", "Hold Shift"],
           ["Flip a brush", "Hold Ctrl"],
-          ["Move / Turn / Resize", "W / E / R"],
+          ["Move / Rotate / Scale", "W / E / R"],
           ["Copy / Delete", "Ctrl+D / Delete"],
           ["Pick everything", "Ctrl+A"],
           ["Zoom to what's picked", "F"],

@@ -1,6 +1,8 @@
 // Inline line icons. They use currentColor, so each button sets its own color.
 const PATHS = {
   move: '<path d="M12 3v18M3 12h18M12 3 9 6M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+  rotate: '<path d="M20 12a8 8 0 1 1-2.400-5.700"/><path d="M20 4v5h-5"/><circle cx="12" cy="12" r="2"/>',
+  scale: '<path d="M4 20 20 4M14 4h6v6M10 20H4v-6"/><rect x="4" y="4" width="7" height="7" rx="1.500"/>',
   draw: '<path d="M4 15c0-5 4-8 8-8s8 3 8 8"/><path d="M4 18h16"/><path d="M12 3v7M8.5 6.5h7"/>',
   remove: '<path d="M3 8h4c1 0 2 1 2.500 3 .7 3 1.500 4 2.500 4s1.800-1 2.500-4c.5-2 1.500-3 2.500-3h4"/><path d="M3 19h18"/>',
   smooth: '<path d="M3 8c3-3 6-3 9 0s6 3 9 0"/><path d="M3 13c3-2 6-2 9 0s6 2 9 0"/><path d="M3 18h18"/>',
