@@ -9,6 +9,8 @@ const PUNCH_HAND_Y = 0.37;
 const SHOOT_COOLDOWN = 1;
 const RAPID_FIRE_INTERVAL = 0.2;
 const COUNTDOWN_SECONDS = 5;
+const ENDING_HOLD_SECONDS = 3;
+const PLAYER_DEATH_FRAME_DURATION = 0.12;
 const COUNTDOWN_BEEP_DURATION = 0.18;
 const MAX_ENEMIES = 10;
 const ENEMY_SPAWN_RATE = 2;
@@ -86,6 +88,14 @@ const ASSET_PATHS = {
   actionShoot: "assets/controls/btn_action_shoot_active.png",
   projectile: "assets/char/shoot/shoot_envelope.png",
   playerStatic: "assets/char/player/player1_static.png",
+  playerWin: "assets/char/player/player1_win_000.png",
+  playerDeath: [
+    "assets/char/player/player1_death_000.png",
+    "assets/char/player/player1_death_001.png",
+    "assets/char/player/player1_death_002.png",
+    "assets/char/player/player1_death_003.png",
+    "assets/char/player/player1_death_004.png",
+  ],
   playerWalk: [
     "assets/char/player/player1_walk_000.png",
     "assets/char/player/player1_walk_001.png",
@@ -126,6 +136,7 @@ const ASSET_PATHS = {
     "assets/char/player/player1_jump_004.png",
   ],
   enemyStatic: "assets/char/enemy/enemy1_static.png",
+  enemyWin: "assets/char/enemy/enemy1_win_000.png",
   enemyWalk: [
     "assets/char/enemy/enemy1_walk_000.png",
     "assets/char/enemy/enemy1_walk_001.png",
@@ -232,6 +243,7 @@ const game = {
   audioUnlocked: false,
   gameOverDelay: 0,
   gameOverTriggered: false,
+  endingTimer: 0,
 };
 
 const input = {
@@ -357,6 +369,10 @@ function setState(nextState) {
     music.play().catch(() => {});
   }
 
+  if (nextState === "ending" && music) {
+    music.pause();
+  }
+
   if (nextState === "gameOverTime" || nextState === "gameOverDead") {
     game.gameOverDelay = 2.5;
     game.gameOverTriggered = true;
@@ -430,6 +446,7 @@ function resetGameState() {
   game.overReason = null;
   game.gameOverDelay = 0;
   game.gameOverTriggered = false;
+  game.endingTimer = 0;
   game.player = {
     x: GAME_WIDTH / 2,
     y: PLAYER_MIN_Y + 60,
@@ -474,6 +491,8 @@ function getPlayerFrame() {
   else if (player.animation === "punch") frames = ASSET_PATHS.playerPunch;
   else if (player.animation === "kick") frames = ASSET_PATHS.playerKick;
   else if (player.animation === "jump") frames = ASSET_PATHS.playerJump;
+  else if (player.animation === "win") frames = [ASSET_PATHS.playerWin];
+  else if (player.animation === "dead") frames = ASSET_PATHS.playerDeath;
   const idx = clamp(Math.floor(player.animFrame), 0, frames.length - 1);
   return assets.images[frames[idx]] || assets.images[ASSET_PATHS.playerStatic];
 }
@@ -484,6 +503,8 @@ function getEnemyFrame(enemy) {
   else if (enemy.animation === "punch") frames = ASSET_PATHS.enemyPunch;
   else if (enemy.animation === "kick") frames = ASSET_PATHS.enemyKick;
   else if (enemy.animation === "dead") frames = ASSET_PATHS.enemyDeath;
+  else if (enemy.animation === "win") frames = [ASSET_PATHS.enemyWin];
+  else if (enemy.animation === "static") frames = [ASSET_PATHS.enemyStatic];
   const idx = clamp(Math.floor(enemy.animFrame), 0, frames.length - 1);
   return assets.images[frames[idx]] || assets.images[ASSET_PATHS.enemyStatic];
 }
@@ -642,9 +663,8 @@ function damagePlayer(amount) {
   playSound(ASSET_PATHS.fxHitSfx);
   if (game.player.health <= 0) {
     game.player.dead = true;
-    game.overReason = "dead";
     playSound(ASSET_PATHS.playerDeathSfx);
-    setState("gameOverDead");
+    startEnding("dead");
   }
 }
 
@@ -872,22 +892,24 @@ function updatePlayer(dt) {
   }
 }
 
+function advanceEnemyDeath(enemy, dt) {
+  enemy.deathTimer -= dt;
+  enemy.animTimer += dt;
+  while (
+    enemy.animTimer >= ENEMY_DEATH_FRAME_DURATION &&
+    enemy.animFrame < ASSET_PATHS.enemyDeath.length - 1
+  ) {
+    enemy.animTimer -= ENEMY_DEATH_FRAME_DURATION;
+    enemy.animFrame += 1;
+  }
+  return enemy.deathTimer <= 0;
+}
+
 function updateEnemies(dt) {
   for (let i = game.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = game.enemies[i];
     if (enemy.dead) {
-      enemy.deathTimer -= dt;
-      enemy.animTimer += dt;
-      while (
-        enemy.animTimer >= ENEMY_DEATH_FRAME_DURATION &&
-        enemy.animFrame < ASSET_PATHS.enemyDeath.length - 1
-      ) {
-        enemy.animTimer -= ENEMY_DEATH_FRAME_DURATION;
-        enemy.animFrame += 1;
-      }
-      if (enemy.deathTimer <= 0) {
-        game.enemies.splice(i, 1);
-      }
+      if (advanceEnemyDeath(enemy, dt)) game.enemies.splice(i, 1);
       continue;
     }
 
@@ -1171,7 +1193,72 @@ function keepEnemyOnScreen() {
   closest.facing = fromLeft ? 1 : -1;
 }
 
+function startEnding(reason) {
+  const player = game.player;
+  game.overReason = reason;
+  game.endingTimer = ENDING_HOLD_SECONDS;
+  player.attackType = null;
+  player.jumpTime = 0;
+  player.jumpHeight = 0;
+  player.animation = reason === "dead" ? "dead" : "win";
+  player.animFrame = 0;
+  player.animTimer = 0;
+  for (const enemy of game.enemies) {
+    if (enemy.dead) continue;
+    enemy.attackType = null;
+    enemy.animation = reason === "dead" ? "win" : "static";
+    enemy.animFrame = 0;
+  }
+  setState("ending");
+}
+
+function updateEnding(dt) {
+  const player = game.player;
+  game.endingTimer -= dt;
+  player.hurtFlash = Math.max(0, player.hurtFlash - dt);
+  if (player.animation === "dead") {
+    player.animTimer += dt;
+    while (
+      player.animTimer >= PLAYER_DEATH_FRAME_DURATION &&
+      player.animFrame < ASSET_PATHS.playerDeath.length - 1
+    ) {
+      player.animTimer -= PLAYER_DEATH_FRAME_DURATION;
+      player.animFrame += 1;
+    }
+  }
+
+  for (let i = game.enemies.length - 1; i >= 0; i -= 1) {
+    const enemy = game.enemies[i];
+    if (enemy.dead && advanceEnemyDeath(enemy, dt)) game.enemies.splice(i, 1);
+  }
+
+  for (let i = game.projectiles.length - 1; i >= 0; i -= 1) {
+    const p = game.projectiles[i];
+    p.x += p.vx * dt;
+    p.rotation = (p.rotation + Math.PI * 2 * dt) % (Math.PI * 2);
+    p.ttl -= dt;
+    if (p.ttl <= 0) game.projectiles.splice(i, 1);
+  }
+
+  updateEffects(dt);
+  for (let i = game.powerUpEffects.length - 1; i >= 0; i -= 1) {
+    game.powerUpEffects[i].age += dt;
+    if (game.powerUpEffects[i].age >= POWER_UP_EFFECT_DURATION) {
+      game.powerUpEffects.splice(i, 1);
+    }
+  }
+
+  if (game.endingTimer <= 0) {
+    setState(game.overReason === "dead" ? "gameOverDead" : "gameOverTime");
+  }
+}
+
 function update(dt) {
+  if (game.state === "ending") {
+    updateEnding(dt);
+    return;
+  }
+
   if (game.state === "gameOverTime" || game.state === "gameOverDead") {
     game.gameOverDelay = Math.max(0, game.gameOverDelay - dt);
     return;
@@ -1181,11 +1268,8 @@ function update(dt) {
 
   game.timer = Math.max(0, game.timer - dt);
   if (game.timer <= 0) {
-    game.overReason = "time";
-    if (!game.gameOverTriggered) {
-      setState("gameOverTime");
-      playSound(ASSET_PATHS.gameOver);
-    }
+    startEnding("time");
+    playSound(ASSET_PATHS.gameOver);
     return;
   }
 
@@ -1885,7 +1969,13 @@ function render() {
 
   if (game.state === "loading") drawLoadingScreen();
   else if (game.state === "start") drawStartScreen();
-  else if (game.state === "playing" || game.state === "paused") drawGameplay();
+  else if (
+    game.state === "playing" ||
+    game.state === "paused" ||
+    game.state === "ending"
+  ) {
+    drawGameplay();
+  }
   else drawGameOver();
 }
 
