@@ -16,12 +16,14 @@ const ENDING_HOLD_SECONDS = 3;
 const PLAYER_DEATH_FRAME_DURATION = 0.12;
 const COUNTDOWN_BEEP_DURATION = 0.18;
 const RAIN_CHANCE = 0.35;
-const RAIN_MIN_INTENSITY = 0.3;
-const RAIN_MAX_INTENSITY = 1;
+const SNOW_CHANCE = 0.35;
+const SNOW_MAX_FLAKES = 320;
+const WEATHER_MIN_INTENSITY = 0.3;
+const WEATHER_MAX_INTENSITY = 1;
 const RAIN_MAX_DROPS = 360;
 const RAIN_SLANT = 0.22;
-const RAIN_SHIFT_MIN = 8;
-const RAIN_SHIFT_MAX = 16;
+const WEATHER_SHIFT_MIN = 8;
+const WEATHER_SHIFT_MAX = 16;
 const SPLASH_DURATION = 0.3;
 const THUNDER_DELAY_MIN = 7;
 const THUNDER_DELAY_MAX = 18;
@@ -280,6 +282,7 @@ const powerUpArt = {};
 let audioContext = null;
 let noiseBuffer = null;
 let rainSound = null;
+let windSound = null;
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
@@ -440,29 +443,35 @@ function getNoiseBuffer() {
   return noiseBuffer;
 }
 
-function getRainVolume() {
-  const weather = game.weather;
-  const audible =
-    weather &&
+function isWeatherAudible(type) {
+  return (
+    game.weather?.type === type &&
     !game.muted &&
-    (game.state === "playing" || game.state === "ending");
-  return audible ? 0.04 + weather.intensity * 0.08 : 0;
+    (game.state === "playing" || game.state === "ending")
+  );
 }
 
-function updateRainSound() {
-  if (!audioContext) return;
-  const volume = getRainVolume();
-  if (!rainSound) {
-    if (volume === 0) return;
+function getRainVolume() {
+  return isWeatherAudible("rain") ? 0.04 + game.weather.intensity * 0.08 : 0;
+}
+
+function getWindVolume() {
+  if (!isWeatherAudible("snow")) return 0;
+  return 0.03 + game.weather.intensity * 0.04 + game.weather.gust * 0.06;
+}
+
+function updateNoiseLoop(loop, volume, highpassHz, lowpassHz) {
+  if (!loop) {
+    if (volume === 0) return null;
     const source = audioContext.createBufferSource();
     source.buffer = getNoiseBuffer();
     source.loop = true;
     const highpass = audioContext.createBiquadFilter();
     highpass.type = "highpass";
-    highpass.frequency.value = 500;
+    highpass.frequency.value = highpassHz;
     const lowpass = audioContext.createBiquadFilter();
     lowpass.type = "lowpass";
-    lowpass.frequency.value = 5000;
+    lowpass.frequency.value = lowpassHz;
     const gain = audioContext.createGain();
     gain.gain.value = 0;
     source.connect(highpass);
@@ -470,9 +479,16 @@ function updateRainSound() {
     lowpass.connect(gain);
     gain.connect(audioContext.destination);
     source.start();
-    rainSound = { gain };
+    loop = { gain };
   }
-  rainSound.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+  loop.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+  return loop;
+}
+
+function updateWeatherSound() {
+  if (!audioContext) return;
+  rainSound = updateNoiseLoop(rainSound, getRainVolume(), 500, 5000);
+  windSound = updateNoiseLoop(windSound, getWindVolume(), 80, 500);
 }
 
 function playThunder(delay) {
@@ -1301,29 +1317,59 @@ function createRaindrop(y) {
   };
 }
 
-function createWeather() {
-  if (Math.random() >= RAIN_CHANCE) return null;
-  const intensity = randomRange(RAIN_MIN_INTENSITY, RAIN_MAX_INTENSITY);
-  const drops = [];
-  for (let i = 0; i < RAIN_MAX_DROPS; i += 1) {
-    drops.push(createRaindrop(Math.random() * GAME_HEIGHT));
-  }
+function createSnowflake(y) {
+  const size = randomRange(1.5, 4.5);
   return {
+    x: randomRange(-200, GAME_WIDTH),
+    y,
+    size,
+    speed: 35 + size * 22,
+    sway: randomRange(0, Math.PI * 2),
+    swaySpeed: randomRange(0.8, 2),
+  };
+}
+
+function createWeather() {
+  const roll = Math.random();
+  if (roll >= RAIN_CHANCE + SNOW_CHANCE) return null;
+  const type = roll < RAIN_CHANCE ? "rain" : "snow";
+  const intensity = randomRange(WEATHER_MIN_INTENSITY, WEATHER_MAX_INTENSITY);
+  const weather = {
+    type,
     intensity,
     target: intensity,
-    shiftTimer: randomRange(RAIN_SHIFT_MIN, RAIN_SHIFT_MAX),
-    drops,
-    splashes: [],
-    splashTimer: 0,
-    flashAge: -1,
-    bolt: null,
-    thunderTimer: randomRange(3, 8),
+    shiftTimer: randomRange(WEATHER_SHIFT_MIN, WEATHER_SHIFT_MAX),
     lastCameraX: game.cameraX,
   };
+
+  if (type === "rain") {
+    weather.drops = [];
+    for (let i = 0; i < RAIN_MAX_DROPS; i += 1) {
+      weather.drops.push(createRaindrop(Math.random() * GAME_HEIGHT));
+    }
+    weather.splashes = [];
+    weather.splashTimer = 0;
+    weather.flashAge = -1;
+    weather.bolt = null;
+    weather.thunderTimer = randomRange(3, 8);
+  } else {
+    weather.flakes = [];
+    for (let i = 0; i < SNOW_MAX_FLAKES; i += 1) {
+      weather.flakes.push(createSnowflake(Math.random() * GAME_HEIGHT));
+    }
+    weather.gust = 0;
+    weather.gustTarget = 0;
+    weather.gustTimer = randomRange(3, 7);
+  }
+  return weather;
 }
 
 function getActiveRaindrops(weather) {
   return Math.round(RAIN_MAX_DROPS * weather.intensity);
+}
+
+function getActiveSnowflakes(weather) {
+  return Math.round(SNOW_MAX_FLAKES * weather.intensity);
 }
 
 function createBolt() {
@@ -1360,13 +1406,46 @@ function updateWeather(dt) {
 
   weather.shiftTimer -= dt;
   if (weather.shiftTimer <= 0) {
-    weather.target = randomRange(RAIN_MIN_INTENSITY, RAIN_MAX_INTENSITY);
-    weather.shiftTimer = randomRange(RAIN_SHIFT_MIN, RAIN_SHIFT_MAX);
+    weather.target = randomRange(WEATHER_MIN_INTENSITY, WEATHER_MAX_INTENSITY);
+    weather.shiftTimer = randomRange(WEATHER_SHIFT_MIN, WEATHER_SHIFT_MAX);
   }
   weather.intensity += (weather.target - weather.intensity) * Math.min(1, dt * 0.4);
 
   const cameraShift = game.cameraX - weather.lastCameraX;
   weather.lastCameraX = game.cameraX;
+  if (weather.type === "rain") updateRain(weather, dt, cameraShift);
+  else updateSnow(weather, dt, cameraShift);
+}
+
+function updateSnow(weather, dt, cameraShift) {
+  weather.gustTimer -= dt;
+  if (weather.gustTimer <= 0) {
+    weather.gustTarget =
+      Math.random() < 0.35 ? randomRange(0.6, 1) : randomRange(0, 0.25);
+    weather.gustTimer = randomRange(3, 8);
+  }
+  weather.gust += (weather.gustTarget - weather.gust) * Math.min(1, dt * 0.8);
+
+  const wind = 15 + weather.gust * 110;
+  const active = getActiveSnowflakes(weather);
+  for (let i = 0; i < active; i += 1) {
+    const flake = weather.flakes[i];
+    const depth = flake.size / 3;
+    flake.sway += flake.swaySpeed * dt;
+    flake.y += flake.speed * dt;
+    flake.x +=
+      (wind * depth + Math.sin(flake.sway) * 20) * dt - cameraShift * depth;
+    if (
+      flake.y - flake.size > GAME_HEIGHT ||
+      flake.x < -250 ||
+      flake.x > GAME_WIDTH + 250
+    ) {
+      Object.assign(flake, createSnowflake(randomRange(-40, 0)));
+    }
+  }
+}
+
+function updateRain(weather, dt, cameraShift) {
   const active = getActiveRaindrops(weather);
   for (let i = 0; i < active; i += 1) {
     const drop = weather.drops[i];
@@ -2143,6 +2222,20 @@ function drawWeatherBackdrop() {
   const weather = game.weather;
   if (!weather) return;
   ctx.save();
+  if (weather.type === "snow") {
+    ctx.fillStyle = `rgba(170, 190, 220, ${0.06 + weather.intensity * 0.08})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    const dusting = ctx.createLinearGradient(0, FEET_MIN_Y - 30, 0, GAME_HEIGHT);
+    dusting.addColorStop(0, "rgba(240, 246, 255, 0)");
+    dusting.addColorStop(
+      1,
+      `rgba(240, 246, 255, ${0.18 + weather.intensity * 0.17})`,
+    );
+    ctx.fillStyle = dusting;
+    ctx.fillRect(0, FEET_MIN_Y - 30, GAME_WIDTH, GAME_HEIGHT);
+    ctx.restore();
+    return;
+  }
   ctx.fillStyle = `rgba(8, 14, 32, ${0.18 + weather.intensity * 0.17})`;
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   ctx.lineWidth = 1.5;
@@ -2157,9 +2250,27 @@ function drawWeatherBackdrop() {
   ctx.restore();
 }
 
-function drawRain() {
+function drawSnow(weather) {
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.beginPath();
+  const active = getActiveSnowflakes(weather);
+  for (let i = 0; i < active; i += 1) {
+    const flake = weather.flakes[i];
+    ctx.moveTo(flake.x + flake.size, flake.y);
+    ctx.arc(flake.x, flake.y, flake.size, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawWeather() {
   const weather = game.weather;
   if (!weather) return;
+  if (weather.type === "snow") {
+    drawSnow(weather);
+    return;
+  }
   ctx.save();
   ctx.strokeStyle = `rgba(190, 210, 235, ${0.28 + weather.intensity * 0.17})`;
   ctx.lineWidth = 1.6;
@@ -2206,7 +2317,7 @@ function drawGameplay() {
   drawBackgroundLayer();
   drawWeatherBackdrop();
   drawWorld();
-  drawRain();
+  drawWeather();
   drawHUD();
 }
 
@@ -2513,7 +2624,7 @@ function animationLoop(time) {
 
   update(dt);
   render();
-  updateRainSound();
+  updateWeatherSound();
   requestAnimationFrame(animationLoop);
 }
 
