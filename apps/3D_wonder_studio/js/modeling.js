@@ -121,7 +121,7 @@ export class ObjectManager {
     this.gizmo.addEventListener("dragging-changed", (e) => {
       rig.controls.enabled = !e.value;
       if (e.value) this._beginTransform();
-      else this._endTransform("Move");
+      else this._endTransform({ translate: "Move", rotate: "Rotate", scale: "Scale" }[this.gizmo.mode]);
     });
     this.gizmo.addEventListener("objectChange", () => {
       this._applyTransform();
@@ -313,7 +313,7 @@ export class ObjectManager {
     this.app.requestRender();
   }
 
-  /** Outlines and handles only show with the Move tool, where they can't hide the sculpt. */
+  /** Outlines and handles only show with the Transform tools, where they can't hide the sculpt. */
   refreshGizmo() {
     const show = this.app.tool === "select";
     for (const o of this.selected) o.outline.visible = show;
