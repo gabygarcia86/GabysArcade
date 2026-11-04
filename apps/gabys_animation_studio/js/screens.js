@@ -23,7 +23,7 @@
       b.addEventListener("click", fn);
       return b;
     };
-    const brand = h("a", { class: "brand", href: "../../index.html", tip: "Back to Gaby's Arcade", "aria-label": "Back to Gaby's Arcade" },
+    const brand = h("a", { class: "brand", href: "../../apps.html", tip: "Back to the Apps page", "aria-label": "Back to the Apps page" },
       h("img", { src: "icon/icon-128.png", alt: "", width: 40, height: 40 }),
       h("span", { class: "brand-text" }, h("b", null, "Gaby's"), " Animation Studio"));
     nameBtn = h("button", { class: "project-name", type: "button", tip: "Rename your animation", onclick: rename }, h("span", { class: "name-text" }), I("rename"));
@@ -137,7 +137,7 @@
           option("is-template", "template", "Try a Template", "Start from a fun example", () => templatesDialog()),
           option("is-open", "folder", "Open My Project", "Keep working on one you made", () => projectsDialog())),
         h("p", { class: "welcome-privacy" }, "🔒 No sign-up, no ads. Your animations stay on this device unless you export them."),
-        h("a", { class: "welcome-back", href: "../../index.html" }, "← Back to Gaby's Arcade")));
+        h("a", { class: "welcome-back", href: "../../apps.html" }, "← Back to Apps")));
     document.body.appendChild(welcomeEl);
     document.body.classList.add("has-welcome");
     try {

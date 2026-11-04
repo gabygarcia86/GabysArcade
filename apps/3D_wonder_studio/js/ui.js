@@ -158,7 +158,7 @@ export class UI {
     more.addEventListener("click", () => more.classList.remove("is-open"));
 
     document.getElementById("topbar").append(
-      h("a", { class: "brand", href: "../../index.html", tip: "Back to Gaby's Arcade", "aria-label": "Back to Gaby's Arcade" },
+      h("a", { class: "brand", href: "../../apps.html", tip: "Back to the Apps page", "aria-label": "Back to the Apps page" },
         h("img", { src: "icon/icon-128.png", alt: "", width: 40, height: 40 }),
         h("span", { class: "brand-text" }, "3D Wonder Studio")),
       h("div", { class: "project-box" }, this.nameInput, this.saveState),
