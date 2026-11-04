@@ -342,5 +342,27 @@ window.ARCADE_CATALOG = {
       ],
       added: "2026-11-03",
     },
+    {
+      folder: "gabys_beat_lab",
+      title: "Gaby's Beat Lab",
+      description:
+        "Make your own music: build beats, write melodies in the piano roll, arrange songs, add effects and export WAV, MP3 or MIDI.",
+      categories: ["Creativity"],
+      tags: [
+        "music",
+        "beats",
+        "drums",
+        "piano",
+        "synth",
+        "song maker",
+        "mixer",
+        "recording",
+        "mp3",
+        "midi",
+        "kids",
+        "touch",
+      ],
+      added: "2026-11-04",
+    },
   ],
 };

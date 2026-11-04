@@ -1,0 +1,98 @@
+/* Beginner Mode, tablet and phone layouts. */
+
+/* ---------- Beginner Mode ---------- */
+body.beginner { --ui-scale: 1.18; font-size: 15px; }
+body.beginner .adv { display: none !important; }
+.beginner-only { display: none; }
+body.beginner .beginner-only { display: inline; }
+body.beginner .step { border-radius: 9px; }
+body.beginner .btn.mega { font-size: 16px; padding: 0 18px; }
+body.beginner .knob-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* toolbar labels collapse to icons when space runs out */
+@media (max-width: 1640px) {
+  .toolbar .btn.buddy .lbl, .toolbar .btn.fun .lbl, .toolbar .toggle-btn .lbl { display: none; }
+  .song-name { max-width: 140px; }
+}
+@media (max-width: 1280px) {
+  .toolbar { flex-wrap: wrap; overflow: visible; row-gap: 6px; }
+  .tb-spacer { display: none; }
+  .toolbar .tb-group.right { margin-left: auto; }
+}
+@media (max-width: 1400px) {
+  .toolbar .file-group .btn .lbl, .brand-text { display: none; }
+  .master-vol { width: 64px; }
+}
+
+/* mobile nav hidden on desktop */
+.mobile-nav { display: none; }
+
+/* ---------- tablet ---------- */
+@media (max-width: 1100px) {
+  .brand-text { display: none; }
+  .song-name { display: none; }
+  .app { grid-template-columns: var(--browser-w, 240px) 6px minmax(0, 1fr) 6px var(--insp-w, 270px); }
+  .ch-name { width: calc(120px * var(--ui-scale)); }
+  .knob-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 1100px) and (min-width: 761px) {
+  .app.inspector-collapsed { grid-template-columns: var(--browser-w, 240px) 6px minmax(0, 1fr) 6px 44px; }
+}
+
+/* ---------- phone ---------- */
+@media (max-width: 760px) {
+  body { font-size: 14px; }
+  .toolbar { gap: 6px; padding: 4px 6px; min-height: 48px; justify-content: center; }
+  .toolbar .file-group .icon-btn:not([aria-label="Undo"]):not([aria-label="Redo"]) { display: none; }
+  .toolbar .sig, .toolbar .vol-group, .toolbar .btn.fun, .toolbar .toggle-btn { display: none; }
+  .pos-display { min-width: 64px; }
+  .pos-time { display: none; }
+  .app { display: block; padding: 4px; padding-bottom: 0; }
+  .app > .resizer { display: none; }
+  .app > .panel, .center { display: none; height: 100%; }
+  .app[data-mview="browser"] > .browser-panel,
+  .app[data-mview="inspector"] > .inst-panel { display: flex; }
+  .app[data-mview="rack"] > .center,
+  .app[data-mview="playlist"] > .center,
+  .app[data-mview="pianoroll"] > .center,
+  .app[data-mview="mixer"] > .center { display: flex; flex-direction: column; }
+  .app[data-mview="rack"] #editor,
+  .app[data-mview="playlist"] #rack, .app[data-mview="pianoroll"] #rack, .app[data-mview="mixer"] #rack { display: none; }
+  .center > .resizer { display: none; }
+  .center > .panel { flex: 1; }
+  .editor-tabs { display: none; }
+  .app .panel .collapse-btn { display: none; }
+  .app.browser-collapsed .browser-panel > :not(.panel-head),
+  .app.inspector-collapsed .inst-panel > :not(.panel-head),
+  .app.rack-collapsed .rack-panel > :not(.panel-head) { display: flex; }
+  .app.browser-collapsed .browser-panel .panel-head,
+  .app.inspector-collapsed .inst-panel .panel-head { flex-direction: row; height: auto; }
+  .app.browser-collapsed .browser-panel .panel-title,
+  .app.inspector-collapsed .inst-panel .panel-title { writing-mode: horizontal-tb; margin: 0; }
+  .browser-list, .insp-body, .rack-rows { display: block; }
+  .app.browser-collapsed .browser-panel > .browser-list, .app.inspector-collapsed .inst-panel > .insp-body { display: block; }
+  .mobile-nav {
+    display: flex;
+    flex: none;
+    gap: 2px;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    background: #11132a;
+    border-top: 1px solid var(--border);
+  }
+  .mobile-nav button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0; border: none; border-radius: 10px; background: transparent; font-size: 19px; color: var(--text-dim); }
+  .mobile-nav button span { font-size: 10.5px; font-weight: 600; }
+  .mobile-nav button.on { background: var(--panel-3); color: var(--text); }
+  .rack-head .btn-group, .rack-head .pat-group .icon-btn:nth-child(n + 4) { display: none; }
+  .ch-name { width: 96px; }
+  .rack-ctl .knob { display: none; }
+  .step { width: 30px; height: 36px; }
+  .pl-headers { width: 100px; }
+  .guide { left: 8px; right: 8px; width: auto; bottom: 70px; }
+  .form-row, .export-form .form-row { grid-template-columns: 1fr; gap: 4px; }
+  .modal.full { border-radius: 0; }
+  .modal-back:has(.modal.full) { padding: 0; }
+  .welcome-grid, .genre-grid { grid-template-columns: repeat(2, 1fr); }
+  .pad-grid { gap: 6px; }
+  .knob-grid { grid-template-columns: repeat(4, 1fr); }
+  .piano { height: 120px; }
+}
