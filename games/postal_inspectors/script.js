@@ -93,6 +93,7 @@ const ASSET_PATHS = {
   healthFill: "assets/ui/ui_health_bar_fill.png",
   pauseBtn: "assets/ui/btn_pause.png",
   playBtn: "assets/ui/btn_play.png",
+  restartBtn: "assets/ui/btn_restart.png",
   audioOn: "assets/ui/btn_audio_on.png",
   audioOff: "assets/ui/btn_audio_off.png",
   fullScreenBtn: "assets/ui/btn_full_screen.png",
@@ -222,6 +223,7 @@ const ASSET_PATHS = {
 const BUTTONS = {
   start: { x: 40, y: 450, w: 254, h: 254 },
   playAgain: { x: 40, y: 450, w: 254, h: 254 },
+  restart: { x: 960, y: 18, w: 56, h: 56 },
   pause: { x: 1030, y: 18, w: 56, h: 56 },
   mute: { x: 1100, y: 18, w: 56, h: 56 },
   fullscreen: { x: 1170, y: 18, w: 56, h: 56 },
@@ -2161,6 +2163,16 @@ function drawHUD() {
 
   drawBoostTimers(healthX);
 
+  const restartIcon = assets.images[ASSET_PATHS.restartBtn];
+  if (restartIcon)
+    ctx.drawImage(
+      restartIcon,
+      BUTTONS.restart.x,
+      BUTTONS.restart.y,
+      BUTTONS.restart.w,
+      BUTTONS.restart.h,
+    );
+
   const pauseIcon =
     game.state === "paused"
       ? assets.images[ASSET_PATHS.playBtn]
@@ -2569,6 +2581,12 @@ function handlePointerDown(event) {
   }
 
   if (game.state === "playing" || game.state === "paused") {
+    if (rectContains(point.x, point.y, BUTTONS.restart)) {
+      playSound(ASSET_PATHS.btnClick);
+      startNewGame();
+      return;
+    }
+
     if (rectContains(point.x, point.y, BUTTONS.pause)) {
       if (game.state === "paused") setState("playing");
       else setState("paused");
