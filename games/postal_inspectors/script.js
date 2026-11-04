@@ -8,6 +8,9 @@ const PUNCH_HAND_X = 0.94;
 const PUNCH_HAND_Y = 0.37;
 const SHOOT_COOLDOWN = 1;
 const RAPID_FIRE_INTERVAL = 0.2;
+const JOYSTICK_RADIUS = 85 * 1.5;
+const JOYSTICK_EDGE_GAP_X = 45;
+const JOYSTICK_EDGE_GAP_Y = 35;
 const COUNTDOWN_SECONDS = 5;
 const ENDING_HOLD_SECONDS = 3;
 const PLAYER_DEATH_FRAME_DURATION = 0.12;
@@ -209,7 +212,11 @@ const BUTTONS = {
   pause: { x: 1030, y: 18, w: 56, h: 56 },
   mute: { x: 1100, y: 18, w: 56, h: 56 },
   fullscreen: { x: 1170, y: 18, w: 56, h: 56 },
-  joystick: { x: 130, y: 600, radius: 85 },
+  joystick: {
+    x: JOYSTICK_EDGE_GAP_X + JOYSTICK_RADIUS,
+    y: GAME_HEIGHT - JOYSTICK_EDGE_GAP_Y - JOYSTICK_RADIUS,
+    radius: JOYSTICK_RADIUS,
+  },
   jump: { x: 1079, y: 520, w: 162, h: 162 },
   punch: { x: 979, y: 420, w: 132, h: 132 },
   kick: { x: 1108, y: 380, w: 132, h: 132 },
@@ -1064,7 +1071,7 @@ function spawnPowerUp() {
   ];
   let spot = null;
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    const x = game.cameraX + 280 + Math.random() * 620;
+    const x = game.cameraX + 360 + Math.random() * 540;
     const y = FEET_MIN_Y + 30 + Math.random() * 220;
     const crowded = taken.some(
       (item) => Math.hypot(item.x - x, item.y - y) < POWER_UP_SPACING,
