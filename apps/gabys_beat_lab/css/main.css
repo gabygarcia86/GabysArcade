@@ -139,7 +139,7 @@ input:focus, select:focus { border-color: var(--cyan); outline: none; }
 /* ---------- tooltip / toast ---------- */
 .tooltip {
   position: fixed;
-  z-index: 1000;
+  z-index: 2300;
   max-width: 280px;
   background: #0b0c1a;
   border: 1px solid var(--border-2);
@@ -155,7 +155,7 @@ input:focus, select:focus { border-color: var(--cyan); outline: none; }
   box-shadow: var(--shadow);
 }
 .tooltip.show { opacity: 1; transform: none; }
-.toasts { position: fixed; z-index: 1100; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toasts { position: fixed; z-index: 2250; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
 .toast {
   background: linear-gradient(90deg, #4c1d95, #1e3a8a);
   border: 1px solid #7c3aed;
@@ -175,7 +175,7 @@ input:focus, select:focus { border-color: var(--cyan); outline: none; }
 .modal-back {
   position: fixed;
   inset: 0;
-  z-index: 900;
+  z-index: 2100; /* above the loading splash, so the startup "Recover your work?" question is visible */
   background: rgba(5, 6, 18, 0.65);
   backdrop-filter: blur(3px);
   display: flex;
@@ -221,7 +221,7 @@ input:focus, select:focus { border-color: var(--cyan); outline: none; }
 /* ---------- menu ---------- */
 .menu {
   position: fixed;
-  z-index: 950;
+  z-index: 2200;
   min-width: 220px;
   max-width: min(380px, 94vw);
   max-height: 75vh;
@@ -280,4 +280,4 @@ input:focus, select:focus { border-color: var(--cyan); outline: none; }
 .splash h1 b { background: linear-gradient(90deg, var(--pink), var(--purple), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .splash-msg { color: var(--text-dim); }
 .sound-banner { position: fixed; z-index: 1200; top: 70px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 99px; background: var(--orange); color: #1a1a2e; border: none; font-weight: 700; box-shadow: var(--shadow); }
-.confetti { position: fixed; inset: 0; z-index: 1500; pointer-events: none; }
+.confetti { position: fixed; inset: 0; z-index: 2400; pointer-events: none; }
