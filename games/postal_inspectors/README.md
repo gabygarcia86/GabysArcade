@@ -1,4 +1,4 @@
-Postal Inspectors : Mail Call the mobile game coming soon!
+Postal Inspectors : Mail Call
 
 Created by Gaby Garcia
 
@@ -14,7 +14,3 @@ Then open <http://localhost:8000/>. The VS Code **Live Server** extension or `np
 
 ## TODO
 
-- Safari frame rate
-- Death screen
-- Joystick size
-- rain
