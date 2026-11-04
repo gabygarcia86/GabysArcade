@@ -320,5 +320,27 @@ window.ARCADE_CATALOG = {
       tags: ["art", "drawing", "painting", "kids"],
       added: "2026-10-10",
     },
+    {
+      folder: "gabys_animation_studio",
+      title: "Gaby's Animation Studio",
+      description:
+        "Make your own cartoons frame by frame with onion skins, stickers and sounds, then export a GIF or video.",
+      categories: ["Creativity"],
+      tags: [
+        "animation",
+        "cartoon",
+        "flipbook",
+        "frame by frame",
+        "drawing",
+        "gif",
+        "video",
+        "stickers",
+        "sound effects",
+        "art",
+        "kids",
+        "touch",
+      ],
+      added: "2026-11-03",
+    },
   ],
 };
