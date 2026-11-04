@@ -8,8 +8,26 @@ const PUNCH_HAND_X = 0.94;
 const PUNCH_HAND_Y = 0.37;
 const SHOOT_COOLDOWN = 1;
 const RAPID_FIRE_INTERVAL = 0.2;
+const JOYSTICK_RADIUS = 85 * 1.5;
+const JOYSTICK_EDGE_GAP_X = 45;
+const JOYSTICK_EDGE_GAP_Y = 35;
 const COUNTDOWN_SECONDS = 5;
+const ENDING_HOLD_SECONDS = 3;
+const PLAYER_DEATH_FRAME_DURATION = 0.12;
 const COUNTDOWN_BEEP_DURATION = 0.18;
+const RAIN_CHANCE = 0.35;
+const SNOW_CHANCE = 0.35;
+const SNOW_MAX_FLAKES = 320;
+const WEATHER_MIN_INTENSITY = 0.3;
+const WEATHER_MAX_INTENSITY = 1;
+const RAIN_MAX_DROPS = 360;
+const RAIN_SLANT = 0.22;
+const WEATHER_SHIFT_MIN = 8;
+const WEATHER_SHIFT_MAX = 16;
+const SPLASH_DURATION = 0.3;
+const THUNDER_DELAY_MIN = 7;
+const THUNDER_DELAY_MAX = 18;
+const LIGHTNING_BOLT_DURATION = 0.35;
 const MAX_ENEMIES = 10;
 const ENEMY_SPAWN_RATE = 2;
 const ENEMY_EDGE_PEEK = 40;
@@ -52,7 +70,7 @@ const HIT_EFFECT_FRAME_DURATION = 0.07;
 const PLAYER_JUMP_LAND_DURATION = 0.1;
 
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: false });
 const portraitOverlay = document.getElementById("portraitOverlay");
 const gameShell = document.getElementById("game-shell");
 
@@ -86,6 +104,14 @@ const ASSET_PATHS = {
   actionShoot: "assets/controls/btn_action_shoot_active.png",
   projectile: "assets/char/shoot/shoot_envelope.png",
   playerStatic: "assets/char/player/player1_static.png",
+  playerWin: "assets/char/player/player1_win_000.png",
+  playerDeath: [
+    "assets/char/player/player1_death_000.png",
+    "assets/char/player/player1_death_001.png",
+    "assets/char/player/player1_death_002.png",
+    "assets/char/player/player1_death_003.png",
+    "assets/char/player/player1_death_004.png",
+  ],
   playerWalk: [
     "assets/char/player/player1_walk_000.png",
     "assets/char/player/player1_walk_001.png",
@@ -126,6 +152,7 @@ const ASSET_PATHS = {
     "assets/char/player/player1_jump_004.png",
   ],
   enemyStatic: "assets/char/enemy/enemy1_static.png",
+  enemyWin: "assets/char/enemy/enemy1_win_000.png",
   enemyWalk: [
     "assets/char/enemy/enemy1_walk_000.png",
     "assets/char/enemy/enemy1_walk_001.png",
@@ -198,7 +225,11 @@ const BUTTONS = {
   pause: { x: 1030, y: 18, w: 56, h: 56 },
   mute: { x: 1100, y: 18, w: 56, h: 56 },
   fullscreen: { x: 1170, y: 18, w: 56, h: 56 },
-  joystick: { x: 130, y: 600, radius: 85 },
+  joystick: {
+    x: JOYSTICK_EDGE_GAP_X + JOYSTICK_RADIUS,
+    y: GAME_HEIGHT - JOYSTICK_EDGE_GAP_Y - JOYSTICK_RADIUS,
+    radius: JOYSTICK_RADIUS,
+  },
   jump: { x: 1079, y: 520, w: 162, h: 162 },
   punch: { x: 979, y: 420, w: 132, h: 132 },
   kick: { x: 1108, y: 380, w: 132, h: 132 },
@@ -232,6 +263,8 @@ const game = {
   audioUnlocked: false,
   gameOverDelay: 0,
   gameOverTriggered: false,
+  endingTimer: 0,
+  weather: null,
 };
 
 const input = {
@@ -247,6 +280,11 @@ const input = {
 const assets = { images: {}, sounds: {} };
 const powerUpArt = {};
 let audioContext = null;
+let noiseBuffer = null;
+let rainSound = null;
+const soundBuffers = {};
+let portraitOverlayShown = null;
+let windSound = null;
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
@@ -292,6 +330,35 @@ function makeSound(src) {
   return sound;
 }
 
+function decodeImage(path, img) {
+  if (window.createImageBitmap) {
+    return createImageBitmap(img)
+      .then((bitmap) => {
+        assets.images[path] = bitmap;
+      })
+      .catch(() => {});
+  }
+  return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+}
+
+function loadSoundBuffers() {
+  for (const path of Object.keys(assets.sounds)) {
+    if (path === ASSET_PATHS.music) continue;
+    fetch(path)
+      .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject()))
+      .then(
+        (data) =>
+          new Promise((resolve, reject) => {
+            audioContext.decodeAudioData(data, resolve, reject);
+          }),
+      )
+      .then((buffer) => {
+        soundBuffers[path] = buffer;
+      })
+      .catch(() => {});
+  }
+}
+
 function preloadAssets() {
   game.loadingIconPath =
     ASSET_PATHS.loadingIcons[
@@ -317,7 +384,9 @@ function preloadAssets() {
     if (path.endsWith(".png") || path.endsWith(".jpg")) {
       const img = makeImage(path);
       assets.images[path] = img;
-      img.onload = markDone;
+      img.onload = () => {
+        decodeImage(path, img).finally(markDone);
+      };
       img.onerror = markDone;
       return;
     }
@@ -357,6 +426,10 @@ function setState(nextState) {
     music.play().catch(() => {});
   }
 
+  if (nextState === "ending" && music) {
+    music.pause();
+  }
+
   if (nextState === "gameOverTime" || nextState === "gameOverDead") {
     game.gameOverDelay = 2.5;
     game.gameOverTriggered = true;
@@ -365,8 +438,18 @@ function setState(nextState) {
 }
 
 function playSound(path) {
+  if (game.muted) return;
+  const buffer = soundBuffers[path];
+  if (buffer && audioContext) {
+    if (audioContext.state === "suspended") audioContext.resume();
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+    return;
+  }
   const sound = assets.sounds[path];
-  if (!sound || game.muted) return;
+  if (!sound) return;
   sound.currentTime = 0;
   sound.play().catch(() => {});
 }
@@ -388,6 +471,95 @@ function playCountdownBeep() {
   tone.stop(end);
 }
 
+function getNoiseBuffer() {
+  if (!noiseBuffer) {
+    noiseBuffer = audioContext.createBuffer(
+      1,
+      audioContext.sampleRate * 2,
+      audioContext.sampleRate,
+    );
+    const samples = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i += 1) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+  }
+  return noiseBuffer;
+}
+
+function isWeatherAudible(type) {
+  return (
+    game.weather?.type === type &&
+    !game.muted &&
+    (game.state === "playing" || game.state === "ending")
+  );
+}
+
+function getRainVolume() {
+  return isWeatherAudible("rain") ? 0.04 + game.weather.intensity * 0.08 : 0;
+}
+
+function getWindVolume() {
+  if (!isWeatherAudible("snow")) return 0;
+  return 0.03 + game.weather.intensity * 0.04 + game.weather.gust * 0.06;
+}
+
+function updateNoiseLoop(loop, volume, highpassHz, lowpassHz) {
+  if (!loop) {
+    if (volume === 0) return null;
+    const source = audioContext.createBufferSource();
+    source.buffer = getNoiseBuffer();
+    source.loop = true;
+    const highpass = audioContext.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = highpassHz;
+    const lowpass = audioContext.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = lowpassHz;
+    const gain = audioContext.createGain();
+    gain.gain.value = 0;
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start();
+    loop = { gain, volume: 0 };
+  }
+  if (Math.abs(loop.volume - volume) > 0.002) {
+    loop.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+    loop.volume = volume;
+  }
+  return loop;
+}
+
+function updateWeatherSound() {
+  if (!audioContext) return;
+  rainSound = updateNoiseLoop(rainSound, getRainVolume(), 500, 5000);
+  windSound = updateNoiseLoop(windSound, getWindVolume(), 80, 500);
+}
+
+function playThunder(delay) {
+  if (!audioContext || game.muted) return;
+  if (audioContext.state === "suspended") audioContext.resume();
+  const start = audioContext.currentTime + delay;
+  const duration = randomRange(2.2, 3.8);
+  const source = audioContext.createBufferSource();
+  source.buffer = getNoiseBuffer();
+  source.loop = true;
+  const filter = audioContext.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(900 - delay * 300, start);
+  filter.frequency.exponentialRampToValueAtTime(120, start + duration);
+  const volume = audioContext.createGain();
+  volume.gain.setValueAtTime(0.0001, start);
+  volume.gain.exponentialRampToValueAtTime(0.6 - delay * 0.2, start + 0.08);
+  volume.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  source.connect(filter);
+  filter.connect(volume);
+  volume.connect(audioContext.destination);
+  source.start(start, Math.random() * 1.5);
+  source.stop(start + duration + 0.1);
+}
+
 function toggleMute() {
   game.muted = !game.muted;
   Object.values(assets.sounds).forEach((sound) => {
@@ -406,7 +578,10 @@ function unlockAudio() {
   if (game.audioUnlocked) return;
   game.audioUnlocked = true;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (AudioContextClass) audioContext = new AudioContextClass();
+  if (AudioContextClass) {
+    audioContext = new AudioContextClass();
+    loadSoundBuffers();
+  }
   const music = assets.sounds[ASSET_PATHS.music];
   if (music && (game.state === "start" || game.state === "playing")) {
     music.muted = game.muted;
@@ -430,6 +605,7 @@ function resetGameState() {
   game.overReason = null;
   game.gameOverDelay = 0;
   game.gameOverTriggered = false;
+  game.endingTimer = 0;
   game.player = {
     x: GAME_WIDTH / 2,
     y: PLAYER_MIN_Y + 60,
@@ -460,6 +636,7 @@ function resetGameState() {
 
 function startNewGame() {
   resetGameState();
+  game.weather = createWeather();
   for (let i = 0; i < ENEMY_SPAWN_RATE; i += 1) spawnEnemy(true);
   game.spawnTimer = 9 / ENEMY_SPAWN_RATE;
   setState("playing");
@@ -474,6 +651,8 @@ function getPlayerFrame() {
   else if (player.animation === "punch") frames = ASSET_PATHS.playerPunch;
   else if (player.animation === "kick") frames = ASSET_PATHS.playerKick;
   else if (player.animation === "jump") frames = ASSET_PATHS.playerJump;
+  else if (player.animation === "win") frames = [ASSET_PATHS.playerWin];
+  else if (player.animation === "dead") frames = ASSET_PATHS.playerDeath;
   const idx = clamp(Math.floor(player.animFrame), 0, frames.length - 1);
   return assets.images[frames[idx]] || assets.images[ASSET_PATHS.playerStatic];
 }
@@ -484,6 +663,8 @@ function getEnemyFrame(enemy) {
   else if (enemy.animation === "punch") frames = ASSET_PATHS.enemyPunch;
   else if (enemy.animation === "kick") frames = ASSET_PATHS.enemyKick;
   else if (enemy.animation === "dead") frames = ASSET_PATHS.enemyDeath;
+  else if (enemy.animation === "win") frames = [ASSET_PATHS.enemyWin];
+  else if (enemy.animation === "static") frames = [ASSET_PATHS.enemyStatic];
   const idx = clamp(Math.floor(enemy.animFrame), 0, frames.length - 1);
   return assets.images[frames[idx]] || assets.images[ASSET_PATHS.enemyStatic];
 }
@@ -623,6 +804,7 @@ function spawnProjectile() {
     vx: player.facing * 640,
     ttl: 1.5,
     rotation: 0,
+    groundY: player.y + player.height,
   });
 }
 
@@ -642,14 +824,13 @@ function damagePlayer(amount) {
   playSound(ASSET_PATHS.fxHitSfx);
   if (game.player.health <= 0) {
     game.player.dead = true;
-    game.overReason = "dead";
     playSound(ASSET_PATHS.playerDeathSfx);
-    setState("gameOverDead");
+    startEnding("dead");
   }
 }
 
-function spawnHitEffect(x, y) {
-  game.effects.push({ x, y, frame: 0, frameTimer: 0 });
+function spawnHitEffect(x, y, groundY = y) {
+  game.effects.push({ x, y, groundY, frame: 0, frameTimer: 0 });
   playSound(ASSET_PATHS.fxHitSfx);
 }
 
@@ -716,7 +897,11 @@ function applyPlayerHit() {
       const damage = attack === "punch" ? 4 : attack === "kick" ? 6 : 0;
       enemy.health -= getPlayerDamage(damage);
       enemy.hurtFlash = 0.2;
-      spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+      spawnHitEffect(
+        enemy.x + enemy.width / 2,
+        enemy.y + enemy.height / 2,
+        enemy.y + enemy.height,
+      );
       if (enemy.health <= 0) {
         enemy.dead = true;
         enemy.deathTimer =
@@ -872,22 +1057,24 @@ function updatePlayer(dt) {
   }
 }
 
+function advanceEnemyDeath(enemy, dt) {
+  enemy.deathTimer -= dt;
+  enemy.animTimer += dt;
+  while (
+    enemy.animTimer >= ENEMY_DEATH_FRAME_DURATION &&
+    enemy.animFrame < ASSET_PATHS.enemyDeath.length - 1
+  ) {
+    enemy.animTimer -= ENEMY_DEATH_FRAME_DURATION;
+    enemy.animFrame += 1;
+  }
+  return enemy.deathTimer <= 0;
+}
+
 function updateEnemies(dt) {
   for (let i = game.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = game.enemies[i];
     if (enemy.dead) {
-      enemy.deathTimer -= dt;
-      enemy.animTimer += dt;
-      while (
-        enemy.animTimer >= ENEMY_DEATH_FRAME_DURATION &&
-        enemy.animFrame < ASSET_PATHS.enemyDeath.length - 1
-      ) {
-        enemy.animTimer -= ENEMY_DEATH_FRAME_DURATION;
-        enemy.animFrame += 1;
-      }
-      if (enemy.deathTimer <= 0) {
-        game.enemies.splice(i, 1);
-      }
+      if (advanceEnemyDeath(enemy, dt)) game.enemies.splice(i, 1);
       continue;
     }
 
@@ -968,7 +1155,11 @@ function updateProjectiles(dt) {
       const hitY = Math.abs(p.y - enemy.y) < 40 * CHARACTER_SCALE;
       if (hitX && hitY) {
         enemy.health -= getPlayerDamage(3.35);
-        spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+        spawnHitEffect(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          enemy.y + enemy.height,
+        );
         if (enemy.health <= 0) {
           enemy.dead = true;
           enemy.deathTimer =
@@ -1042,7 +1233,7 @@ function spawnPowerUp() {
   ];
   let spot = null;
   for (let attempt = 0; attempt < 30; attempt += 1) {
-    const x = game.cameraX + 280 + Math.random() * 620;
+    const x = game.cameraX + 360 + Math.random() * 540;
     const y = FEET_MIN_Y + 30 + Math.random() * 220;
     const crowded = taken.some(
       (item) => Math.hypot(item.x - x, item.y - y) < POWER_UP_SPACING,
@@ -1171,7 +1362,257 @@ function keepEnemyOnScreen() {
   closest.facing = fromLeft ? 1 : -1;
 }
 
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function createRaindrop(y) {
+  return {
+    x: randomRange(-250, GAME_WIDTH),
+    y,
+    length: randomRange(16, 30),
+    speed: randomRange(950, 1350),
+  };
+}
+
+function createSnowflake(y) {
+  const size = randomRange(1.5, 4.5);
+  return {
+    x: randomRange(-200, GAME_WIDTH),
+    y,
+    size,
+    speed: 35 + size * 22,
+    sway: randomRange(0, Math.PI * 2),
+    swaySpeed: randomRange(0.8, 2),
+  };
+}
+
+function createWeather() {
+  const roll = Math.random();
+  if (roll >= RAIN_CHANCE + SNOW_CHANCE) return null;
+  const type = roll < RAIN_CHANCE ? "rain" : "snow";
+  const intensity = randomRange(WEATHER_MIN_INTENSITY, WEATHER_MAX_INTENSITY);
+  const weather = {
+    type,
+    intensity,
+    target: intensity,
+    shiftTimer: randomRange(WEATHER_SHIFT_MIN, WEATHER_SHIFT_MAX),
+    lastCameraX: game.cameraX,
+  };
+
+  if (type === "rain") {
+    weather.drops = [];
+    for (let i = 0; i < RAIN_MAX_DROPS; i += 1) {
+      weather.drops.push(createRaindrop(Math.random() * GAME_HEIGHT));
+    }
+    weather.splashes = [];
+    weather.splashTimer = 0;
+    weather.flashAge = -1;
+    weather.bolt = null;
+    weather.thunderTimer = randomRange(3, 8);
+  } else {
+    weather.flakes = [];
+    for (let i = 0; i < SNOW_MAX_FLAKES; i += 1) {
+      weather.flakes.push(createSnowflake(Math.random() * GAME_HEIGHT));
+    }
+    weather.gust = 0;
+    weather.gustTarget = 0;
+    weather.gustTimer = randomRange(3, 7);
+  }
+  return weather;
+}
+
+function getActiveRaindrops(weather) {
+  return Math.round(RAIN_MAX_DROPS * weather.intensity);
+}
+
+function getActiveSnowflakes(weather) {
+  return Math.round(SNOW_MAX_FLAKES * weather.intensity);
+}
+
+function createBolt() {
+  const branches = [];
+  let x = randomRange(150, GAME_WIDTH - 150);
+  let y = -10;
+  const main = [{ x, y }];
+  const bottom = randomRange(180, 300);
+  while (y < bottom) {
+    x += randomRange(-28, 28);
+    y += randomRange(18, 34);
+    main.push({ x, y });
+    if (branches.length === 0 && y > 70 && Math.random() < 0.3) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      branches.push([
+        { x, y },
+        { x: x + side * randomRange(25, 45), y: y + randomRange(25, 40) },
+        { x: x + side * randomRange(50, 80), y: y + randomRange(55, 80) },
+      ]);
+    }
+  }
+  return { paths: [main, ...branches], age: 0 };
+}
+
+function strikeLightning(weather) {
+  weather.flashAge = 0;
+  weather.bolt = Math.random() < 0.7 ? createBolt() : null;
+  playThunder(randomRange(0.25, 1.6));
+}
+
+function updateWeather(dt) {
+  const weather = game.weather;
+  if (!weather) return;
+
+  weather.shiftTimer -= dt;
+  if (weather.shiftTimer <= 0) {
+    weather.target = randomRange(WEATHER_MIN_INTENSITY, WEATHER_MAX_INTENSITY);
+    weather.shiftTimer = randomRange(WEATHER_SHIFT_MIN, WEATHER_SHIFT_MAX);
+  }
+  weather.intensity += (weather.target - weather.intensity) * Math.min(1, dt * 0.4);
+
+  const cameraShift = game.cameraX - weather.lastCameraX;
+  weather.lastCameraX = game.cameraX;
+  if (weather.type === "rain") updateRain(weather, dt, cameraShift);
+  else updateSnow(weather, dt, cameraShift);
+}
+
+function updateSnow(weather, dt, cameraShift) {
+  weather.gustTimer -= dt;
+  if (weather.gustTimer <= 0) {
+    weather.gustTarget =
+      Math.random() < 0.35 ? randomRange(0.6, 1) : randomRange(0, 0.25);
+    weather.gustTimer = randomRange(3, 8);
+  }
+  weather.gust += (weather.gustTarget - weather.gust) * Math.min(1, dt * 0.8);
+
+  const wind = 15 + weather.gust * 110;
+  const active = getActiveSnowflakes(weather);
+  for (let i = 0; i < active; i += 1) {
+    const flake = weather.flakes[i];
+    const depth = flake.size / 3;
+    flake.sway += flake.swaySpeed * dt;
+    flake.y += flake.speed * dt;
+    flake.x +=
+      (wind * depth + Math.sin(flake.sway) * 20) * dt - cameraShift * depth;
+    if (
+      flake.y - flake.size > GAME_HEIGHT ||
+      flake.x < -250 ||
+      flake.x > GAME_WIDTH + 250
+    ) {
+      Object.assign(flake, createSnowflake(randomRange(-40, 0)));
+    }
+  }
+}
+
+function updateRain(weather, dt, cameraShift) {
+  const active = getActiveRaindrops(weather);
+  for (let i = 0; i < active; i += 1) {
+    const drop = weather.drops[i];
+    drop.y += drop.speed * dt;
+    drop.x += drop.speed * RAIN_SLANT * dt - cameraShift;
+    if (
+      drop.y - drop.length > GAME_HEIGHT ||
+      drop.x < -300 ||
+      drop.x > GAME_WIDTH + 300
+    ) {
+      Object.assign(drop, createRaindrop(randomRange(-120, 0)));
+    }
+  }
+
+  weather.splashTimer -= dt;
+  while (weather.splashTimer <= 0) {
+    weather.splashes.push({
+      x: Math.random() * GAME_WIDTH,
+      y: randomRange(FEET_MIN_Y + 20, GAME_HEIGHT - 5),
+      age: 0,
+    });
+    weather.splashTimer += 1 / (45 * weather.intensity);
+  }
+  for (let i = weather.splashes.length - 1; i >= 0; i -= 1) {
+    const splash = weather.splashes[i];
+    splash.age += dt;
+    splash.x -= cameraShift;
+    if (splash.age >= SPLASH_DURATION) weather.splashes.splice(i, 1);
+  }
+
+  if (weather.flashAge >= 0) weather.flashAge += dt;
+  if (weather.bolt) {
+    weather.bolt.age += dt;
+    if (weather.bolt.age >= LIGHTNING_BOLT_DURATION) weather.bolt = null;
+  }
+  weather.thunderTimer -= dt * (0.5 + weather.intensity);
+  if (weather.thunderTimer <= 0) {
+    strikeLightning(weather);
+    weather.thunderTimer = randomRange(THUNDER_DELAY_MIN, THUNDER_DELAY_MAX);
+  }
+}
+
+function startEnding(reason) {
+  const player = game.player;
+  game.overReason = reason;
+  game.endingTimer = ENDING_HOLD_SECONDS;
+  player.attackType = null;
+  player.jumpTime = 0;
+  player.jumpHeight = 0;
+  player.animation = reason === "dead" ? "dead" : "win";
+  player.animFrame = 0;
+  player.animTimer = 0;
+  for (const enemy of game.enemies) {
+    if (enemy.dead) continue;
+    enemy.attackType = null;
+    enemy.animation = reason === "dead" ? "win" : "static";
+    enemy.animFrame = 0;
+  }
+  setState("ending");
+}
+
+function updateEnding(dt) {
+  const player = game.player;
+  game.endingTimer -= dt;
+  player.hurtFlash = Math.max(0, player.hurtFlash - dt);
+  if (player.animation === "dead") {
+    player.animTimer += dt;
+    while (
+      player.animTimer >= PLAYER_DEATH_FRAME_DURATION &&
+      player.animFrame < ASSET_PATHS.playerDeath.length - 1
+    ) {
+      player.animTimer -= PLAYER_DEATH_FRAME_DURATION;
+      player.animFrame += 1;
+    }
+  }
+
+  for (let i = game.enemies.length - 1; i >= 0; i -= 1) {
+    const enemy = game.enemies[i];
+    if (enemy.dead && advanceEnemyDeath(enemy, dt)) game.enemies.splice(i, 1);
+  }
+
+  for (let i = game.projectiles.length - 1; i >= 0; i -= 1) {
+    const p = game.projectiles[i];
+    p.x += p.vx * dt;
+    p.rotation = (p.rotation + Math.PI * 2 * dt) % (Math.PI * 2);
+    p.ttl -= dt;
+    if (p.ttl <= 0) game.projectiles.splice(i, 1);
+  }
+
+  updateEffects(dt);
+  updateWeather(dt);
+  for (let i = game.powerUpEffects.length - 1; i >= 0; i -= 1) {
+    game.powerUpEffects[i].age += dt;
+    if (game.powerUpEffects[i].age >= POWER_UP_EFFECT_DURATION) {
+      game.powerUpEffects.splice(i, 1);
+    }
+  }
+
+  if (game.endingTimer <= 0) {
+    setState(game.overReason === "dead" ? "gameOverDead" : "gameOverTime");
+  }
+}
+
 function update(dt) {
+  if (game.state === "ending") {
+    updateEnding(dt);
+    return;
+  }
+
   if (game.state === "gameOverTime" || game.state === "gameOverDead") {
     game.gameOverDelay = Math.max(0, game.gameOverDelay - dt);
     return;
@@ -1181,11 +1622,8 @@ function update(dt) {
 
   game.timer = Math.max(0, game.timer - dt);
   if (game.timer <= 0) {
-    game.overReason = "time";
-    if (!game.gameOverTriggered) {
-      setState("gameOverTime");
-      playSound(ASSET_PATHS.gameOver);
-    }
+    startEnding("time");
+    playSound(ASSET_PATHS.gameOver);
     return;
   }
 
@@ -1200,6 +1638,7 @@ function update(dt) {
   updateProjectiles(dt);
   updateEffects(dt);
   updatePowerUps(dt);
+  updateWeather(dt);
 
   const enemyLimit =
     game.timer <= FINAL_WAVE_SECONDS ? FINAL_WAVE_MAX_ENEMIES : MAX_ENEMIES;
@@ -1544,14 +1983,14 @@ function drawPowerUpEffect(effect) {
   ctx.font = "italic 900 40px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.lineJoin = "round";
+  const textY = effect.y - 40 - progress * 70;
+  ctx.lineWidth = 18;
+  ctx.strokeStyle = `rgba(${POWER_UP_GLOW[effect.type]}, 0.45)`;
+  ctx.strokeText(effect.text, screenX, textY);
   ctx.lineWidth = 8;
   ctx.strokeStyle = "#1c0406";
   ctx.fillStyle = "#fff";
-  ctx.shadowColor = `rgb(${POWER_UP_GLOW[effect.type]})`;
-  ctx.shadowBlur = 20;
-  const textY = effect.y - 40 - progress * 70;
   ctx.strokeText(effect.text, screenX, textY);
-  ctx.shadowBlur = 0;
   ctx.fillText(effect.text, screenX, textY);
   ctx.restore();
 }
@@ -1577,87 +2016,107 @@ function drawBoostTimers(healthX) {
   }
 }
 
-function drawWorld() {
-  for (const powerUp of game.powerUps) drawPowerUp(powerUp);
-
-  for (const enemy of game.enemies) {
-    const img = getEnemyFrame(enemy);
-    const drawX = enemy.x - game.cameraX;
-    const drawY = enemy.y;
-    ctx.save();
-    ctx.translate(drawX + enemy.width / 2, drawY + enemy.height / 2);
-    ctx.scale(enemy.facing, 1);
-    ctx.translate(-enemy.width / 2, -enemy.height / 2);
-    if (enemy.hurtFlash > 0) ctx.globalAlpha = 0.7;
-    ctx.drawImage(img, 0, 0, enemy.width, enemy.height);
-    ctx.restore();
-  }
-
-  for (const effect of game.effects) {
-    const framePath = ASSET_PATHS.fxHit[effect.frame];
-    const img = assets.images[framePath];
-    if (img) {
-      const width = img.width;
-      const height = img.height;
-      ctx.drawImage(
-        img,
-        effect.x - game.cameraX - width / 2,
-        effect.y - height / 2,
-        width,
-        height,
-      );
-    }
-  }
-
-  for (const projectile of game.projectiles) {
-    const img = assets.images[ASSET_PATHS.projectile];
-    if (img) {
-      const screenX = projectile.x - game.cameraX;
-      ctx.save();
-      ctx.translate(
-        screenX + projectile.w / 2,
-        projectile.y + projectile.h / 2,
-      );
-      ctx.rotate(projectile.rotation);
-      ctx.drawImage(
-        img,
-        -projectile.w / 2,
-        -projectile.h / 2,
-        projectile.w,
-        projectile.h,
-      );
-      ctx.restore();
-    }
-  }
-
-  const playerImg = getPlayerFrame();
-  const px = game.player.x - game.cameraX;
-  const py = game.player.y - game.player.jumpHeight;
+function drawEnemy(enemy) {
+  const img = getEnemyFrame(enemy);
+  const drawX = enemy.x - game.cameraX;
+  const drawY = enemy.y;
   ctx.save();
-  ctx.translate(px + game.player.width / 2, py + game.player.height / 2);
-  ctx.scale(game.player.facing, 1);
-  ctx.translate(-game.player.width / 2, -game.player.height / 2);
-  if (game.player.hurtFlash > 0) ctx.globalAlpha = 0.6;
-  ctx.drawImage(playerImg, 0, 0, game.player.width, game.player.height);
+  ctx.translate(drawX + enemy.width / 2, drawY + enemy.height / 2);
+  ctx.scale(enemy.facing, 1);
+  ctx.translate(-enemy.width / 2, -enemy.height / 2);
+  if (enemy.hurtFlash > 0) ctx.globalAlpha = 0.7;
+  ctx.drawImage(img, 0, 0, enemy.width, enemy.height);
   ctx.restore();
+}
 
+function drawHitEffect(effect) {
+  const framePath = ASSET_PATHS.fxHit[effect.frame];
+  const img = assets.images[framePath];
+  if (!img) return;
+  ctx.drawImage(
+    img,
+    effect.x - game.cameraX - img.width / 2,
+    effect.y - img.height / 2,
+    img.width,
+    img.height,
+  );
+}
+
+function drawProjectile(projectile) {
+  const img = assets.images[ASSET_PATHS.projectile];
+  if (!img) return;
+  const screenX = projectile.x - game.cameraX;
+  ctx.save();
+  ctx.translate(screenX + projectile.w / 2, projectile.y + projectile.h / 2);
+  ctx.rotate(projectile.rotation);
+  ctx.drawImage(
+    img,
+    -projectile.w / 2,
+    -projectile.h / 2,
+    projectile.w,
+    projectile.h,
+  );
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const player = game.player;
+  const px = player.x - game.cameraX;
+  const py = player.y - player.jumpHeight;
+  ctx.save();
+  ctx.translate(px + player.width / 2, py + player.height / 2);
+  ctx.scale(player.facing, 1);
+  ctx.translate(-player.width / 2, -player.height / 2);
+  if (player.hurtFlash > 0) ctx.globalAlpha = 0.6;
+  ctx.drawImage(getPlayerFrame(), 0, 0, player.width, player.height);
+  ctx.restore();
+}
+
+function drawSpeechBubble() {
+  const player = game.player;
+  if (player.speechIndex === null || player.speechTimer <= 0) return;
+  const speechImg = assets.images[ASSET_PATHS.playerSpeech[player.speechIndex]];
+  if (!speechImg) return;
+  const px = player.x - game.cameraX;
+  const py = player.y - player.jumpHeight;
+  const speechWidth = speechImg.width * CHARACTER_SCALE;
+  const speechHeight = speechImg.height * CHARACTER_SCALE;
+  ctx.drawImage(
+    speechImg,
+    px + (player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
+    Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
+    speechWidth,
+    speechHeight,
+  );
+}
+
+function getWorldLayers() {
+  const player = game.player;
+  return [
+    ...game.powerUps.map((powerUp) => ({
+      depth: powerUp.y,
+      draw: () => drawPowerUp(powerUp),
+    })),
+    ...game.enemies.map((enemy) => ({
+      depth: enemy.y + enemy.height,
+      draw: () => drawEnemy(enemy),
+    })),
+    ...game.effects.map((effect) => ({
+      depth: (effect.groundY ?? effect.y) + 1,
+      draw: () => drawHitEffect(effect),
+    })),
+    ...game.projectiles.map((projectile) => ({
+      depth: (projectile.groundY ?? projectile.y + projectile.h) + 0.5,
+      draw: () => drawProjectile(projectile),
+    })),
+    { depth: player.y + player.height, draw: drawPlayer },
+  ].sort((a, b) => a.depth - b.depth);
+}
+
+function drawWorld() {
+  for (const layer of getWorldLayers()) layer.draw();
   for (const effect of game.powerUpEffects) drawPowerUpEffect(effect);
-
-  if (game.player.speechIndex !== null && game.player.speechTimer > 0) {
-    const speechPath = ASSET_PATHS.playerSpeech[game.player.speechIndex];
-    const speechImg = assets.images[speechPath];
-    if (speechImg) {
-      const speechWidth = speechImg.width * CHARACTER_SCALE;
-      const speechHeight = speechImg.height * CHARACTER_SCALE;
-      ctx.drawImage(
-        speechImg,
-        px + (game.player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
-        Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
-        speechWidth,
-        speechHeight,
-      );
-    }
-  }
+  drawSpeechBubble();
 }
 
 function drawHUD() {
@@ -1829,9 +2288,113 @@ function drawBackgroundLayer() {
   }
 }
 
+function getFlashAlpha(age) {
+  if (age < 0) return 0;
+  if (age < 0.08) return 0.55;
+  if (age < 0.14) return 0.1;
+  if (age < 0.24) return 0.4;
+  return Math.max(0, 0.4 * (1 - (age - 0.24) / 0.5));
+}
+
+function drawWeatherBackdrop() {
+  const weather = game.weather;
+  if (!weather) return;
+  ctx.save();
+  if (weather.type === "snow") {
+    ctx.fillStyle = `rgba(170, 190, 220, ${0.06 + weather.intensity * 0.08})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    const dusting = ctx.createLinearGradient(0, FEET_MIN_Y - 30, 0, GAME_HEIGHT);
+    dusting.addColorStop(0, "rgba(240, 246, 255, 0)");
+    dusting.addColorStop(
+      1,
+      `rgba(240, 246, 255, ${0.18 + weather.intensity * 0.17})`,
+    );
+    ctx.fillStyle = dusting;
+    ctx.fillRect(0, FEET_MIN_Y - 30, GAME_WIDTH, GAME_HEIGHT);
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle = `rgba(8, 14, 32, ${0.18 + weather.intensity * 0.17})`;
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.lineWidth = 1.5;
+  for (const splash of weather.splashes) {
+    const progress = splash.age / SPLASH_DURATION;
+    const radius = 2 + progress * 9;
+    ctx.strokeStyle = `rgba(200, 215, 240, ${0.5 * (1 - progress)})`;
+    ctx.beginPath();
+    ctx.ellipse(splash.x, splash.y, radius, radius * 0.35, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSnow(weather) {
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.beginPath();
+  const active = getActiveSnowflakes(weather);
+  for (let i = 0; i < active; i += 1) {
+    const flake = weather.flakes[i];
+    ctx.moveTo(flake.x + flake.size, flake.y);
+    ctx.arc(flake.x, flake.y, flake.size, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawWeather() {
+  const weather = game.weather;
+  if (!weather) return;
+  if (weather.type === "snow") {
+    drawSnow(weather);
+    return;
+  }
+  ctx.save();
+  ctx.strokeStyle = `rgba(190, 210, 235, ${0.28 + weather.intensity * 0.17})`;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  const active = getActiveRaindrops(weather);
+  for (let i = 0; i < active; i += 1) {
+    const drop = weather.drops[i];
+    ctx.moveTo(drop.x, drop.y);
+    ctx.lineTo(drop.x - drop.length * RAIN_SLANT, drop.y - drop.length);
+  }
+  ctx.stroke();
+
+  if (weather.bolt) {
+    const fade = 1 - weather.bolt.age / LIGHTNING_BOLT_DURATION;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineJoin = "round";
+    for (const [width, color] of [
+      [12, `rgba(140, 170, 255, ${0.35 * fade})`],
+      [3, `rgba(255, 255, 255, ${fade})`],
+    ]) {
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      for (const path of weather.bolt.paths) {
+        ctx.beginPath();
+        path.forEach((point, i) =>
+          i === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y),
+        );
+        ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  const flash = getFlashAlpha(weather.flashAge);
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(225, 232, 255, ${flash})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  }
+  ctx.restore();
+}
+
 function drawGameplay() {
   drawBackgroundLayer();
+  drawWeatherBackdrop();
   drawWorld();
+  drawWeather();
   drawHUD();
 }
 
@@ -1867,25 +2430,35 @@ function drawGameOver() {
   }
 }
 
+function showPortraitOverlay(shown) {
+  if (shown === portraitOverlayShown) return;
+  portraitOverlayShown = shown;
+  portraitOverlay.style.display = shown ? "flex" : "none";
+}
+
 function render() {
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   if (isPortrait()) {
     const img = assets.images[ASSET_PATHS.rotatePhone];
     if (img) {
       ctx.drawImage(img, GAME_WIDTH / 2 - 150, GAME_HEIGHT / 2 - 150, 300, 300);
     }
-    portraitOverlay.style.display = "flex";
+    showPortraitOverlay(true);
     return;
   }
 
-  portraitOverlay.style.display = "none";
+  showPortraitOverlay(false);
 
   if (game.state === "loading") drawLoadingScreen();
   else if (game.state === "start") drawStartScreen();
-  else if (game.state === "playing" || game.state === "paused") drawGameplay();
+  else if (
+    game.state === "playing" ||
+    game.state === "paused" ||
+    game.state === "ending"
+  ) {
+    drawGameplay();
+  }
   else drawGameOver();
 }
 
@@ -2123,7 +2696,7 @@ function resizeCanvas() {
 
 function animationLoop(time) {
   if (!game.lastFrame) game.lastFrame = time;
-  const dt = Math.min((time - game.lastFrame) / 1000, 0.033);
+  const dt = Math.min((time - game.lastFrame) / 1000, 0.05);
   game.lastFrame = time;
 
   if (game.state === "start") {
@@ -2132,6 +2705,7 @@ function animationLoop(time) {
 
   update(dt);
   render();
+  updateWeatherSound();
   requestAnimationFrame(animationLoop);
 }
 
