@@ -755,6 +755,7 @@ function spawnProjectile() {
     vx: player.facing * 640,
     ttl: 1.5,
     rotation: 0,
+    groundY: player.y + player.height,
   });
 }
 
@@ -779,8 +780,8 @@ function damagePlayer(amount) {
   }
 }
 
-function spawnHitEffect(x, y) {
-  game.effects.push({ x, y, frame: 0, frameTimer: 0 });
+function spawnHitEffect(x, y, groundY = y) {
+  game.effects.push({ x, y, groundY, frame: 0, frameTimer: 0 });
   playSound(ASSET_PATHS.fxHitSfx);
 }
 
@@ -847,7 +848,11 @@ function applyPlayerHit() {
       const damage = attack === "punch" ? 4 : attack === "kick" ? 6 : 0;
       enemy.health -= getPlayerDamage(damage);
       enemy.hurtFlash = 0.2;
-      spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+      spawnHitEffect(
+        enemy.x + enemy.width / 2,
+        enemy.y + enemy.height / 2,
+        enemy.y + enemy.height,
+      );
       if (enemy.health <= 0) {
         enemy.dead = true;
         enemy.deathTimer =
@@ -1101,7 +1106,11 @@ function updateProjectiles(dt) {
       const hitY = Math.abs(p.y - enemy.y) < 40 * CHARACTER_SCALE;
       if (hitX && hitY) {
         enemy.health -= getPlayerDamage(3.35);
-        spawnHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+        spawnHitEffect(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          enemy.y + enemy.height,
+        );
         if (enemy.health <= 0) {
           enemy.dead = true;
           enemy.deathTimer =
@@ -1958,87 +1967,107 @@ function drawBoostTimers(healthX) {
   }
 }
 
-function drawWorld() {
-  for (const powerUp of game.powerUps) drawPowerUp(powerUp);
-
-  for (const enemy of game.enemies) {
-    const img = getEnemyFrame(enemy);
-    const drawX = enemy.x - game.cameraX;
-    const drawY = enemy.y;
-    ctx.save();
-    ctx.translate(drawX + enemy.width / 2, drawY + enemy.height / 2);
-    ctx.scale(enemy.facing, 1);
-    ctx.translate(-enemy.width / 2, -enemy.height / 2);
-    if (enemy.hurtFlash > 0) ctx.globalAlpha = 0.7;
-    ctx.drawImage(img, 0, 0, enemy.width, enemy.height);
-    ctx.restore();
-  }
-
-  for (const effect of game.effects) {
-    const framePath = ASSET_PATHS.fxHit[effect.frame];
-    const img = assets.images[framePath];
-    if (img) {
-      const width = img.width;
-      const height = img.height;
-      ctx.drawImage(
-        img,
-        effect.x - game.cameraX - width / 2,
-        effect.y - height / 2,
-        width,
-        height,
-      );
-    }
-  }
-
-  for (const projectile of game.projectiles) {
-    const img = assets.images[ASSET_PATHS.projectile];
-    if (img) {
-      const screenX = projectile.x - game.cameraX;
-      ctx.save();
-      ctx.translate(
-        screenX + projectile.w / 2,
-        projectile.y + projectile.h / 2,
-      );
-      ctx.rotate(projectile.rotation);
-      ctx.drawImage(
-        img,
-        -projectile.w / 2,
-        -projectile.h / 2,
-        projectile.w,
-        projectile.h,
-      );
-      ctx.restore();
-    }
-  }
-
-  const playerImg = getPlayerFrame();
-  const px = game.player.x - game.cameraX;
-  const py = game.player.y - game.player.jumpHeight;
+function drawEnemy(enemy) {
+  const img = getEnemyFrame(enemy);
+  const drawX = enemy.x - game.cameraX;
+  const drawY = enemy.y;
   ctx.save();
-  ctx.translate(px + game.player.width / 2, py + game.player.height / 2);
-  ctx.scale(game.player.facing, 1);
-  ctx.translate(-game.player.width / 2, -game.player.height / 2);
-  if (game.player.hurtFlash > 0) ctx.globalAlpha = 0.6;
-  ctx.drawImage(playerImg, 0, 0, game.player.width, game.player.height);
+  ctx.translate(drawX + enemy.width / 2, drawY + enemy.height / 2);
+  ctx.scale(enemy.facing, 1);
+  ctx.translate(-enemy.width / 2, -enemy.height / 2);
+  if (enemy.hurtFlash > 0) ctx.globalAlpha = 0.7;
+  ctx.drawImage(img, 0, 0, enemy.width, enemy.height);
   ctx.restore();
+}
 
+function drawHitEffect(effect) {
+  const framePath = ASSET_PATHS.fxHit[effect.frame];
+  const img = assets.images[framePath];
+  if (!img) return;
+  ctx.drawImage(
+    img,
+    effect.x - game.cameraX - img.width / 2,
+    effect.y - img.height / 2,
+    img.width,
+    img.height,
+  );
+}
+
+function drawProjectile(projectile) {
+  const img = assets.images[ASSET_PATHS.projectile];
+  if (!img) return;
+  const screenX = projectile.x - game.cameraX;
+  ctx.save();
+  ctx.translate(screenX + projectile.w / 2, projectile.y + projectile.h / 2);
+  ctx.rotate(projectile.rotation);
+  ctx.drawImage(
+    img,
+    -projectile.w / 2,
+    -projectile.h / 2,
+    projectile.w,
+    projectile.h,
+  );
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const player = game.player;
+  const px = player.x - game.cameraX;
+  const py = player.y - player.jumpHeight;
+  ctx.save();
+  ctx.translate(px + player.width / 2, py + player.height / 2);
+  ctx.scale(player.facing, 1);
+  ctx.translate(-player.width / 2, -player.height / 2);
+  if (player.hurtFlash > 0) ctx.globalAlpha = 0.6;
+  ctx.drawImage(getPlayerFrame(), 0, 0, player.width, player.height);
+  ctx.restore();
+}
+
+function drawSpeechBubble() {
+  const player = game.player;
+  if (player.speechIndex === null || player.speechTimer <= 0) return;
+  const speechImg = assets.images[ASSET_PATHS.playerSpeech[player.speechIndex]];
+  if (!speechImg) return;
+  const px = player.x - game.cameraX;
+  const py = player.y - player.jumpHeight;
+  const speechWidth = speechImg.width * CHARACTER_SCALE;
+  const speechHeight = speechImg.height * CHARACTER_SCALE;
+  ctx.drawImage(
+    speechImg,
+    px + (player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
+    Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
+    speechWidth,
+    speechHeight,
+  );
+}
+
+function getWorldLayers() {
+  const player = game.player;
+  return [
+    ...game.powerUps.map((powerUp) => ({
+      depth: powerUp.y,
+      draw: () => drawPowerUp(powerUp),
+    })),
+    ...game.enemies.map((enemy) => ({
+      depth: enemy.y + enemy.height,
+      draw: () => drawEnemy(enemy),
+    })),
+    ...game.effects.map((effect) => ({
+      depth: (effect.groundY ?? effect.y) + 1,
+      draw: () => drawHitEffect(effect),
+    })),
+    ...game.projectiles.map((projectile) => ({
+      depth: (projectile.groundY ?? projectile.y + projectile.h) + 0.5,
+      draw: () => drawProjectile(projectile),
+    })),
+    { depth: player.y + player.height, draw: drawPlayer },
+  ].sort((a, b) => a.depth - b.depth);
+}
+
+function drawWorld() {
+  for (const layer of getWorldLayers()) layer.draw();
   for (const effect of game.powerUpEffects) drawPowerUpEffect(effect);
-
-  if (game.player.speechIndex !== null && game.player.speechTimer > 0) {
-    const speechPath = ASSET_PATHS.playerSpeech[game.player.speechIndex];
-    const speechImg = assets.images[speechPath];
-    if (speechImg) {
-      const speechWidth = speechImg.width * CHARACTER_SCALE;
-      const speechHeight = speechImg.height * CHARACTER_SCALE;
-      ctx.drawImage(
-        speechImg,
-        px + (game.player.width - speechWidth) / 2 + 32 * CHARACTER_SCALE,
-        Math.max(0, py - speechHeight + 20 * CHARACTER_SCALE),
-        speechWidth,
-        speechHeight,
-      );
-    }
-  }
+  drawSpeechBubble();
 }
 
 function drawHUD() {
