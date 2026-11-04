@@ -15,6 +15,17 @@ const COUNTDOWN_SECONDS = 5;
 const ENDING_HOLD_SECONDS = 3;
 const PLAYER_DEATH_FRAME_DURATION = 0.12;
 const COUNTDOWN_BEEP_DURATION = 0.18;
+const RAIN_CHANCE = 0.35;
+const RAIN_MIN_INTENSITY = 0.3;
+const RAIN_MAX_INTENSITY = 1;
+const RAIN_MAX_DROPS = 360;
+const RAIN_SLANT = 0.22;
+const RAIN_SHIFT_MIN = 8;
+const RAIN_SHIFT_MAX = 16;
+const SPLASH_DURATION = 0.3;
+const THUNDER_DELAY_MIN = 7;
+const THUNDER_DELAY_MAX = 18;
+const LIGHTNING_BOLT_DURATION = 0.35;
 const MAX_ENEMIES = 10;
 const ENEMY_SPAWN_RATE = 2;
 const ENEMY_EDGE_PEEK = 40;
@@ -251,6 +262,7 @@ const game = {
   gameOverDelay: 0,
   gameOverTriggered: false,
   endingTimer: 0,
+  weather: null,
 };
 
 const input = {
@@ -266,6 +278,8 @@ const input = {
 const assets = { images: {}, sounds: {} };
 const powerUpArt = {};
 let audioContext = null;
+let noiseBuffer = null;
+let rainSound = null;
 
 function flattenAssetList() {
   return Object.values(ASSET_PATHS).flatMap((value) =>
@@ -411,6 +425,79 @@ function playCountdownBeep() {
   tone.stop(end);
 }
 
+function getNoiseBuffer() {
+  if (!noiseBuffer) {
+    noiseBuffer = audioContext.createBuffer(
+      1,
+      audioContext.sampleRate * 2,
+      audioContext.sampleRate,
+    );
+    const samples = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i += 1) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+  }
+  return noiseBuffer;
+}
+
+function getRainVolume() {
+  const weather = game.weather;
+  const audible =
+    weather &&
+    !game.muted &&
+    (game.state === "playing" || game.state === "ending");
+  return audible ? 0.04 + weather.intensity * 0.08 : 0;
+}
+
+function updateRainSound() {
+  if (!audioContext) return;
+  const volume = getRainVolume();
+  if (!rainSound) {
+    if (volume === 0) return;
+    const source = audioContext.createBufferSource();
+    source.buffer = getNoiseBuffer();
+    source.loop = true;
+    const highpass = audioContext.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 500;
+    const lowpass = audioContext.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 5000;
+    const gain = audioContext.createGain();
+    gain.gain.value = 0;
+    source.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(gain);
+    gain.connect(audioContext.destination);
+    source.start();
+    rainSound = { gain };
+  }
+  rainSound.gain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.4);
+}
+
+function playThunder(delay) {
+  if (!audioContext || game.muted) return;
+  if (audioContext.state === "suspended") audioContext.resume();
+  const start = audioContext.currentTime + delay;
+  const duration = randomRange(2.2, 3.8);
+  const source = audioContext.createBufferSource();
+  source.buffer = getNoiseBuffer();
+  source.loop = true;
+  const filter = audioContext.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(900 - delay * 300, start);
+  filter.frequency.exponentialRampToValueAtTime(120, start + duration);
+  const volume = audioContext.createGain();
+  volume.gain.setValueAtTime(0.0001, start);
+  volume.gain.exponentialRampToValueAtTime(0.6 - delay * 0.2, start + 0.08);
+  volume.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  source.connect(filter);
+  filter.connect(volume);
+  volume.connect(audioContext.destination);
+  source.start(start, Math.random() * 1.5);
+  source.stop(start + duration + 0.1);
+}
+
 function toggleMute() {
   game.muted = !game.muted;
   Object.values(assets.sounds).forEach((sound) => {
@@ -484,6 +571,7 @@ function resetGameState() {
 
 function startNewGame() {
   resetGameState();
+  game.weather = createWeather();
   for (let i = 0; i < ENEMY_SPAWN_RATE; i += 1) spawnEnemy(true);
   game.spawnTimer = 9 / ENEMY_SPAWN_RATE;
   setState("playing");
@@ -1200,6 +1288,127 @@ function keepEnemyOnScreen() {
   closest.facing = fromLeft ? 1 : -1;
 }
 
+function randomRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function createRaindrop(y) {
+  return {
+    x: randomRange(-250, GAME_WIDTH),
+    y,
+    length: randomRange(16, 30),
+    speed: randomRange(950, 1350),
+  };
+}
+
+function createWeather() {
+  if (Math.random() >= RAIN_CHANCE) return null;
+  const intensity = randomRange(RAIN_MIN_INTENSITY, RAIN_MAX_INTENSITY);
+  const drops = [];
+  for (let i = 0; i < RAIN_MAX_DROPS; i += 1) {
+    drops.push(createRaindrop(Math.random() * GAME_HEIGHT));
+  }
+  return {
+    intensity,
+    target: intensity,
+    shiftTimer: randomRange(RAIN_SHIFT_MIN, RAIN_SHIFT_MAX),
+    drops,
+    splashes: [],
+    splashTimer: 0,
+    flashAge: -1,
+    bolt: null,
+    thunderTimer: randomRange(3, 8),
+    lastCameraX: game.cameraX,
+  };
+}
+
+function getActiveRaindrops(weather) {
+  return Math.round(RAIN_MAX_DROPS * weather.intensity);
+}
+
+function createBolt() {
+  const branches = [];
+  let x = randomRange(150, GAME_WIDTH - 150);
+  let y = -10;
+  const main = [{ x, y }];
+  const bottom = randomRange(180, 300);
+  while (y < bottom) {
+    x += randomRange(-28, 28);
+    y += randomRange(18, 34);
+    main.push({ x, y });
+    if (branches.length === 0 && y > 70 && Math.random() < 0.3) {
+      const side = Math.random() < 0.5 ? -1 : 1;
+      branches.push([
+        { x, y },
+        { x: x + side * randomRange(25, 45), y: y + randomRange(25, 40) },
+        { x: x + side * randomRange(50, 80), y: y + randomRange(55, 80) },
+      ]);
+    }
+  }
+  return { paths: [main, ...branches], age: 0 };
+}
+
+function strikeLightning(weather) {
+  weather.flashAge = 0;
+  weather.bolt = Math.random() < 0.7 ? createBolt() : null;
+  playThunder(randomRange(0.25, 1.6));
+}
+
+function updateWeather(dt) {
+  const weather = game.weather;
+  if (!weather) return;
+
+  weather.shiftTimer -= dt;
+  if (weather.shiftTimer <= 0) {
+    weather.target = randomRange(RAIN_MIN_INTENSITY, RAIN_MAX_INTENSITY);
+    weather.shiftTimer = randomRange(RAIN_SHIFT_MIN, RAIN_SHIFT_MAX);
+  }
+  weather.intensity += (weather.target - weather.intensity) * Math.min(1, dt * 0.4);
+
+  const cameraShift = game.cameraX - weather.lastCameraX;
+  weather.lastCameraX = game.cameraX;
+  const active = getActiveRaindrops(weather);
+  for (let i = 0; i < active; i += 1) {
+    const drop = weather.drops[i];
+    drop.y += drop.speed * dt;
+    drop.x += drop.speed * RAIN_SLANT * dt - cameraShift;
+    if (
+      drop.y - drop.length > GAME_HEIGHT ||
+      drop.x < -300 ||
+      drop.x > GAME_WIDTH + 300
+    ) {
+      Object.assign(drop, createRaindrop(randomRange(-120, 0)));
+    }
+  }
+
+  weather.splashTimer -= dt;
+  while (weather.splashTimer <= 0) {
+    weather.splashes.push({
+      x: Math.random() * GAME_WIDTH,
+      y: randomRange(FEET_MIN_Y + 20, GAME_HEIGHT - 5),
+      age: 0,
+    });
+    weather.splashTimer += 1 / (45 * weather.intensity);
+  }
+  for (let i = weather.splashes.length - 1; i >= 0; i -= 1) {
+    const splash = weather.splashes[i];
+    splash.age += dt;
+    splash.x -= cameraShift;
+    if (splash.age >= SPLASH_DURATION) weather.splashes.splice(i, 1);
+  }
+
+  if (weather.flashAge >= 0) weather.flashAge += dt;
+  if (weather.bolt) {
+    weather.bolt.age += dt;
+    if (weather.bolt.age >= LIGHTNING_BOLT_DURATION) weather.bolt = null;
+  }
+  weather.thunderTimer -= dt * (0.5 + weather.intensity);
+  if (weather.thunderTimer <= 0) {
+    strikeLightning(weather);
+    weather.thunderTimer = randomRange(THUNDER_DELAY_MIN, THUNDER_DELAY_MAX);
+  }
+}
+
 function startEnding(reason) {
   const player = game.player;
   game.overReason = reason;
@@ -1248,6 +1457,7 @@ function updateEnding(dt) {
   }
 
   updateEffects(dt);
+  updateWeather(dt);
   for (let i = game.powerUpEffects.length - 1; i >= 0; i -= 1) {
     game.powerUpEffects[i].age += dt;
     if (game.powerUpEffects[i].age >= POWER_UP_EFFECT_DURATION) {
@@ -1291,6 +1501,7 @@ function update(dt) {
   updateProjectiles(dt);
   updateEffects(dt);
   updatePowerUps(dt);
+  updateWeather(dt);
 
   const enemyLimit =
     game.timer <= FINAL_WAVE_SECONDS ? FINAL_WAVE_MAX_ENEMIES : MAX_ENEMIES;
@@ -1920,9 +2131,82 @@ function drawBackgroundLayer() {
   }
 }
 
+function getFlashAlpha(age) {
+  if (age < 0) return 0;
+  if (age < 0.08) return 0.55;
+  if (age < 0.14) return 0.1;
+  if (age < 0.24) return 0.4;
+  return Math.max(0, 0.4 * (1 - (age - 0.24) / 0.5));
+}
+
+function drawWeatherBackdrop() {
+  const weather = game.weather;
+  if (!weather) return;
+  ctx.save();
+  ctx.fillStyle = `rgba(8, 14, 32, ${0.18 + weather.intensity * 0.17})`;
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.lineWidth = 1.5;
+  for (const splash of weather.splashes) {
+    const progress = splash.age / SPLASH_DURATION;
+    const radius = 2 + progress * 9;
+    ctx.strokeStyle = `rgba(200, 215, 240, ${0.5 * (1 - progress)})`;
+    ctx.beginPath();
+    ctx.ellipse(splash.x, splash.y, radius, radius * 0.35, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawRain() {
+  const weather = game.weather;
+  if (!weather) return;
+  ctx.save();
+  ctx.strokeStyle = `rgba(190, 210, 235, ${0.28 + weather.intensity * 0.17})`;
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  const active = getActiveRaindrops(weather);
+  for (let i = 0; i < active; i += 1) {
+    const drop = weather.drops[i];
+    ctx.moveTo(drop.x, drop.y);
+    ctx.lineTo(drop.x - drop.length * RAIN_SLANT, drop.y - drop.length);
+  }
+  ctx.stroke();
+
+  if (weather.bolt) {
+    const fade = 1 - weather.bolt.age / LIGHTNING_BOLT_DURATION;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineJoin = "round";
+    for (const [width, color] of [
+      [12, `rgba(140, 170, 255, ${0.35 * fade})`],
+      [3, `rgba(255, 255, 255, ${fade})`],
+    ]) {
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      for (const path of weather.bolt.paths) {
+        ctx.beginPath();
+        path.forEach((point, i) =>
+          i === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y),
+        );
+        ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  const flash = getFlashAlpha(weather.flashAge);
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(225, 232, 255, ${flash})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  }
+  ctx.restore();
+}
+
 function drawGameplay() {
   drawBackgroundLayer();
+  drawWeatherBackdrop();
   drawWorld();
+  drawRain();
   drawHUD();
 }
 
@@ -2229,6 +2513,7 @@ function animationLoop(time) {
 
   update(dt);
   render();
+  updateRainSound();
   requestAnimationFrame(animationLoop);
 }
 
