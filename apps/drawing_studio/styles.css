@@ -743,7 +743,8 @@ svg { flex: none; }
     grid-row: 2;
     flex-direction: row;
     align-items: flex-start;
-    max-height: 42vh;
+    height: 42vh;
+    height: 42dvh;
     padding: 10px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -755,9 +756,14 @@ svg { flex: none; }
   .tool-card {
     flex: none;
     width: 272px;
+    /* Cards are capped to the strip's height and scroll inside themselves. */
+    max-height: 100%;
     overflow-y: auto;
+    overscroll-behavior: contain;
     scroll-snap-align: start;
   }
+
+  .sticker-list { max-height: 150px; }
 }
 
 @media (max-width: 560px) {
