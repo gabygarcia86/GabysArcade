@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#12121f">
+    <meta name="description"
+      content="Make your own music in the browser! Build beats, write melodies in the piano roll, arrange songs, mix with real effects and export WAV, MP3 or MIDI. No sign-up, no ads.">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16"
+      href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+      href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>Gaby's Beat Lab</title>
+    <link rel="preload" href="assets/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/studio.css">
+    <link rel="stylesheet" href="css/fun.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script src="js/util.js" defer></script>
+    <script src="js/theory.js" defer></script>
+    <script src="js/instruments.js" defer></script>
+    <script src="js/sounds.js" defer></script>
+    <script src="js/effects.js" defer></script>
+    <script src="js/model.js" defer></script>
+    <script src="js/audio-engine.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/project-manager.js" defer></script>
+    <script src="js/export.js" defer></script>
+    <script src="js/generator.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/toolbar.js" defer></script>
+    <script src="js/browser.js" defer></script>
+    <script src="js/channel-rack.js" defer></script>
+    <script src="js/piano-roll.js" defer></script>
+    <script src="js/playlist.js" defer></script>
+    <script src="js/mixer-ui.js" defer></script>
+    <script src="js/inspector.js" defer></script>
+    <script src="js/recorder.js" defer></script>
+    <script src="js/fun.js" defer></script>
+    <script src="js/app.js" defer></script>
+  </head>
+  <body>
+    <header class="toolbar" id="toolbar"></header>
+
+    <div class="app" id="app">
+      <aside class="panel browser-panel" id="browser" aria-label="Sound browser"></aside>
+      <div class="resizer v" data-resize="browser" aria-hidden="true"></div>
+      <main class="center" id="center">
+        <section class="panel rack-panel" id="rack" aria-label="Channel Rack"></section>
+        <div class="resizer h" data-resize="rack" aria-hidden="true"></div>
+        <section class="panel editor-panel" id="editor" aria-label="Editors">
+          <div class="editor-tabs" role="tablist">
+            <button class="tab" role="tab" data-view="playlist" data-tip="Arrange your song (Alt+1)">🎞️ Playlist</button>
+            <button class="tab" role="tab" data-view="pianoroll" data-tip="Write melodies and chords (Alt+2)">🎹 Piano Roll</button>
+            <button class="tab" role="tab" data-view="mixer" data-tip="Volume, panning and effects (Alt+3)">🎚️ Mixer</button>
+          </div>
+          <div class="view" id="playlist"></div>
+          <div class="view" id="pianoroll" hidden></div>
+          <div class="view" id="mixer" hidden></div>
+        </section>
+      </main>
+      <div class="resizer v" data-resize="inspector" aria-hidden="true"></div>
+      <aside class="panel inst-panel" id="inspector" aria-label="Instrument panel"></aside>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Studio sections">
+      <button data-v="rack">🥁<span>Beat</span></button>
+      <button data-v="pianoroll">🎹<span>Keys</span></button>
+      <button data-v="playlist">🎞️<span>Song</span></button>
+      <button data-v="mixer">🎚️<span>Mix</span></button>
+      <button data-v="inspector">🎛️<span>Sound</span></button>
+      <button data-v="browser">📚<span>Library</span></button>
+    </nav>
+
+    <button class="sound-banner" id="sound-banner" hidden>🔈 Tap here to turn the sound back on</button>
+
+    <div class="splash" id="splash">
+      <div class="splash-card">
+        <div class="splash-logo">🎛️</div>
+        <h1>Gaby's <b>Beat Lab</b></h1>
+        <div class="progress"><div class="progress-fill"></div></div>
+        <p class="splash-msg">Tuning up the instruments…</p>
+      </div>
+    </div>
+
+    <noscript>
+      <p class="noscript">Gaby's Beat Lab needs JavaScript to run. Please turn it on and reload the page.</p>
+    </noscript>
+  </body>
+</html>
