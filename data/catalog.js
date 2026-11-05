@@ -120,7 +120,7 @@ window.ARCADE_CATALOG = {
         "family",
         "mobile",
       ],
-      added: "2026-10-31",
+      added: "2026-10-30",
     },
     {
       folder: "photo_scavenger_hunt_park",
@@ -162,7 +162,7 @@ window.ARCADE_CATALOG = {
         "keyboard",
         "touch",
       ],
-      added: "",
+      added: "2026-11-5",
       icon: "games/postal_inspectors/icons/icon-256.png",
     },
     {
