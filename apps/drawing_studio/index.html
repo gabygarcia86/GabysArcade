@@ -19,8 +19,8 @@
     <title>Gaby's Drawing Studio</title>
     <link rel="preload" href="assets/fonts/fredoka-latin-wght-normal.woff2"
       as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css?v=3">
+    <script src="script.js?v=3" defer></script>
   </head>
   <body class="drawing-page">
     <header class="topbar">
@@ -94,7 +94,7 @@
             <button class="tool-button" type="button" data-tool="hand"
               aria-pressed="false" style="--tool: #ff9f1c">
               <span class="tool-icon" aria-hidden="true">✋</span>
-              <span>Move</span>
+              <span>Hand</span>
             </button>
           </div>
 
@@ -141,27 +141,80 @@
           </div>
         </section>
 
-        <section class="tool-card">
+        <section class="tool-card sticker-card" data-mode="stamp">
           <h2>Stickers</h2>
-          <p class="hint">Choose one, then tap your picture!</p>
-          <div class="sticker-list" aria-label="Stickers">
-            <button class="sticker-button is-selected" type="button"
-              data-sticker="none" aria-label="No sticker, draw instead"
-              aria-pressed="true">✏️</button>
-            <button class="sticker-button" type="button" data-sticker="☀️"
-              aria-label="Sun sticker" aria-pressed="false">☀️</button>
-            <button class="sticker-button" type="button" data-sticker="🌈"
-              aria-label="Rainbow sticker" aria-pressed="false">🌈</button>
-            <button class="sticker-button" type="button" data-sticker="⭐"
-              aria-label="Star sticker" aria-pressed="false">⭐</button>
-            <button class="sticker-button" type="button" data-sticker="🌸"
-              aria-label="Flower sticker" aria-pressed="false">🌸</button>
-            <button class="sticker-button" type="button" data-sticker="🦋"
-              aria-label="Butterfly sticker" aria-pressed="false">🦋</button>
-            <button class="sticker-button" type="button" data-sticker="🐱"
-              aria-label="Cat sticker" aria-pressed="false">🐱</button>
-            <button class="sticker-button" type="button" data-sticker="🚀"
-              aria-label="Rocket sticker" aria-pressed="false">🚀</button>
+          <div class="segmented sticker-modes" role="group"
+            aria-label="What stickers do">
+            <button class="mode-button" type="button" data-sticker-mode="stamp"
+              aria-pressed="false" title="Tap to stamp one sticker">
+              <span aria-hidden="true">👆</span> Stamp</button>
+            <button class="mode-button" type="button" data-sticker-mode="trail"
+              aria-pressed="false" title="Drag to make a trail of stickers">
+              <span aria-hidden="true">〰️</span> Trail</button>
+            <button class="mode-button" type="button" data-sticker-mode="move"
+              aria-pressed="false" title="Pick up stickers to move and change them">
+              <span aria-hidden="true">🤏</span> Move</button>
+          </div>
+          <p class="hint" id="sticker-hint">Tap your picture to stamp a
+            sticker!</p>
+
+          <div class="sticker-picker">
+            <div class="sticker-tabs" id="sticker-tabs" role="group"
+              aria-label="Sticker groups"></div>
+            <div class="sticker-list" id="sticker-grid"
+              aria-label="Stickers"></div>
+          </div>
+
+          <div class="sticker-settings">
+            <div class="sticker-preview-box" aria-hidden="true">
+              <span class="sticker-preview" id="sticker-preview">⭐</span>
+            </div>
+            <div class="sticker-sliders">
+              <label class="mini-slider">
+                <span class="mini-slider-head">Size
+                  <output data-value-for="sticker-size">56</output></span>
+                <input id="sticker-size" type="range" min="20" max="200"
+                  step="2" value="56">
+              </label>
+              <label class="mini-slider">
+                <span class="mini-slider-head">Turn
+                  <output data-value-for="sticker-turn">0°</output></span>
+                <input id="sticker-turn" type="range" min="-180" max="180"
+                  step="5" value="0">
+              </label>
+              <label class="mini-slider">
+                <span class="mini-slider-head">Fade
+                  <output data-value-for="sticker-fade">100%</output></span>
+                <input id="sticker-fade" type="range" min="15" max="100"
+                  step="5" value="100">
+              </label>
+            </div>
+          </div>
+
+          <div class="chip-row">
+            <button class="chip" id="sticker-flip" type="button"
+              aria-pressed="false" title="Face the other way">
+              <span aria-hidden="true">↔️</span> Flip</button>
+            <button class="chip new-only" id="sticker-wiggle" type="button"
+              aria-pressed="false"
+              title="Every sticker gets a slightly different size and turn">
+              <span aria-hidden="true">🌀</span> Wiggle</button>
+            <button class="chip new-only" id="sticker-mix" type="button"
+              aria-pressed="false"
+              title="Use a surprise sticker from this group each time">
+              <span aria-hidden="true">🎲</span> Mix</button>
+          </div>
+
+          <div class="sticker-actions" id="sticker-actions" hidden>
+            <button class="chip" id="sticker-copy" type="button"
+              title="Make a copy of this sticker">
+              <span aria-hidden="true">📄</span> Copy</button>
+            <button class="chip" id="sticker-front" type="button"
+              title="Put this sticker on top">
+              <span aria-hidden="true">⬆️</span> To front</button>
+            <button class="chip is-danger" id="sticker-delete" type="button"
+              title="Remove this sticker (Delete key)">
+              <span aria-hidden="true">🗑️</span> Remove</button>
           </div>
         </section>
 

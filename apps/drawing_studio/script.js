@@ -11,16 +11,78 @@
   const redoButton = document.getElementById("redo-button");
   const shapeButtons = document.querySelectorAll(".shape-button");
   const shapeStyleButtons = document.querySelectorAll(".shape-style-button");
+  const toolButtons = document.querySelectorAll(".tool-button");
   const drawingNotice = document.getElementById("notice");
+
+  const stickerCard = document.querySelector(".sticker-card");
+  const stickerTabs = document.getElementById("sticker-tabs");
+  const stickerGrid = document.getElementById("sticker-grid");
+  const stickerHint = document.getElementById("sticker-hint");
+  const stickerModeButtons = document.querySelectorAll("[data-sticker-mode]");
+  const stickerSizeInput = document.getElementById("sticker-size");
+  const stickerTurnInput = document.getElementById("sticker-turn");
+  const stickerFadeInput = document.getElementById("sticker-fade");
+  const stickerFlipButton = document.getElementById("sticker-flip");
+  const stickerWiggleButton = document.getElementById("sticker-wiggle");
+  const stickerMixButton = document.getElementById("sticker-mix");
+  const stickerActions = document.getElementById("sticker-actions");
+  const stickerPreview = document.getElementById("sticker-preview");
+
+  const STICKER_SETS = [
+    {
+      name: "Faces",
+      icon: "😀",
+      stickers: ["😀", "😂", "🥰", "😎", "🤩", "🥳", "😜", "🤪", "😇", "🤠",
+        "😴", "😱", "👻", "🤖", "👽", "🙈"],
+    },
+    {
+      name: "Animals",
+      icon: "🐶",
+      stickers: ["🐶", "🐱", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐷",
+        "🐸", "🐵", "🐧", "🐔", "🦄", "🐝", "🦋", "🐢", "🐙", "🐬", "🐳",
+        "🦖", "🐞", "🦕"],
+    },
+    {
+      name: "Nature",
+      icon: "🌸",
+      stickers: ["☀️", "🌈", "⭐", "🌙", "☁️", "⚡", "❄️", "🔥", "💧", "🌸",
+        "🌻", "🌷", "🌳", "🌴", "🌵", "🍄", "🍀", "🍁", "🌊", "⛰️"],
+    },
+    {
+      name: "Food",
+      icon: "🍕",
+      stickers: ["🍎", "🍌", "🍓", "🍉", "🍒", "🍇", "🥕", "🍕", "🍔", "🌭",
+        "🍟", "🍩", "🍪", "🎂", "🧁", "🍦", "🍭", "🍫", "🥨", "🧃"],
+    },
+    {
+      name: "Fun",
+      icon: "🚀",
+      stickers: ["🚀", "🚗", "🚂", "✈️", "🚁", "⛵", "🏠", "🏰", "🎈", "🎁",
+        "🎨", "⚽", "🏀", "🎸", "🥁", "👑", "💎", "🪄", "🎉", "🧸"],
+    },
+    {
+      name: "Sparkles",
+      icon: "✨",
+      stickers: ["✨", "🌟", "💫", "❤️", "🧡", "💛", "💚", "💙", "💜", "💖",
+        "💕", "🎀", "🫧", "🔮", "🌀", "💥"],
+    },
+  ];
+
+  const STICKER_HINTS = {
+    stamp: "Tap your picture to stamp a sticker!",
+    trail: "Drag across your picture to make a sticker trail!",
+    move: "Tap a sticker on your picture to pick it up, then drag it!",
+    moveSelected: "Drag it around, or change it with the sliders below.",
+  };
 
   const minZoom = 0.5;
   const maxZoom = 2;
   const zoomStep = 0.25;
+  const maxHistory = 100;
   let color = "#27324b";
   let brushSize = Number(brushSizeInput.value);
   let zoom = 1;
   let activeTool = "pencil";
-  let activeSticker = "";
   let activeShape = "";
   let shapeStyle = "stroke";
   let drawing = false;
@@ -31,12 +93,69 @@
   let currentStroke = null;
   let currentShape = null;
   let items = [];
-  let redoItems = [];
+  let history = [];
+  let future = [];
+  let editBase = null;
+  let editChanged = false;
   let noticeTimer;
 
+  let stickerSet = 0;
+  let activeSticker = "⭐";
+  let stickerMode = "stamp";
+  let selectedIndex = -1;
+  let stickerDrag = null;
+  let trail = null;
+  const stickerSettings = {
+    size: Number(stickerSizeInput.value),
+    rotation: Number(stickerTurnInput.value),
+    opacity: Number(stickerFadeInput.value) / 100,
+    flip: false,
+    wiggle: false,
+    mix: false,
+  };
+
+  /* ---------- history: every change saves the previous list of items ---------- */
   function updateHistoryButtons() {
-    undoButton.disabled = items.length === 0;
-    redoButton.disabled = redoItems.length === 0;
+    undoButton.disabled = history.length === 0;
+    redoButton.disabled = future.length === 0;
+  }
+
+  function commit(nextItems) {
+    history.push(items);
+    if (history.length > maxHistory) history.shift();
+    items = nextItems;
+    future = [];
+    redraw();
+    updateHistoryButtons();
+  }
+
+  // Starts a change that happens over time (dragging, sliders) and counts as one undo step.
+  function beginEdit() {
+    if (editBase) return;
+    editBase = items;
+    editChanged = false;
+    items = items.slice();
+  }
+
+  function endEdit() {
+    if (!editBase) return;
+    if (editChanged) {
+      history.push(editBase);
+      if (history.length > maxHistory) history.shift();
+      future = [];
+    } else {
+      items = editBase;
+    }
+    editBase = null;
+    editChanged = false;
+    redraw();
+    updateHistoryButtons();
+  }
+
+  function patchItem(index, patch) {
+    beginEdit();
+    items[index] = { ...items[index], ...patch };
+    editChanged = true;
   }
 
   function updateZoom() {
@@ -202,6 +321,38 @@
     }, 2500);
   }
 
+  function cssScale() {
+    return canvas.width / canvas.clientWidth;
+  }
+
+  function drawSticker(item) {
+    context.save();
+    context.globalAlpha = item.opacity ?? 1;
+    context.translate(item.x * canvas.width, item.y * canvas.height);
+    context.rotate(((item.rotation || 0) * Math.PI) / 180);
+    if (item.flip) context.scale(-1, 1);
+    context.font = `${item.size * cssScale()}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(item.emoji, 0, 0);
+    context.restore();
+  }
+
+  function drawSelection(item) {
+    const scale = cssScale();
+    const half = item.size * 0.62 * scale;
+    context.save();
+    context.translate(item.x * canvas.width, item.y * canvas.height);
+    context.rotate(((item.rotation || 0) * Math.PI) / 180);
+    context.lineWidth = 2.5 * scale;
+    context.strokeStyle = "#7b5cf0";
+    context.setLineDash([7 * scale, 5 * scale]);
+    context.beginPath();
+    context.roundRect(-half, -half, half * 2, half * 2, 10 * scale);
+    context.stroke();
+    context.restore();
+  }
+
   function drawItem(item) {
     if (item.type === "shape") {
       drawShape(item);
@@ -209,17 +360,7 @@
     }
 
     if (item.type === "sticker") {
-      context.save();
-      const pixelRatio = canvas.width / canvas.clientWidth;
-      context.font = `${item.size * pixelRatio}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillText(
-        item.emoji,
-        item.x * canvas.width,
-        item.y * canvas.height,
-      );
-      context.restore();
+      drawSticker(item);
       return;
     }
 
@@ -229,13 +370,11 @@
     }
 
     if (item.points.length === 0) return;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
 
     context.save();
     context.lineCap = "round";
     context.lineJoin = "round";
-    context.lineWidth = item.size * (canvas.width / width);
+    context.lineWidth = item.size * cssScale();
     context.strokeStyle = item.tool === "eraser" ? "#ffffff" : item.color;
     context.beginPath();
     context.moveTo(
@@ -257,13 +396,17 @@
     context.restore();
   }
 
-  function redraw() {
+  function redraw(showSelection = true) {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
     for (const item of items) drawItem(item);
     if (currentStroke) drawItem(currentStroke);
     if (currentShape) drawItem(currentShape);
+    const selected = items[selectedIndex];
+    if (showSelection && selected && selected.type === "sticker") {
+      drawSelection(selected);
+    }
   }
 
   function resizeCanvas() {
@@ -288,29 +431,190 @@
     };
   }
 
-  function addSticker(point) {
-    items.push({
-      type: "sticker",
-      emoji: activeSticker,
-      x: point.x,
-      y: point.y,
-      size: Math.max(34, brushSize * 4),
-    });
-    redoItems = [];
-    redraw();
-    updateHistoryButtons();
+  /* ---------- stickers ---------- */
+  function randomBetween(low, high) {
+    return low + Math.random() * (high - low);
   }
 
-  function addFill(point) {
-    items.push({
-      type: "fill",
+  function makeSticker(point) {
+    const set = STICKER_SETS[stickerSet].stickers;
+    const wiggle = stickerSettings.wiggle;
+    return {
+      type: "sticker",
+      emoji: stickerSettings.mix
+        ? set[Math.floor(Math.random() * set.length)]
+        : activeSticker,
       x: point.x,
       y: point.y,
-      color,
-    });
-    redoItems = [];
+      size: Math.round(stickerSettings.size * (wiggle ? randomBetween(0.75, 1.25) : 1)),
+      rotation: stickerSettings.rotation + (wiggle ? randomBetween(-25, 25) : 0),
+      opacity: stickerSettings.opacity,
+      flip: stickerSettings.flip,
+    };
+  }
+
+  // Finds the top-most sticker under a point on the paper.
+  function hitSticker(point) {
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    for (let index = items.length - 1; index >= 0; index -= 1) {
+      const item = items[index];
+      if (item.type !== "sticker") continue;
+      const dx = (point.x - item.x) * width;
+      const dy = (point.y - item.y) * height;
+      if (Math.hypot(dx, dy) <= Math.max(18, item.size * 0.62)) return index;
+    }
+    return -1;
+  }
+
+  function selectSticker(index) {
+    selectedIndex = index;
+    const item = items[index];
+    if (item && item.type === "sticker") {
+      stickerSizeInput.value = item.size;
+      stickerTurnInput.value = Math.round(item.rotation || 0);
+      stickerFadeInput.value = Math.round((item.opacity ?? 1) * 100);
+    } else {
+      selectedIndex = -1;
+      stickerSizeInput.value = stickerSettings.size;
+      stickerTurnInput.value = stickerSettings.rotation;
+      stickerFadeInput.value = Math.round(stickerSettings.opacity * 100);
+    }
+    updateStickerControls();
     redraw();
-    updateHistoryButtons();
+  }
+
+  function selectedSticker() {
+    const item = items[selectedIndex];
+    return item && item.type === "sticker" ? item : null;
+  }
+
+  function updateSliderLabel(input) {
+    const output = document.querySelector(`[data-value-for="${input.id}"]`);
+    const unit = input.id === "sticker-turn" ? "°" : input.id === "sticker-fade" ? "%" : "";
+    if (output) output.textContent = `${input.value}${unit}`;
+    const range = Number(input.max) - Number(input.min);
+    input.style.setProperty("--p", `${((input.value - input.min) / range) * 100}%`);
+  }
+
+  function updateStickerControls() {
+    const selected = selectedSticker();
+    const editing = stickerMode === "move";
+    const flip = editing && selected ? selected.flip : stickerSettings.flip;
+
+    stickerCard.classList.toggle("is-active", activeTool === "sticker");
+    stickerCard.dataset.mode = stickerMode;
+    stickerHint.textContent = editing && selected
+      ? STICKER_HINTS.moveSelected
+      : STICKER_HINTS[stickerMode];
+
+    stickerModeButtons.forEach((button) => {
+      const on = activeTool === "sticker" && button.dataset.stickerMode === stickerMode;
+      button.classList.toggle("is-selected", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+
+    stickerGrid.querySelectorAll(".sticker-button").forEach((button) => {
+      const on = activeTool === "sticker" && !editing &&
+        !stickerSettings.mix && button.dataset.sticker === activeSticker;
+      button.classList.toggle("is-selected", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+
+    stickerFlipButton.setAttribute("aria-pressed", String(Boolean(flip)));
+    stickerWiggleButton.setAttribute("aria-pressed", String(stickerSettings.wiggle));
+    stickerMixButton.setAttribute("aria-pressed", String(stickerSettings.mix));
+    stickerActions.hidden = !(editing && selected);
+
+    // In Move mode with nothing picked up, the sliders have nothing to change.
+    const slidersOff = editing && !selected;
+    [stickerSizeInput, stickerTurnInput, stickerFadeInput, stickerFlipButton]
+      .forEach((control) => { control.disabled = slidersOff; });
+
+    [stickerSizeInput, stickerTurnInput, stickerFadeInput].forEach(updateSliderLabel);
+
+    const shown = editing && selected ? selected : {
+      emoji: stickerSettings.mix ? "🎲" : activeSticker,
+      size: stickerSettings.size,
+      rotation: stickerSettings.rotation,
+      opacity: stickerSettings.opacity,
+      flip: stickerSettings.flip,
+    };
+    stickerPreview.textContent = slidersOff ? "👆" : shown.emoji;
+    stickerPreview.style.opacity = slidersOff ? 0.5 : shown.opacity ?? 1;
+    stickerPreview.style.fontSize = `${Math.min(64, Math.max(18, shown.size * 0.6))}px`;
+    stickerPreview.style.transform = slidersOff ? "none"
+      : `rotate(${shown.rotation || 0}deg) scaleX(${shown.flip ? -1 : 1})`;
+  }
+
+  function renderStickerTabs() {
+    stickerTabs.replaceChildren(...STICKER_SETS.map((set, index) => {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "sticker-tab";
+      tab.textContent = set.icon;
+      tab.title = set.name;
+      tab.setAttribute("aria-label", `${set.name} stickers`);
+      tab.setAttribute("aria-pressed", String(index === stickerSet));
+      tab.addEventListener("click", () => {
+        stickerSet = index;
+        renderStickerTabs();
+        renderStickerGrid();
+      });
+      return tab;
+    }));
+  }
+
+  function renderStickerGrid() {
+    stickerGrid.replaceChildren(...STICKER_SETS[stickerSet].stickers.map((emoji) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "sticker-button";
+      button.dataset.sticker = emoji;
+      button.textContent = emoji;
+      button.setAttribute("aria-label", `${emoji} sticker`);
+      button.addEventListener("click", () => {
+        activeSticker = emoji;
+        stickerSettings.mix = false;
+        if (stickerMode === "move") stickerMode = "stamp";
+        setTool("sticker");
+      });
+      return button;
+    }));
+    updateStickerControls();
+  }
+
+  /* ---------- picking tools ---------- */
+  function setTool(tool) {
+    if (editBase) endEdit();
+    activeTool = tool;
+    if (tool !== "shape") activeShape = "";
+    // Leaving the sticker tool puts it back to stamping so the sticker grid shows again.
+    if (tool !== "sticker") stickerMode = "stamp";
+    if (tool !== "sticker" || stickerMode !== "move") selectedIndex = -1;
+
+    canvas.classList.toggle("is-fill-mode", tool === "fill");
+    canvas.classList.toggle("is-hand-mode", tool === "hand");
+    canvas.classList.toggle("is-sticker-mode", tool === "sticker" && stickerMode !== "move");
+    canvas.classList.toggle("is-move-mode", tool === "sticker" && stickerMode === "move");
+    canvas.classList.remove("is-panning");
+
+    toolButtons.forEach((button) => {
+      const on = button.dataset.tool === tool;
+      button.classList.toggle("is-active", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    shapeButtons.forEach((button) => {
+      const on = tool === "shape" && button.dataset.shape === activeShape;
+      button.classList.toggle("is-selected", on);
+      button.setAttribute("aria-pressed", String(on));
+    });
+    selectSticker(selectedIndex);
+  }
+
+  /* ---------- drawing on the paper ---------- */
+  function addFill(point) {
+    commit([...items, { type: "fill", x: point.x, y: point.y, color }]);
   }
 
   canvas.addEventListener("pointerdown", (event) => {
@@ -327,6 +631,31 @@
 
     const point = getPoint(event);
 
+    if (activeTool === "sticker") {
+      if (stickerMode === "move") {
+        const hit = hitSticker(point);
+        selectSticker(hit);
+        if (hit >= 0) {
+          stickerDrag = {
+            offsetX: point.x - items[hit].x,
+            offsetY: point.y - items[hit].y,
+          };
+          canvas.classList.add("is-panning");
+        }
+        return;
+      }
+      if (stickerMode === "trail") {
+        beginEdit();
+        items.push(makeSticker(point));
+        editChanged = true;
+        trail = { last: point };
+        redraw();
+        return;
+      }
+      commit([...items, makeSticker(point)]);
+      return;
+    }
+
     if (activeTool === "shape") {
       drawing = true;
       currentShape = {
@@ -339,11 +668,6 @@
         end: point,
       };
       redraw();
-      return;
-    }
-
-    if (activeSticker) {
-      addSticker(point);
       return;
     }
 
@@ -371,6 +695,28 @@
       updateZoom();
       return;
     }
+    if (stickerDrag && selectedIndex >= 0) {
+      const point = getPoint(event);
+      patchItem(selectedIndex, {
+        x: Math.max(0, Math.min(1, point.x - stickerDrag.offsetX)),
+        y: Math.max(0, Math.min(1, point.y - stickerDrag.offsetY)),
+      });
+      redraw();
+      return;
+    }
+    if (trail) {
+      const point = getPoint(event);
+      const distance = Math.hypot(
+        (point.x - trail.last.x) * canvas.clientWidth,
+        (point.y - trail.last.y) * canvas.clientHeight,
+      );
+      if (distance >= Math.max(10, stickerSettings.size * 0.75)) {
+        items.push(makeSticker(point));
+        trail.last = point;
+        redraw();
+      }
+      return;
+    }
     if (drawing && currentShape) {
       currentShape.end = getPoint(event);
       redraw();
@@ -381,38 +727,40 @@
     redraw();
   });
 
-  function finishStroke() {
+  function finishPointer() {
+    if (panning) {
+      panning = false;
+      panStart = null;
+      canvas.classList.remove("is-panning");
+    }
+    if (stickerDrag) {
+      stickerDrag = null;
+      canvas.classList.remove("is-panning");
+      endEdit();
+      return;
+    }
+    if (trail) {
+      trail = null;
+      endEdit();
+      return;
+    }
     if (drawing && currentShape) {
-      items.push(currentShape);
+      const shape = currentShape;
       currentShape = null;
       drawing = false;
-      redoItems = [];
-      redraw();
-      updateHistoryButtons();
+      commit([...items, shape]);
       return;
     }
     if (!drawing || !currentStroke) return;
-    items.push(currentStroke);
+    const stroke = currentStroke;
     currentStroke = null;
     drawing = false;
-    redoItems = [];
-    redraw();
-    updateHistoryButtons();
+    commit([...items, stroke]);
   }
 
-  canvas.addEventListener("pointerup", finishStroke);
-  canvas.addEventListener("pointercancel", finishStroke);
-  canvas.addEventListener("lostpointercapture", finishStroke);
-
-  function finishPan() {
-    panning = false;
-    panStart = null;
-    canvas.classList.remove("is-panning");
-  }
-
-  canvas.addEventListener("pointerup", finishPan);
-  canvas.addEventListener("pointercancel", finishPan);
-  canvas.addEventListener("lostpointercapture", finishPan);
+  canvas.addEventListener("pointerup", finishPointer);
+  canvas.addEventListener("pointercancel", finishPointer);
+  canvas.addEventListener("lostpointercapture", finishPointer);
 
   zoomOutButton.addEventListener("click", () => {
     zoom = Math.max(minZoom, zoom - zoomStep);
@@ -424,58 +772,20 @@
     updateZoom();
   });
 
-  document.querySelectorAll(".tool-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      activeTool = button.dataset.tool;
-      activeSticker = "";
-      activeShape = "";
-      canvas.classList.remove("is-sticker-mode");
-      canvas.classList.remove("is-hand-mode", "is-panning");
-      canvas.classList.toggle("is-fill-mode", activeTool === "fill");
-      canvas.classList.toggle("is-hand-mode", activeTool === "hand");
-      document.querySelectorAll(".tool-button").forEach((toolButton) => {
-        const selected = toolButton === button;
-        toolButton.classList.toggle("is-active", selected);
-        toolButton.setAttribute("aria-pressed", String(selected));
-      });
-      document.querySelectorAll(".sticker-button").forEach((stickerButton) => {
-        const selected = stickerButton.dataset.sticker === "none";
-        stickerButton.classList.toggle("is-selected", selected);
-        stickerButton.setAttribute("aria-pressed", String(selected));
-      });
-      shapeButtons.forEach((shapeButton) => {
-        shapeButton.classList.remove("is-selected");
-        shapeButton.setAttribute("aria-pressed", "false");
-      });
-    });
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => setTool(button.dataset.tool));
   });
 
   shapeButtons.forEach((button) => {
     button.addEventListener("click", () => {
       activeShape = button.dataset.shape;
-      activeTool = "shape";
-      activeSticker = "";
       if (activeShape === "line") shapeStyle = "stroke";
-      canvas.classList.remove("is-sticker-mode", "is-fill-mode", "is-hand-mode", "is-panning");
-      shapeButtons.forEach((shapeButton) => {
-        const selected = shapeButton === button;
-        shapeButton.classList.toggle("is-selected", selected);
-        shapeButton.setAttribute("aria-pressed", String(selected));
-      });
       shapeStyleButtons.forEach((styleButton) => {
         const selected = styleButton.dataset.shapeStyle === shapeStyle;
         styleButton.classList.toggle("is-selected", selected);
         styleButton.setAttribute("aria-pressed", String(selected));
       });
-      document.querySelectorAll(".tool-button").forEach((toolButton) => {
-        toolButton.classList.remove("is-active");
-        toolButton.setAttribute("aria-pressed", "false");
-      });
-      document.querySelectorAll(".sticker-button").forEach((stickerButton) => {
-        const selected = stickerButton.dataset.sticker === "none";
-        stickerButton.classList.toggle("is-selected", selected);
-        stickerButton.setAttribute("aria-pressed", String(selected));
-      });
+      setTool("shape");
     });
   });
 
@@ -517,44 +827,113 @@
     brushSizeValue.textContent = brushSize;
   });
 
-  document.querySelectorAll(".sticker-button").forEach((button) => {
+  /* ---------- sticker controls ---------- */
+  stickerModeButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      activeSticker =
-        button.dataset.sticker === "none" ? "" : button.dataset.sticker;
-      document.querySelectorAll(".sticker-button").forEach((stickerButton) => {
-        const selected = stickerButton === button;
-        stickerButton.classList.toggle("is-selected", selected);
-        stickerButton.setAttribute("aria-pressed", String(selected));
-      });
-      if (activeSticker) {
-        activeTool = "pencil";
-        activeShape = "";
-        canvas.classList.remove("is-fill-mode", "is-hand-mode", "is-panning");
-        document.querySelectorAll(".tool-button").forEach((toolButton) => {
-          const selected = toolButton.dataset.tool === activeTool;
-          toolButton.classList.toggle("is-active", selected);
-          toolButton.setAttribute("aria-pressed", String(selected));
-        });
-        shapeButtons.forEach((shapeButton) => {
-          shapeButton.classList.remove("is-selected");
-          shapeButton.setAttribute("aria-pressed", "false");
-        });
-      }
-      canvas.classList.toggle("is-sticker-mode", Boolean(activeSticker));
+      stickerMode = button.dataset.stickerMode;
+      selectedIndex = -1;
+      setTool("sticker");
     });
   });
 
+  // Sliders change the picked-up sticker in Move mode, otherwise the next stickers.
+  function bindStickerSlider(input, key, toValue) {
+    input.addEventListener("input", () => {
+      const value = toValue(Number(input.value));
+      if (stickerMode === "move" && selectedSticker()) {
+        patchItem(selectedIndex, { [key]: value });
+        redraw();
+      } else {
+        stickerSettings[key] = value;
+      }
+      updateStickerControls();
+    });
+    input.addEventListener("change", endEdit);
+  }
+
+  bindStickerSlider(stickerSizeInput, "size", (value) => value);
+  bindStickerSlider(stickerTurnInput, "rotation", (value) => value);
+  bindStickerSlider(stickerFadeInput, "opacity", (value) => value / 100);
+
+  stickerFlipButton.addEventListener("click", () => {
+    const selected = stickerMode === "move" && selectedSticker();
+    if (selected) {
+      commit(items.map((item, index) =>
+        index === selectedIndex ? { ...item, flip: !item.flip } : item));
+    } else {
+      stickerSettings.flip = !stickerSettings.flip;
+    }
+    updateStickerControls();
+  });
+
+  stickerWiggleButton.addEventListener("click", () => {
+    stickerSettings.wiggle = !stickerSettings.wiggle;
+    updateStickerControls();
+  });
+
+  stickerMixButton.addEventListener("click", () => {
+    stickerSettings.mix = !stickerSettings.mix;
+    if (stickerMode === "move") stickerMode = "stamp";
+    setTool("sticker");
+  });
+
+  function deleteSelectedSticker() {
+    if (!selectedSticker()) return;
+    const index = selectedIndex;
+    selectedIndex = -1;
+    commit(items.filter((_, itemIndex) => itemIndex !== index));
+    selectSticker(-1);
+  }
+
+  document.getElementById("sticker-copy").addEventListener("click", () => {
+    const item = selectedSticker();
+    if (!item) return;
+    const copy = {
+      ...item,
+      x: Math.min(1, item.x + 0.03),
+      y: Math.min(1, item.y + 0.03),
+    };
+    commit([...items, copy]);
+    selectSticker(items.length - 1);
+  });
+
+  document.getElementById("sticker-front").addEventListener("click", () => {
+    const item = selectedSticker();
+    if (!item || selectedIndex === items.length - 1) return;
+    const index = selectedIndex;
+    commit([...items.filter((_, itemIndex) => itemIndex !== index), item]);
+    selectSticker(items.length - 1);
+  });
+
+  document.getElementById("sticker-delete").addEventListener("click",
+    deleteSelectedSticker);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.target.closest("input, textarea")) return;
+    if ((event.key === "Delete" || event.key === "Backspace") && selectedSticker()) {
+      event.preventDefault();
+      deleteSelectedSticker();
+    } else if (event.key === "Escape" && selectedSticker()) {
+      selectSticker(-1);
+    }
+  });
+
+  /* ---------- undo, redo, start over and save ---------- */
   undoButton.addEventListener("click", () => {
-    if (items.length === 0) return;
-    redoItems.push(items.pop());
-    redraw();
+    endEdit();
+    if (history.length === 0) return;
+    future.push(items);
+    items = history.pop();
+    selectSticker(-1);
     updateHistoryButtons();
   });
 
   redoButton.addEventListener("click", () => {
-    if (redoItems.length === 0) return;
-    items.push(redoItems.pop());
-    redraw();
+    endEdit();
+    if (future.length === 0) return;
+    history.push(items);
+    items = future.pop();
+    selectSticker(-1);
     updateHistoryButtons();
   });
 
@@ -570,13 +949,14 @@
     ) {
       return;
     }
-    redoItems = items.slice().reverse();
-    items = [];
-    redraw();
-    updateHistoryButtons();
+    selectedIndex = -1;
+    commit([]);
+    selectSticker(-1);
   });
 
   document.getElementById("save-button").addEventListener("click", () => {
+    // Leave the dotted "picked up" box out of the saved picture.
+    redraw(false);
     canvas.toBlob((blob) => {
       if (!blob) {
         showNotice("Sorry, we couldn't save this picture. Please try again.");
@@ -590,8 +970,11 @@
       URL.revokeObjectURL(imageUrl);
       showNotice("Your picture is ready to save!");
     }, "image/png");
+    redraw();
   });
 
+  renderStickerTabs();
+  renderStickerGrid();
   new ResizeObserver(resizeCanvas).observe(canvas);
   resizeCanvas();
   updateZoom();
