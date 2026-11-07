@@ -312,6 +312,28 @@ window.ARCADE_CATALOG = {
       added: "2026-10-31",
     },
     {
+      folder: "comic_book_studio",
+      title: "Comic Book Studio",
+      description:
+        "Create your own comic books with panel layouts, drawing tools, speech bubbles, sound effects and covers, then export a PDF.",
+      categories: ["Creativity"],
+      tags: [
+        "comics",
+        "comic book",
+        "graphic novel",
+        "manga",
+        "speech bubbles",
+        "sound effects",
+        "drawing",
+        "story",
+        "pdf",
+        "art",
+        "kids",
+        "touch",
+      ],
+      added: "2026-11-06",
+    },
+    {
       folder: "drawing_studio",
       title: "Drawing Studio",
       description:

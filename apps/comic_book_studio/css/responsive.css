@@ -1,0 +1,69 @@
+/* Comic Book Studio - large-button mode, tablet and phone layouts.
+ * The studio is designed for desktop; smaller screens get overlay sidebars and a compact toolbar. */
+
+body.big-ui { --btn-h: 38px; font-size: 15px; }
+body.big-ui .toolbox { width: 76px; }
+body.big-ui .tool-btn { height: 56px; }
+body.big-ui .tool-ico { font-size: 24px; }
+body.big-ui .edge-toggle.left { left: 76px; }
+body.big-ui .tb-btn { height: 40px; min-width: 40px; }
+body.big-ui .icon-btn { width: 36px; height: 36px; }
+body.big-ui .layer-row { min-height: 40px; }
+
+@media (max-width: 1560px) {
+  #tb-new .tb-label, #tb-open .tb-label, #tb-save .tb-label { display: none; }
+}
+@media (max-height: 1040px) {
+  .tool-btn { height: 34px; }
+  .tool-ico { font-size: 18px; }
+  .toolbox { gap: 4px; }
+  .tool-sep { margin: 2px 4px; }
+  .tool-name { display: none; }
+  body.toolbox-wide .tool-name { display: inline; }
+}
+
+@media (max-width: 1280px) {
+  .tb-btn .tb-label { display: none; }
+  #tb-export .tb-label, #tb-ai .tb-label { display: inline; }
+  .project-title { max-width: 160px; }
+}
+
+@media (max-width: 1024px) {
+  :root { --right-w: 290px; }
+  .menus { display: none; }
+  .brand span { display: none; }
+  .rightbar { position: absolute; right: 0; top: 0; bottom: 0; z-index: 25; box-shadow: -10px 0 30px rgba(0, 0, 0, 0.45); }
+  #resize-right { display: none; }
+  body:not(.show-right-overlay) .rightbar { display: none; }
+  .edge-toggle.right { right: 0; }
+  body.show-right-overlay .edge-toggle.right { right: var(--right-w); }
+  .wizard, .settings, .shortcut-cols { grid-template-columns: 1fr; }
+  .welcome-cards { grid-template-columns: repeat(2, 1fr); }
+  .recent-row { grid-template-columns: repeat(3, 1fr); }
+  .fmt-cards { grid-template-columns: repeat(3, 1fr); }
+  .exp-main { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  :root { --bottom-h: 130px; }
+  .topbar { height: 46px; gap: 2px; }
+  .tb-group { padding: 0 3px; }
+  .zoom-group #tb-zoom-out, .zoom-group #tb-zoom-in, #tb-settings, .title-wrap .save-status { display: none; }
+  .title-wrap { display: none; }
+  #tb-ai .tb-label, #tb-export .tb-label { display: none; }
+  .toolbox { width: 52px; padding: 4px 3px; }
+  .edge-toggle.left { left: 52px; }
+  .tool-btn { height: 40px; }
+  .tool-name { display: none; }
+  .color-well { width: 44px; height: 44px; }
+  .swatch { width: 28px; height: 28px; }
+  .quick-colors { display: none; }
+  .drawer, .ai-drawer { width: 100%; max-width: 100%; }
+  .welcome-hero h1 { font-size: 30px; }
+  .welcome-cards { grid-template-columns: 1fr 1fr; }
+  .recent-row { grid-template-columns: repeat(2, 1fr); }
+  .fmt-cards { grid-template-columns: repeat(2, 1fr); }
+  .char-maker { grid-template-columns: 1fr; }
+  .char-preview { max-width: 160px; position: static; }
+  .reader-top .seg { order: 5; }
+}

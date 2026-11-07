@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#11122a">
+    <meta name="description"
+      content="Make your own comic books in the browser! Design panel layouts, draw, add speech bubbles and sound effects, design a cover, then export a PDF or images. No sign-up, no ads.">
+    <link rel="icon" href="icon/favicon.ico?v=2" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16"
+      href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32"
+      href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <title>Comic Book Studio</title>
+    <link rel="preload" href="assets/fonts/fredoka-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/comic-neue-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/bangers.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/studio.css">
+    <link rel="stylesheet" href="css/dialogs.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script src="js/util.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/model.js" defer></script>
+    <script src="js/history.js" defer></script>
+    <script src="js/lettering.js" defer></script>
+    <script src="js/render.js" defer></script>
+    <script src="js/raster.js" defer></script>
+    <script src="js/layouts.js" defer></script>
+    <script src="js/gen-art.js" defer></script>
+    <script src="js/gen-story.js" defer></script>
+    <script src="js/assets.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/editor.js" defer></script>
+    <script src="js/tools.js" defer></script>
+    <script src="js/actions.js" defer></script>
+    <script src="js/properties.js" defer></script>
+    <script src="js/layers-panel.js" defer></script>
+    <script src="js/pages-panel.js" defer></script>
+    <script src="js/cover.js" defer></script>
+    <script src="js/projects.js" defer></script>
+    <script src="js/export.js" defer></script>
+    <script src="js/reader.js" defer></script>
+    <script src="js/library.js" defer></script>
+    <script src="js/ai.js" defer></script>
+    <script src="js/tutorial.js" defer></script>
+    <script src="js/sample.js" defer></script>
+    <script src="js/toolbar.js" defer></script>
+    <script src="js/app.js" defer></script>
+  </head>
+  <body class="loading">
+    <header class="topbar" id="topbar"></header>
+
+    <div class="studio" id="studio">
+      <aside class="toolbox" id="toolbox" aria-label="Toolbox"></aside>
+      <button class="edge-toggle left" id="toggle-left" aria-label="Show or hide the toolbox" data-tip="Show or hide the toolbox">‹</button>
+
+      <main class="workspace" id="workspace" aria-label="Comic page workspace"></main>
+
+      <button class="edge-toggle right" id="toggle-right" aria-label="Show or hide properties and layers" data-tip="Show or hide properties and layers">›</button>
+      <div class="resizer v" id="resize-right" aria-hidden="true"></div>
+      <aside class="rightbar" id="rightbar" aria-label="Properties and layers">
+        <section class="props" aria-label="Properties">
+          <div class="panel-head"><h3>Properties</h3></div>
+          <div class="props-body" id="props-body"></div>
+        </section>
+        <div class="resizer h" id="resize-layers" aria-hidden="true"></div>
+        <section class="layers" id="layers" aria-label="Layers"></section>
+      </aside>
+    </div>
+
+    <div class="resizer h bottom" id="resize-bottom" aria-hidden="true"></div>
+    <footer class="pages" id="pages" aria-label="Pages"></footer>
+
+    <div class="boot" aria-hidden="true">
+      <img src="icon/icon-128.png" alt="" width="96" height="96">
+      <div>Loading Comic Book Studio…</div>
+    </div>
+    <noscript><p class="noscript">Comic Book Studio needs JavaScript turned on.</p></noscript>
+  </body>
+</html>
