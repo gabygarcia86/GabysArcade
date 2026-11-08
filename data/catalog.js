@@ -334,6 +334,25 @@ window.ARCADE_CATALOG = {
       added: "2026-11-06",
     },
     {
+      folder: "cruise_finder",
+      title: "Cruise Finder",
+      description:
+        "Find Royal Caribbean cruises, add drinks, Wi-Fi, gratuities and travel costs, and compare complete vacation totals side by side.",
+      categories: ["Travel"],
+      tags: [
+        "cruise",
+        "royal caribbean",
+        "travel",
+        "vacation",
+        "price comparison",
+        "budget",
+        "planner",
+        "calculator",
+        "family",
+      ],
+      added: "2026-11-07",
+    },
+    {
       folder: "drawing_studio",
       title: "Drawing Studio",
       description:

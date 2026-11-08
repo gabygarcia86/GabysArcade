@@ -106,3 +106,7 @@ The proxy turns on server-side refusal fallbacks and returns friendly error mess
 ## Browser support
 
 Comic Book Studio is built for current desktop Chrome, Edge, Firefox and Safari, and works with mouse, touch and pen. Live image filters use canvas `filter`. Browsers without it get a slower pixel-based fallback. WEBP export depends on the browser's encoder. If it's missing, the app says so instead of saving a different format. In private browsing, storage may be blocked. The app warns you, and you can still export project files.
+
+## TODO
+
+- Fix add page on a tablet. Can't see the Cancel and Add Page buttons on the bottom of the window.
