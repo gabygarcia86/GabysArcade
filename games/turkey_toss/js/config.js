@@ -85,7 +85,8 @@ export const SERVING = {
 export const SLICE = {
   radiusX: 0.37,
   radiusZ: 0.26,
-  thickness: 0.07,
+  // Height of the turkey leg mesh; it lies along x and spans 2 * radiusX.
+  thickness: 0.17,
   // Spheres that make up the slice's collision shape.
   colliderRadius: 0.05,
   // Distinct procedural shapes generated at start-up.

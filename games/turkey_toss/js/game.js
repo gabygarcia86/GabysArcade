@@ -42,7 +42,7 @@ const FADE_SECONDS = 0.3;
 const SINK_SECONDS = 0.8;
 // Seconds a plate contact is remembered, because a resting slice's contact can flicker.
 const PLATE_TOUCH_SECONDS = 0.1;
-const STACK_GAP = 0.04;
+const STACK_GAP = 0.09;
 
 const BEST_KEY = 'turkeyToss.bestScore.v1';
 
@@ -91,7 +91,6 @@ class Slice {
     this.thudded = false;
     this.hitCornucopia = false; // each slice can only trigger the shower once
     this.floored = false; // each slice only costs points once
-    this.phase = Math.random() * 6.28; // desynchronizes the flop between slices
     this.bowlCenter = null;
   }
 }
@@ -388,8 +387,8 @@ export class Game {
     slice.reset();
     slice.mesh = mesh;
     slice.state = SliceState.AIMING;
-    // Random resting yaw shows a different side of the irregular outline each time.
-    slice.restQuaternion.setFromAxisAngle(_up, Math.random() * Math.PI * 2);
+    // The leg rests with its bone toward the player, like a handle, give or take a little.
+    slice.restQuaternion.setFromAxisAngle(_up, Math.PI / 2 + (Math.random() - 0.5) * 0.25);
     mesh.position.copy(REST_POSITION);
     mesh.quaternion.copy(slice.restQuaternion);
     this.current = slice;
@@ -866,8 +865,6 @@ export class Game {
           const t = Math.min(1, slice.timer / 0.18);
           mesh.position.lerpVectors(slice.startPosition, slice.targetPosition, t);
           mesh.quaternion.slerpQuaternions(slice.startQuaternion, slice.targetQuaternion, t);
-          // Finishes draped over the plate's slight curve, with a little jiggle.
-          mesh.morphTargetInfluences[0] = 0.28 + 0.25 * Math.exp(-slice.timer * 5) * Math.cos(slice.timer * 26);
           break;
         }
         case SliceState.SINKING: {
@@ -884,10 +881,6 @@ export class Game {
           _previousQuaternion.set(q.x, q.y, q.z, q.w);
           _renderQuaternion.set(r.x, r.y, r.z, r.w);
           mesh.quaternion.slerpQuaternions(_previousQuaternion, _renderQuaternion, alpha);
-          // A slice in the air flops with its tumble, then relaxes once it hits something.
-          mesh.morphTargetInfluences[0] = physics.grounded
-            ? 0.2
-            : 0.75 * Math.sin(this.simTime * 11 + slice.phase);
           mesh.scale.setScalar(Math.max(0.001, 1 - Math.min(1, slice.fade)));
           break;
         }
@@ -912,6 +905,5 @@ export class Game {
       _renderPosition.y += Math.max(0, Math.sin(this.elapsed * 4)) * 0.03;
     }
     mesh.position.copy(_renderPosition);
-    mesh.morphTargetInfluences[0] = 0.25 + power * 0.5 * this.aimLift;
   }
 }
