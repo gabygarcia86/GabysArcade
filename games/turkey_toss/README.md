@@ -1,18 +1,18 @@
 # Turkey Toss
 
-A 60-second 3D Thanksgiving arcade game. Toss turkey slices across the dinner table, land them on plates, stack multipliers and bounce off the giant roast.
+A 60-second 3D Thanksgiving arcade game. Toss turkey legs across the dinner table, land them on plates, stack multipliers and bounce off the giant roast.
 
 Built with plain HTML, CSS, JavaScript ES modules, [Three.js](https://threejs.org/) (r186) and [cannon-es](https://github.com/pmndrs/cannon-es) (0.20.0). Every model, texture, particle, sound effect and music note is generated in code, so the only asset files are the Fredoka font in `assets/fonts/` and the icons in `icon/`.
 
 ## How to play
 
 1. Press **Start Game**. After a short "Ready? Go!" the 60-second clock starts.
-2. Press (or touch) the slice on the platter, **drag upward** to aim, and **release** to toss.
-   - The drag direction sets where the slice heads. The drag length sets how far it flies.
+2. Press (or touch) the turkey leg on the platter, **drag upward** to aim, and **release** to toss.
+   - The drag direction sets where the leg heads. The drag length sets how far it flies.
    - A dotted arc shows where it will land.
    - A tiny drag, or a drag pointing back toward you, cancels the throw.
-3. A slice scores only if it **stops on a plate**. It then stays there for the rest of the round.
-4. The round ends when the clock or the 60 slices run out. Slices already in the air can still land.
+3. A leg scores only if it **stops on a plate**. It then stays there for the rest of the round.
+4. The round ends when the clock or the 60 legs run out. Legs already in the air can still land.
 5. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 mutes. Sound and music have their own volume sliders on the menu and pause screens.
 
 ### Scoring
@@ -30,7 +30,7 @@ Built with plain HTML, CSS, JavaScript ES modules, [Three.js](https://threejs.or
 | Bounce off the giant turkey, then land on a plate | **10X** on that landing only |
 | Cornucopia | **2X** for 10 seconds, plus a shower of fruit. Overlapping hits stack |
 | Flying turkey | Flat **+100**, unaffected by multipliers |
-| Slice lands on the floor | Flat **-10**. The score never drops below zero |
+| Leg lands on the floor | Flat **-10**. The score never drops below zero |
 
 Multipliers combine by multiplying. Two cranberry hits and one gravy hit inside the same 10 seconds, plus a bounce, make 2 × 2 × 3 × 10 = 120X, so a bounce onto the 10-point plate would be worth 1,200.
 
@@ -123,7 +123,7 @@ turkey_toss/
     ├── game.js        State machine (MENU/READY/PLAYING/WIND_DOWN/PAUSED/GAME_OVER), slice lifecycle, round flow
     ├── scene.js       Renderer, camera framing, lights, room, table, decorations
     ├── props.js       Plates, sauce bowls, giant turkey, flying turkey, serving platter
-    ├── slices.js      Procedural slice geometry, bend morph and mesh pool
+    ├── slices.js      Procedural turkey-leg geometry and mesh pool
     ├── physics.js     cannon-es world, grip, trajectory preview, bowl and bounce logic
     ├── throwing.js    Pointer Events drag-to-aim and the aiming preview
     ├── scoring.js     Landing score, number formatting, results messages
@@ -137,7 +137,7 @@ turkey_toss/
 
 ### How a throw scores
 
-Physics runs at a fixed 120 Hz. Each slice is a flat ring of spheres, which stays stable on the plates, bowls and roast. Slices never collide with each other.
+Physics runs at a fixed 120 Hz. Each turkey leg's physics body is a flat ring of spheres (the leg is only the mesh drawn over it), which stays stable on the plates, bowls and roast. Slices never collide with each other.
 
 Real friction would let a fast throw skid straight across a plate, so touching the table or a plate bleeds off most of the slice's speed and eases it flat (`_applyGrip` in `physics.js`).
 

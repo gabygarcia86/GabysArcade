@@ -6,7 +6,7 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#3a1c0e">
     <meta name="description"
-      content="Turkey Toss: a 60-second 3D Thanksgiving arcade game. Land turkey slices on plates, stack multipliers and bounce off the giant turkey.">
+      content="Turkey Toss: a 60-second 3D Thanksgiving arcade game. Land turkey legs on plates, stack multipliers and bounce off the giant turkey.">
     <title>Coming Soon - Turkey Toss</title>
     <script src="../../assets/js/coming-soon-guard.js"></script>
     <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
@@ -60,7 +60,7 @@
             <span class="hud-value" id="hud-time">60</span>
           </div>
           <div class="hud-box">
-            <span class="hud-label">Slices</span>
+            <span class="hud-label">Legs</span>
             <span class="hud-value" id="hud-slices">60</span>
           </div>
           <div class="hud-box" id="hud-plates-box">
@@ -88,7 +88,7 @@
           aria-label="Mute sound">&#128266;</button>
       </div>
 
-      <p id="hint" class="hint hidden">Drag up from the turkey slice to aim
+      <p id="hint" class="hint hidden">Drag up from the turkey leg to aim
         &middot; release to toss</p>
 
       <div id="popup-layer" aria-hidden="true"></div>
@@ -125,9 +125,9 @@
         <div class="panel">
           <h2>How to Play</h2>
           <ul class="how-list">
-            <li><b>Press the slice, drag up, release.</b> Drag direction aims and
+            <li><b>Press the turkey leg, drag up, release.</b> Drag direction aims and
               drag length sets the distance.</li>
-            <li><b>Land slices on plates.</b> Farther plates are worth more:
+            <li><b>Land legs on plates.</b> Farther plates are worth more:
               1, 2, 3, 5, and 10 for the back plate.</li>
             <li><b>Fill all nine plates</b> for a permanent <b>4X</b>.</li>
             <li><b>Cranberry bowl:</b> each hit gives <b>2X</b> for 10 seconds.</li>
@@ -138,11 +138,11 @@
               shower of fruit.</li>
             <li><b>Flying turkey:</b> it crosses once per round. Hit it for
               <b>+100</b>.</li>
-            <li><b>Watch the edges:</b> a slice on the floor costs
+            <li><b>Watch the edges:</b> a leg on the floor costs
               <b>10 points</b>.</li>
           </ul>
           <p class="instructions">Multipliers stack by multiplying. You have 60
-            seconds and 60 slices.</p>
+            seconds and 60 turkey legs.</p>
           <button type="button" class="big-btn" id="btn-how-back">Got It</button>
         </div>
       </section>
@@ -196,7 +196,7 @@
             <div><dt>Cornucopia hits</dt><dd id="stat-cornucopia"></dd></div>
             <div><dt>Turkey bounces</dt><dd id="stat-bounces"></dd></div>
             <div><dt>Flying turkey</dt><dd id="stat-flying"></dd></div>
-            <div><dt>Slices on the floor</dt><dd id="stat-floor"></dd></div>
+            <div><dt>Legs on the floor</dt><dd id="stat-floor"></dd></div>
           </dl>
           <form id="score-form" class="score-form hidden" novalidate>
             <label for="score-name">Your name</label>

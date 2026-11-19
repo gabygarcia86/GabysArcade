@@ -568,13 +568,15 @@ export class ServingPlatter {
     band.position.y = 0.1;
     this.group.add(band);
 
+    // Spare legs fan out to the left and right, bones in, leaving room for the one being
+    // thrown, which lies across the middle with its bone toward the player.
     this.spares = [];
     for (let i = 0; i < PLATTER_SLICES; i++) {
+      const side = i % 2 === 0 ? 0 : Math.PI;
+      const angle = side + (Math.floor(i / 2) - 1) * 0.38;
       const mesh = pool.createMesh();
-      const angle = (i / PLATTER_SLICES) * Math.PI * 2;
-      mesh.position.set(Math.cos(angle) * 0.46, 0.09 + i * 0.006, Math.sin(angle) * 0.46);
+      mesh.position.set(Math.cos(angle) * 0.55, 0.13 + i * 0.004, Math.sin(angle) * 0.55);
       mesh.rotation.y = -angle;
-      mesh.morphTargetInfluences[0] = 0.25;
       this.group.add(mesh);
       this.spares.push(mesh);
     }
