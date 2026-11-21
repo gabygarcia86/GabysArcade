@@ -449,7 +449,22 @@
       v.trigger.walls.forEach((wall) => { wall.active = false; });
       this.player.heal(40);
       this.player.frozen = true;
-      this.scene = new J.Cinematics.DialogueScene(this, J.VISION_END, () => { this.player.frozen = false; });
+      // Every holocron so far: all of them in earlier levels, and each one before the vision here.
+      const foundHere = this.level.pickups.every((p) => p.kind !== "holocron" || p.taken || p.x > v.trigger.x);
+      const lines = foundHere && this.holocronsFoundBefore(this.levelIndex)
+        ? [...J.VISION_END, ...J.VISION_END_HOLOCRONS] : J.VISION_END;
+      this.scene = new J.Cinematics.DialogueScene(this, lines, () => { this.player.frozen = false; });
+    }
+
+    // True when every level before `index` has been cleared with all its holocrons
+    // (across any of its runs, since the save keeps the most found).
+    holocronsFoundBefore(index) {
+      const { completed } = this.save.data;
+      for (let i = 0; i < index; i++) {
+        const level = completed[i];
+        if (!level || level.holocrons < level.totalHolocrons) return false;
+      }
+      return true;
     }
 
     startBoss(trigger) {

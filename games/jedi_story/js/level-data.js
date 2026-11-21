@@ -360,10 +360,22 @@
     ["mentor", "Master Gale Garcian", "Fear is a shadow, nothing more. You have walked through yours. Now go. The citadel is close."],
   ];
 
+  // Added after VISION_END when every holocron so far has been found.
+  J.VISION_END_HOLOCRONS = [
+    ["mentor", "Master Gale Garcian", "Remember this, young Jedi. The Force is not measured by the enemies you defeat, but by the lives you protect. Whatever happens today, never lose sight of who you are."],
+  ];
+
   J.ENDING_SHOTS = [
     { scene: "exegolDawn", text: "The citadel fell silent. For the first time in an age, the storm over Exegol broke, and starlight touched the ground." },
     { scene: "fleet", text: "Across the galaxy the droid armies stopped mid-stride. Imperial fleets lost their voice. Worlds that had forgotten the sky looked up." },
     { scene: "planets", text: "Kashyyyk's forests began to grow back. On Tatooine, Coruscant and Hoth, people came out of hiding and started to rebuild." },
     { scene: "temple", text: "And in the ruins of the Jedi Temple, a Knight lit one lightsaber, and the first new Padawans gathered to learn." },
+  ];
+
+  // Added after ENDING_SHOTS when every holocron in all ten levels has been found.
+  J.ENDING_SHOTS_HOLOCRONS = [
+    { scene: "holocron", text: "Deep within the ancient Jedi archives, the collected Holocrons awakened. Their ancient knowledge illuminated the path for a new generation of Jedi." },
+    { scene: "gale", text: "Master Gale Garcian had faced the darkness and emerged victorious. Yet he knew his greatest achievement was not defeating the Sith, but preserving the hope of the galaxy." },
+    { scene: "sunrise", text: "As twin suns rose over a peaceful horizon, a new chapter began. The Jedi Order would rise again, guided by courage, wisdom, and the light of the Force." },
   ];
 })(window.JEDI);

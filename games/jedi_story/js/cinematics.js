@@ -207,7 +207,9 @@
     constructor(game, onDone) {
       this.game = game;
       this.onDone = onDone;
-      this.shots = J.ENDING_SHOTS;
+      // Finding every holocron in the campaign adds the bonus shots before THE END.
+      this.shots = game.holocronsFoundBefore(J.LEVELS.length)
+        ? [...J.ENDING_SHOTS, ...J.ENDING_SHOTS_HOLOCRONS] : J.ENDING_SHOTS;
       this.index = 0;
       this.t = 0;
       this.stars = new J.Starfield();
@@ -317,6 +319,118 @@
         Art.jedi(ctx, i < 2 ? padawan : this.skin, this.saber, x, 395, i < 2 ? 1 : -1, Art.pose("kneel", t + i), t, 0, s, false);
       });
       Art.jedi(ctx, this.skin, this.saber, W / 2, 395, 1, Art.pose("victory", clamp(t * 0.5, 0, 1)), t, Math.sin(t * 1.3) * 0.25, 1.35);
+    }
+
+    // ----- Bonus shots for finding every holocron -----
+
+    // The archive: ten holocrons, one per world, circling the Jedi and waking up.
+    holocron(ctx, t) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#070a18");
+      g.addColorStop(1, "#141a30");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++) {
+        const x = 40 + i * 110;
+        ctx.fillStyle = "#0f1428";
+        ctx.fillRect(x, 60, 70, 360);
+        ctx.fillStyle = "#1b2240";
+        for (let r = 0; r < 6; r++) ctx.fillRect(x + 4, 76 + r * 56, 62, 4);
+      }
+      ctx.fillStyle = "#0a0d1c";
+      ctx.fillRect(0, 400, W, H - 400);
+
+      const wake = clamp(t / 3, 0, 1);
+      const cx = W / 2;
+      const cy = 250;
+      const glow = ctx.createRadialGradient(cx, cy, 10, cx, cy, 300);
+      glow.addColorStop(0, `rgba(255,207,106,${0.35 * wake})`);
+      glow.addColorStop(1, "rgba(255,207,106,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      const cube = (i, front) => {
+        const a = t * 0.4 + (i * Math.PI * 2) / 10;
+        if ((Math.sin(a) > 0) !== front) return;
+        const s = 13 + Math.sin(a) * 4;
+        ctx.save();
+        ctx.translate(cx + Math.cos(a) * 200, cy + Math.sin(a) * 60);
+        ctx.rotate(t * 0.8 + i);
+        ctx.globalAlpha = 0.35 + 0.65 * wake;
+        ctx.shadowColor = "#ffcf6a";
+        ctx.shadowBlur = 18 * wake;
+        ctx.fillStyle = "#ffcf6a";
+        ctx.fillRect(-s / 2, -s / 2, s, s);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "#7a5a1a";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-s / 2, -s / 2, s, s);
+        ctx.beginPath();
+        ctx.moveTo(-s / 2, 0);
+        ctx.lineTo(s / 2, 0);
+        ctx.moveTo(0, -s / 2);
+        ctx.lineTo(0, s / 2);
+        ctx.stroke();
+        ctx.restore();
+      };
+      // The far half of the ring passes behind the Jedi, the near half in front.
+      for (let i = 0; i < 10; i++) cube(i, false);
+      Art.jedi(ctx, this.skin, this.saber, cx, 400, 1, Art.pose("relaxed", t), t, Math.sin(t) * 0.2, 1.25, false);
+      for (let i = 0; i < 10; i++) cube(i, true);
+      ctx.globalAlpha = 1;
+    }
+
+    // Master Gale Garcian and the Jedi, together in the rebuilt temple.
+    gale(ctx, t) {
+      this.bgTemple.drawLayers(ctx, 200, 0, 0, t);
+      ctx.fillStyle = "rgba(255,200,130,.16)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#e2d2a8";
+      ctx.fillRect(0, 395, W, 8);
+      ctx.fillStyle = "#b8ab92";
+      ctx.fillRect(0, 403, W, 137);
+      Art.jedi(ctx, Art.BOSS_SKINS.mentor, this.saber, W / 2 - 80, 395, 1, Art.pose("relaxed", t), t, Math.sin(t * 0.9) * 0.2, 1.4, false);
+      Art.jedi(ctx, this.skin, this.saber, W / 2 + 90, 395, -1, Art.pose("relaxed", t + 1.3), t, Math.sin(t * 1.1) * 0.2, 1.3, false);
+    }
+
+    // Twin suns climbing over the dunes while the Jedi watches from a ridge.
+    sunrise(ctx, t) {
+      const rise = ease.out(clamp(t / 5, 0, 1));
+      const sky = ctx.createLinearGradient(0, 0, 0, 420);
+      sky.addColorStop(0, "#26345e");
+      sky.addColorStop(0.55, "#e0875a");
+      sky.addColorStop(1, "#ffd39a");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+      [[W / 2 - 60, 36, "#fff2c8", 0], [W / 2 + 70, 24, "#ffd27a", 30]].forEach(([x, r, color, lag]) => {
+        const y = 380 - rise * (170 - lag);
+        const halo = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 4);
+        halo.addColorStop(0, "rgba(255,230,170,.55)");
+        halo.addColorStop(1, "rgba(255,230,170,0)");
+        ctx.fillStyle = halo;
+        ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#c0874a";
+      ctx.beginPath();
+      ctx.moveTo(0, 390);
+      ctx.quadraticCurveTo(300, 350, 560, 392);
+      ctx.quadraticCurveTo(780, 420, W, 380);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.fill();
+      ctx.fillStyle = "#8a5a30";
+      ctx.beginPath();
+      ctx.moveTo(0, 418);
+      ctx.quadraticCurveTo(180, 388, 420, 420);
+      ctx.quadraticCurveTo(700, 455, W, 425);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.fill();
+      Art.jedi(ctx, this.skin, this.saber, 190, 405, 1, Art.pose("relaxed", t), t, Math.sin(t * 1.2) * 0.3, 1.1, false);
     }
   }
 

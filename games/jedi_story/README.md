@@ -60,7 +60,7 @@ Menus also work with the arrow keys, Enter and Esc. Touch controls appear automa
 
 **Bosses.** A boss guards while idle, so swinging at one usually gets blocked. Wait for an attack, then punish the recovery, parry it with a timed Deflect, or break the guard with Force Push. Bosses drop bacta at set points in the fight.
 
-**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are behind cracked walls, on ledges just inside pits, and on high platforms above the usual view.
+**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are behind cracked walls, on ledges just inside pits, and on high platforms above the usual view. Finding them all unlocks a bonus line from Master Gale Garcian after the Exegol vision (every holocron up to that point), and three bonus ending scenes (every holocron in all ten levels). Holocrons found on any run of a level count.
 
 ### Upgrades
 
@@ -230,5 +230,3 @@ games/jedi_story/
 ```
 
 ## TODO
-
-- Special prize for collecting all holocrons
