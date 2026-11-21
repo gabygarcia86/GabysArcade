@@ -289,6 +289,8 @@ p { margin: .4em 0; line-height: 1.4; }
 .btn:focus-visible, .chip:focus-visible, .droid-card:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .btn.primary { background: #ffd93b; border-color: #ffd93b; color: #1b1400; }
 .btn.primary:hover { background: #ffe873; }
+.btn.back-arcade { margin-top: 6px; background: transparent; font-size: 16px; }
+.btn.back-arcade:hover { background: rgba(30, 44, 90, .6); }
 
 .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
 .row .btn { flex: 0 1 200px; }

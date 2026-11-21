@@ -451,6 +451,11 @@
   /* ---------- Button behavior ---------- */
 
   UIManager.prototype.actions = {
+    // Leaves the game for the arcade home page.
+    arcade() {
+      this.game.audio.sfx("select");
+      window.location.href = "../../index.html";
+    },
     play() {
       this.game.audio.sfx("select");
       this.game.newGame();
@@ -564,6 +569,7 @@
               <button type="button" class="btn" data-action="leaderboard">Leaderboard</button>
               <button type="button" class="btn" data-action="open:instructions">Instructions</button>
               <button type="button" class="btn" data-action="open:options">Options</button>
+              <button type="button" class="btn back-arcade" data-action="arcade">&larr; Back to Arcade</button>
             </div>
             <section class="menu-scores" aria-label="Your best scores">
               <h2>Your Best Scores</h2>
