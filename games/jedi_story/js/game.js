@@ -451,7 +451,8 @@
       player.frozen = true;
       player.facing = 1;
       this.letterboxTarget = 1;
-      this.audio.stopMusic();
+      // The boss theme starts with the dialogue and runs until the level complete screen.
+      this.audio.playMusic(def.music);
       this.audio.play("bossIntro");
       this.audio.play(def.sting);
       this.bossCard = { name: def.name, title: def.title, t: 0 };
@@ -461,7 +462,6 @@
         this.letterboxTarget = 0;
         this.bossCard = null;
         this.boss.begin();
-        this.audio.playMusic(def.music);
         this.audio.play("saberOn");
       };
       // A retry goes straight back into the fight.
@@ -477,7 +477,6 @@
         if (enemy.wave === "emperor" && !enemy.dead) enemy.kill(0);
       });
       this.addScore(5000);
-      this.audio.stopMusic();
       this.audio.play("bossDown");
       this.camera.shake(12, 0.8);
       this.slowMo(0.3, 1.1);
