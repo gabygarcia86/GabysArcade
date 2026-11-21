@@ -15,6 +15,9 @@
   };
 
   // chords: scale degrees, one per bar. lead: scale degrees per half beat (null = rest).
+  // Music names with no generated song of their own borrow this one if their file fails.
+  const SONG_FALLBACKS = { crawl: "cinematic" };
+
   const SONGS = {
     menu: { bpm: 84, root: 50, scale: "minor", chords: [0, 5, 3, 4], style: "heroic",
       lead: [0, null, 4, null, 7, null, null, 6, 5, null, 4, null, 2, null, null, null, 3, null, 4, 5, 4, null, 2, null, 4, null, null, null, null, null, null, null] },
@@ -127,11 +130,16 @@
       if (this.ctx.state === "suspended") this.ctx.resume();
     }
 
+    // The Music slider times the track's own boost. Browsers cap file volume at 1.
+    fileMusicVolume() {
+      return Math.min(1, this.options.music * (this.fileMusicBoost || 1));
+    }
+
     applyVolumes() {
       if (!this.ctx) return;
       this.sfxBus.gain.value = this.options.sfx;
       this.musicBus.gain.value = this.options.music * 0.7;
-      if (this.fileMusic) this.fileMusic.volume = this.options.music;
+      if (this.fileMusic) this.fileMusic.volume = this.fileMusicVolume();
       if (this.ambientFile) this.ambientFile.volume = this.options.sfx * 0.6;
     }
 
@@ -555,11 +563,23 @@
       this.stopMusic();
       this.pendingMusic = name;
       this.songName = name;
-      const url = J.AUDIO_FILES.music[name];
+      // An entry is either a path (loops) or { file, loop: false, volume } for more control.
+      const entry = J.AUDIO_FILES.music[name];
+      const options = entry && typeof entry === "object" ? entry : {};
+      const url = options.file || entry;
       if (url) {
-        this.fileMusic = new Audio(url);
-        this.fileMusic.loop = true;
-        this.fileMusic.volume = this.options.music;
+        const track = new Audio(url);
+        this.fileMusic = track;
+        this.fileMusicBoost = options.volume || 1;
+        track.loop = options.loop !== false;
+        track.volume = this.fileMusicVolume();
+        // Once a play-once track finishes, let it go so a resume doesn't restart it.
+        track.addEventListener("ended", () => {
+          if (this.fileMusic === track) {
+            this.fileMusic = null;
+            this.songName = null;
+          }
+        });
         this.fileMusic.addEventListener("error", () => {
           console.warn(`Jedi Story: couldn't load music "${name}" from ${url}, using the generated track.`);
           if (this.songName === name) this.startSong(name);
@@ -571,7 +591,7 @@
     }
 
     startSong(name) {
-      const base = SONGS[name] || SONGS.level1;
+      const base = SONGS[name] || SONGS[SONG_FALLBACKS[name]] || SONGS.level1;
       this.song = { ...base, style: STYLES[base.style] };
       this.step = 0;
       this.nextStepTime = this.ctx.currentTime + 0.1;

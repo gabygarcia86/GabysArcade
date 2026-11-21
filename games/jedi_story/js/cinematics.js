@@ -60,7 +60,7 @@
       ];
       this.speed = 26.25;
       this.length = (titleGap + J.OPENING_CRAWL.length * 66) / this.speed + 8;
-      game.audio.playMusic("cinematic");
+      game.audio.playMusic("crawl");
     }
 
     update(dt) {
