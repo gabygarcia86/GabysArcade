@@ -504,6 +504,35 @@ button:disabled {
   font-size: 12px;
 }
 
+.hud-buttons .hud-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hud-icon svg polygon {
+  fill: currentColor;
+}
+
+#hud-sound .icon-sound-off,
+#hud-sound[aria-pressed="true"] .icon-sound-on {
+  display: none;
+}
+
+#hud-sound[aria-pressed="true"] .icon-sound-off {
+  display: block;
+}
+
 /* ---------- Touch controls ---------- */
 
 #touch-controls {

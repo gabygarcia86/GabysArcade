@@ -295,7 +295,7 @@ export class UI {
     const { save } = this;
     $("btn-sound").textContent = `SOUND: ${save.sound ? "ON" : "OFF"}`;
     $("btn-music").textContent = `MUSIC: ${save.music ? "ON" : "OFF"}`;
-    $("hud-sound").textContent = save.sound ? "SND" : "MUTE";
+    $("hud-sound").setAttribute("aria-label", save.sound ? "Mute sound" : "Unmute sound");
     $("hud-sound").setAttribute("aria-pressed", String(!save.sound));
     document.querySelectorAll("[data-pursuer]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.pursuer === save.pursuer));

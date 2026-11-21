@@ -2,8 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Coming Soon - Sk8 Free</title>
-    <script src="../../assets/js/coming-soon-guard.js"></script>
+    <title>Sk8 Free</title>
     <meta name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" content="#000080">
@@ -36,8 +35,24 @@
       <div id="hud-chase"></div>
       <div class="hud-buttons">
         <button id="hud-pause" type="button">PAUSE</button>
-        <button id="hud-restart" type="button" aria-label="Restart">R</button>
-        <button id="hud-sound" type="button" aria-label="Sound">SND</button>
+        <button id="hud-restart" class="hud-icon" type="button" aria-label="Restart" title="Restart">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+            <polyline points="20 4 20 9 15 9" />
+          </svg>
+        </button>
+        <button id="hud-sound" class="hud-icon" type="button" aria-label="Mute sound" title="Sound">
+          <svg class="icon-sound-on" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polygon points="4 9 8 9 13 5 13 19 8 15 4 15" />
+            <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+          </svg>
+          <svg class="icon-sound-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polygon points="4 9 8 9 13 5 13 19 8 15 4 15" />
+            <line x1="16" y1="9" x2="22" y2="15" />
+            <line x1="22" y1="9" x2="16" y2="15" />
+          </svg>
+        </button>
       </div>
     </div>
 

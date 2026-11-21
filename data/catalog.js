@@ -142,7 +142,7 @@ window.ARCADE_CATALOG = {
     },
     {
       folder: "postal_inspectors",
-      title: "Coming Soon - Postal Inspectors : Mail Call",
+      title: "Postal Inspectors : Mail Call",
       description:
         "Stop the mail thieves! Punch, kick and hurl envelopes to survive three minutes on the city streets.",
       categories: ["Arcade", "Beat'em Up"],
@@ -184,8 +184,9 @@ window.ARCADE_CATALOG = {
     },
     {
       folder: "sk8_free",
-      title: "Coming Soon - Sk8 Free",
-      description: "In development.",
+      title: "Sk8 Free",
+      description:
+        "Skate down an endless neighborhood, ollie over obstacles and flip off ramps until an angry Cop or Karen catches you.",
       categories: ["Arcade", "Sports", "Endless Runner"],
       tags: [
         "skateboarding",
@@ -193,9 +194,12 @@ window.ARCADE_CATALOG = {
         "arcade",
         "leaderboard",
         "endless runner",
+        "chase",
+        "power-ups",
+        "keyboard",
         "touch",
       ],
-      added: "",
+      added: "2026-11-20",
     },
     {
       folder: "skateboard_ninjas",

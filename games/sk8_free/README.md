@@ -14,7 +14,7 @@ From the root of the GabysArcade repository:
 python -m http.server 8000
 ```
 
-Then open <http://localhost:8000/>, select the game in the Coming Soon section, and enter the PIN. While the game's title starts with `Coming Soon`, `coming-soon-guard.js` sends anyone without that 12-hour pass back to the arcade.
+Then open <http://localhost:8000/> and select Sk8 Free in the library.
 
 ## Controls
 
@@ -26,7 +26,7 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 | Ollie | Space | OLLIE button |
 | Flip in the air | F, or hold for more | FLIP button, or hold for more |
 | Pause | P or Esc | PAUSE button |
-| Restart | R | R button |
+| Restart | R | Restart button |
 
 On touch screens, each tap moves one step between slow, normal and fast, and the speed stays until the next tap. The button lights up while it's set. Tap the other button to return to normal speed.
 
