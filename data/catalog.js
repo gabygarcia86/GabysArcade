@@ -162,7 +162,7 @@ window.ARCADE_CATALOG = {
         "keyboard",
         "touch",
       ],
-      added: "2026-11-5",
+      added: "2026-11-05",
       icon: "games/postal_inspectors/icons/icon-256.png",
     },
     {
