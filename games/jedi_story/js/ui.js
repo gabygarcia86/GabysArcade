@@ -347,6 +347,7 @@
         this.button("STORY MODE", () => this.showStory(), "primary"),
         this.button("LEVEL SELECT", () => game.requireJedi(() => this.showLevels())),
         this.button("CHARACTER CUSTOMIZATION", () => this.showCustomize(() => this.showMain())),
+        this.button("LEADERBOARD", () => this.showLeaderboard(() => this.showMain())),
         this.button("OPTIONS", () => this.showOptions(() => this.showMain())),
         this.button("CREDITS", () => this.showCredits()),
       );
@@ -782,6 +783,117 @@
       this.show(s, back);
     }
 
+    // ---------- Leaderboard ----------
+
+    // The online top 10. `highlight` is a just-submitted run, marked if it made the board.
+    showLeaderboard(back, highlight = null) {
+      const s = el("div", "screen solid");
+      s.append(el("h2", "title", "LEADERBOARD"));
+      s.append(el("p", "sub", "Top 10 campaign scores: the best score from every level cleared, added together."));
+      const board = el("div", "lb-board");
+      board.append(el("p", "lb-status", "Loading..."));
+      s.append(board);
+      const row = el("div", "row");
+      row.style.marginTop = ".8em";
+      row.append(this.button("BACK", back));
+      s.append(row);
+      this.show(s, back);
+
+      const say = (text) => board.replaceChildren(el("p", "lb-status", text));
+      J.Leaderboard.top(10).then((rows) => {
+        if (!s.isConnected) return;
+        if (!rows.length) return say("No scores yet. Be the first Jedi on the board!");
+        const table = el("table", "lb-table");
+        const head = el("tr");
+        ["#", "NAME", "SCORE", "PROGRESS"].forEach((label) => head.append(el("th", null, label)));
+        table.append(head);
+        let marked = false;
+        rows.forEach((entry, i) => {
+          const tr = el("tr");
+          if (highlight && !marked && entry.name === highlight.name && entry.score === highlight.score) {
+            tr.className = "me";
+            marked = true;
+          }
+          tr.append(
+            el("td", "rank", String(i + 1)),
+            el("td", "name", entry.name),
+            el("td", "score", entry.score.toLocaleString()),
+            el("td", "progress", entry.finished ? "★ Beat the game" : `${entry.levels} / ${J.LEVELS.length} levels`),
+          );
+          table.append(tr);
+        });
+        board.replaceChildren(table);
+        if (highlight && !marked) board.append(el("p", "lb-status", "Your score is saved, but it hasn't reached the top 10 yet."));
+        return undefined;
+      }).catch(() => {
+        if (s.isConnected) say("The leaderboard is unavailable right now. Check your connection and try again.");
+      });
+    }
+
+    // The campaign score, a name box and SUBMIT. `reopen` rebuilds the calling screen,
+    // so BACK from the leaderboard returns to it (now showing the score as sent).
+    submitPanel(run, reopen) {
+      const { game } = this;
+      const LB = J.Leaderboard;
+      const box = el("div", "lb-submit");
+      const line = el("div", "lb-run", "CAMPAIGN SCORE ");
+      line.append(el("b", null, run.score.toLocaleString()));
+      box.append(line);
+      if (run.score <= 0) {
+        box.append(el("p", "lb-status", "Score some points to reach the leaderboard."));
+        return box;
+      }
+      if (run.submitted) {
+        box.append(el("p", "lb-status ok", `Submitted as ${run.name}.`));
+        return box;
+      }
+
+      const input = el("input", "name-input lb-name");
+      input.type = "text";
+      input.maxLength = LB.NAME_MAX;
+      input.value = LB.loadName() || game.jedi.name;
+      input.placeholder = "Your name";
+      input.setAttribute("aria-label", "Name for the leaderboard");
+      const status = el("p", "lb-status");
+      status.setAttribute("aria-live", "polite");
+
+      let send = null;
+      const submit = async () => {
+        if (send.disabled) return;
+        const name = LB.cleanName(input.value);
+        if (!name) {
+          status.textContent = "Enter a name first.";
+          input.focus();
+          return;
+        }
+        input.disabled = true;
+        send.disabled = true;
+        status.textContent = "Sending...";
+        try {
+          await LB.submit({ name, score: run.score, levels: run.levels, finished: run.finished });
+          run.submitted = true;
+          run.name = name;
+          LB.saveName(name);
+          if (box.isConnected) this.showLeaderboard(reopen, run);
+        } catch (error) {
+          input.disabled = false;
+          send.disabled = false;
+          status.textContent = "Couldn't reach the leaderboard. Try again.";
+        }
+      };
+      send = this.button("SUBMIT SCORE", submit, "primary");
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submit();
+        }
+      });
+      const row = el("div", "row");
+      row.append(input, send);
+      box.append(row, status);
+      return box;
+    }
+
     // ---------- In-game screens ----------
 
     showPause() {
@@ -801,10 +913,12 @@
       this.show(s, () => game.resume());
     }
 
-    showComplete(stats, index) {
+    // `run` is passed after the final level's credits, to offer a leaderboard entry.
+    showComplete(stats, index, run = null) {
       const { game } = this;
       const s = el("div", "screen dim");
       const last = index === J.LEVELS.length - 1;
+      const again = () => this.showComplete(stats, index, run);
       s.append(el("h2", "title", last ? "CAMPAIGN COMPLETE" : "LEVEL COMPLETE"));
       s.append(el("p", "sub", J.LEVELS[index].name));
       const grid = el("div", "stats");
@@ -817,6 +931,7 @@
       ];
       rows.forEach(([a, b]) => grid.append(el("span", null, a), el("span", null, String(b))));
       s.append(grid);
+      if (run) s.append(this.submitPanel(run, again));
       const menu = el("div", "menu");
       if (!last) {
         menu.append(this.button("CONTINUE TO NEXT LEVEL", () => game.playLevel(index + 1, game.storyMode), "primary"));
@@ -825,21 +940,29 @@
         this.button("REPLAY LEVEL", () => game.playLevel(index, game.storyMode)),
         this.button("RETURN TO LEVEL SELECT", () => { game.toMenu(); this.showLevels(); }),
       );
+      if (run) menu.append(this.button("VIEW LEADERBOARD", () => this.showLeaderboard(again, run.submitted ? run : null)));
+      // Start on the menu, not SUBMIT, so a stray key press can't send a score.
+      menu.firstChild.dataset.first = "1";
       s.append(menu);
       this.show(s, () => game.toMenu());
     }
 
-    showGameOver() {
+    // `run` is the campaign score at the moment the last life was lost.
+    showGameOver(run) {
       const { game } = this;
       const s = el("div", "screen dim");
+      const again = () => this.showGameOver(run);
       s.append(el("h2", "title", "THE FORCE FADES"));
       s.append(el("p", "sub", "No lives left. Continuing halves your score."));
+      if (run) s.append(this.submitPanel(run, again));
       const menu = el("div", "menu");
       menu.append(
         this.button("CONTINUE FROM CHECKPOINT", () => game.continueFromCheckpoint(), "primary"),
         this.button("RESTART LEVEL", () => game.restartLevel()),
-        this.button("RETURN TO MAIN MENU", () => game.toMenu()),
       );
+      if (run) menu.append(this.button("VIEW LEADERBOARD", () => this.showLeaderboard(again, run.submitted ? run : null)));
+      menu.append(this.button("RETURN TO MAIN MENU", () => game.toMenu()));
+      menu.firstChild.dataset.first = "1";
       s.append(menu);
       this.show(s, () => game.toMenu());
     }

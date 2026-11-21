@@ -15,6 +15,7 @@ This is a free, non-commercial fan project. Star Wars and its names and characte
 - [Add your own sounds and music](#add-your-own-sounds-and-music)
 - [Change the game](#change-the-game)
 - [Saved data](#saved-data)
+- [Leaderboard](#leaderboard)
 - [Publish it](#publish-it)
 - [Code map](#code-map)
 
@@ -177,7 +178,18 @@ If you change the campaign's save format, change `KEY` in `js/save.js` so old sa
 
 ## Saved data
 
-Everything is saved in the browser's `localStorage` under `jediStory.save.v1`: your Jedi, unlocked levels, completed levels with best scores, upgrades, and options. It stays in that browser on that device, and it's lost if the player clears site data. Options has **Reset All Progress**, and starting a **New Campaign** clears progress but keeps your Jedi.
+Everything is saved in the browser's `localStorage` under `jediStory.save.v1`: your Jedi, unlocked levels, completed levels with best scores, upgrades, and options. It stays in that browser on that device, and it's lost if the player clears site data. Options has **Reset All Progress**, and starting a **New Campaign** clears progress but keeps your Jedi. Your leaderboard name is saved separately under `jediStory.playerName`.
+
+## Leaderboard
+
+The online top 10 uses the arcade's Supabase project, with its own `jedi_story_scores` table.
+
+**Set it up once:** in the Supabase dashboard, open **SQL Editor → New query**, paste in all of [leaderboard.sql](leaderboard.sql), and click **Run**. Until then, the leaderboard says it's unavailable and submitting a score fails, but the rest of the game works normally.
+
+- **The score** is the campaign score: the best score from every level cleared, added together. After a game over it also includes the score from the level being played, if that beats the level's best.
+- **Submitting:** a name box appears on the game over screen, and on the Campaign Complete screen after the ending credits. Sending a score opens the leaderboard with that entry highlighted.
+- **Viewing:** use **LEADERBOARD** on the main menu, or **VIEW LEADERBOARD** on those two screens. Each entry shows the name, score, and how many levels were cleared, or ★ for a player who beat the game.
+- **Rules:** visitors can read the board and add scores, but can't change or delete them. Names are 1 to 16 characters. `leaderboard.sql` also has commented-out examples for removing an entry or wiping the board.
 
 ## Publish it
 
@@ -189,6 +201,7 @@ The game is in the Coming Soon section now. To release it, follow [Move a game f
 games/jedi_story/
 ├── index.html          Page, touch buttons and script order
 ├── style.css           Menus and touch controls
+├── leaderboard.sql     Supabase setup for the online leaderboard
 ├── assets/audio/       Your own sound and music files
 └── js/
     ├── utils.js        Shared namespace and helpers
@@ -210,12 +223,12 @@ games/jedi_story/
     ├── levels.js       Level, LevelBuilder chunks and LevelManager
     ├── level-data.js   ★ The story and all ten level layouts
     ├── cinematics.js   Opening crawl, title cards, dialogue and ending
-    ├── ui.js           HUD and menus
+    ├── leaderboard.js  Reads and submits online scores
+    ├── ui.js           HUD, menus and leaderboard screens
     ├── game.js         GameEngine, GameStateManager and campaign flow
     └── main.js         Starts the game
 ```
 
 ## TODO
 
-- Leaderboard
 - Special prize for collecting all holocrons

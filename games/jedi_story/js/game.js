@@ -298,6 +298,21 @@
 
     addScore(points) { this.stats.score += points; }
 
+    // The leaderboard's campaign score: each cleared level's best score, plus the
+    // score in the level being played now (if it beats that level's best).
+    leaderboardRun(current = null) {
+      const { completed } = this.save.data;
+      let score = 0;
+      let levels = 0;
+      J.LEVELS.forEach((def, i) => {
+        let best = completed[i] ? completed[i].score : 0;
+        if (completed[i]) levels++;
+        if (current && i === this.levelIndex) best = Math.max(best, current.score);
+        score += best;
+      });
+      return { score, levels, finished: levels === J.LEVELS.length, submitted: false };
+    }
+
     collect(p) {
       switch (p.kind) {
         case "crystal":
@@ -555,7 +570,7 @@
           this.states.menu();
           this.level = null;
           this.player = null;
-          this.ui.showComplete(stats, index);
+          this.ui.showComplete(stats, index, this.leaderboardRun());
         }));
         return;
       }
@@ -576,7 +591,7 @@
         this.input.releaseAll();
         this.touchRoot.hidden = true;
         this.states.gameOver();
-        this.ui.showGameOver();
+        this.ui.showGameOver(this.leaderboardRun(this.stats));
         return;
       }
       player.lives--;

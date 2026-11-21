@@ -253,6 +253,25 @@ html, body {
 .controls-table th { text-align: left; color: var(--gold); font-weight: 700; padding: .12em 1em; letter-spacing: .08em; font-size: .9em; }
 .controls-table td { padding: .14em 1em; border-top: 1px solid rgba(120, 190, 255, .14); }
 
+/* ---------- Leaderboard ---------- */
+.lb-submit { display: flex; flex-direction: column; align-items: center; gap: .35em; margin: 0 0 .9em; }
+.lb-run { color: var(--muted); font-size: .85em; letter-spacing: .12em; }
+.lb-run b { color: var(--gold); font-size: 1.25em; letter-spacing: .04em; margin-left: .3em; }
+.lb-name { width: 12em; font-size: .95em; padding: .45em .6em; }
+.lb-status { margin: .1em 0 0; color: var(--muted); font-size: .85em; text-align: center; min-height: 1.2em; }
+.lb-status.ok { color: var(--ok); }
+.lb-board { width: 100%; max-width: 32em; min-height: 0; overflow-y: auto; }
+.lb-table { width: 100%; border-collapse: collapse; font-size: .9em; }
+.lb-table th { text-align: left; color: var(--gold); font-weight: 700; padding: .14em .7em; letter-spacing: .1em; font-size: .8em; }
+.lb-table td { padding: .2em .7em; border-top: 1px solid rgba(120, 190, 255, .14); }
+.lb-table .rank { color: var(--muted); width: 2em; }
+.lb-table .name { max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-table .score { color: var(--gold); font-weight: 700; text-align: right; }
+.lb-table th:nth-child(3) { text-align: right; }
+.lb-table .progress { color: var(--muted); font-size: .85em; }
+.lb-table tr.me td { background: rgba(255, 215, 106, .14); color: var(--ink); }
+.lb-table tr.me .score { color: var(--gold); }
+
 .scroll { overflow-y: auto; max-height: 100%; min-height: 0; width: 100%; max-width: 40em; font-size: .86em; line-height: 1.45; }
 .scroll h3 { color: var(--gold); margin: .7em 0 .15em; font-size: 1em; letter-spacing: .08em; }
 .scroll p { margin: .15em 0; color: var(--ink); }
