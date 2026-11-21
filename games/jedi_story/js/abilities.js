@@ -33,7 +33,7 @@
       const plus = has("pushPlus");
       const master = has("forceMaster");
       return {
-        cost: master ? 20 : plus ? 25 : 30,
+        cost: master ? 30 : plus ? 35 : 40,
         range: plus ? 300 : 230,
         power: plus ? 640 : 520,
         dmg: master ? 14 : plus ? 10 : 5,
