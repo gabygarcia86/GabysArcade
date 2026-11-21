@@ -335,8 +335,11 @@
   }
 
   const HEADS = {
+    // Human looks: 0-2 are the short cut, 3-5 the long cut; each trio is plain, braid, beard.
     human(ctx, skin, j, hair) {
-      if (j.pattern === 2) {
+      const long = j.pattern >= 3;
+      const extra = j.pattern % 3;
+      if (long) {
         ctx.fillStyle = shade(hair, -0.15);
         ctx.beginPath();
         ctx.moveTo(-3, -9);
@@ -347,20 +350,27 @@
       }
       headBall(ctx, skin);
       face(ctx, skin);
-      if (j.pattern === 3) {
+      if (extra === 2) {
+        // Sideburn running down the jaw into a chin beard, leaving the mouth clear.
         ctx.fillStyle = hair;
+        ctx.strokeStyle = OUTLINE;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(-1, 3.5);
-        ctx.quadraticCurveTo(3, 6, 9, 3.2);
-        ctx.quadraticCurveTo(8, 11, 2.5, 10.5);
-        ctx.quadraticCurveTo(-1, 9, -1, 3.5);
+        ctx.moveTo(-4.6, -0.5);
+        ctx.quadraticCurveTo(-5.4, 7, 0, 9.6);
+        ctx.quadraticCurveTo(5, 11.6, 8.6, 6);
+        ctx.quadraticCurveTo(6, 6.8, 3.4, 5.8);
+        ctx.quadraticCurveTo(-0.6, 4.6, -2.2, -0.5);
+        ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = shade(skin, -0.3);
+        ctx.stroke();
+        ctx.strokeStyle = hair;
+        ctx.lineWidth = 1.4;
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.arc(-1, -3, 8.2, PI * 0.9, PI * 1.5);
-        ctx.lineTo(-1, -3);
-        ctx.fill();
-        return;
+        ctx.moveTo(3.4, 3.7);
+        ctx.quadraticCurveTo(6, 2.8, 8.4, 3.5);
+        ctx.stroke();
       }
       ctx.fillStyle = hair;
       ctx.strokeStyle = OUTLINE;
@@ -373,7 +383,7 @@
       ctx.quadraticCurveTo(1, -6.5, 8.5, -4);
       ctx.fill();
       ctx.stroke();
-      if (j.pattern === 1) tendril(ctx, -6, 1, -9, 8, -5, 16, 1.8, hair, "#d9cdb4");
+      if (extra === 1) tendril(ctx, -6, 1, -9, 8, -5, 16, 1.8, hair, "#d9cdb4");
     },
     twilek(ctx, skin, j, hair, swing) {
       const stripe = j.pattern === 1 ? shade(skin, -0.45) : j.pattern === 2 ? shade(skin, 0.5) : null;

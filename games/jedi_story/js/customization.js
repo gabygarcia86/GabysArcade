@@ -6,7 +6,7 @@
   const SPECIES = [
     { id: "human", name: "Human",
       skins: [["Fair", "#f0c9a8"], ["Tan", "#d9a578"], ["Bronze", "#a9754c"], ["Deep", "#6e4630"]],
-      patterns: ["Short Cut", "Padawan Braid", "Long Hair", "Shaved + Beard"], hair: true },
+      patterns: ["Short Cut", "Short Cut + Braid", "Short Cut + Beard", "Long Cut", "Long Cut + Braid", "Long Cut + Beard"], hair: true },
     { id: "twilek", name: "Twi'lek",
       skins: [["Azure", "#4f93d8"], ["Jade", "#54b77e"], ["Rose", "#e07f9e"], ["Crimson", "#c6463f"]],
       patterns: ["Plain Lekku", "Striped Lekku", "Spotted Lekku"], hair: false },
@@ -64,12 +64,18 @@
 
   class JediCustomization {
     static defaults() {
-      return { name: "Jedi", species: 0, skin: 0, pattern: 1, hair: 0, outfit: 0, palette: 0, saber: "blue", saberType: "single" };
+      return { name: "Jedi", species: 0, skin: 0, pattern: 1, hair: 0, outfit: 0, palette: 0, saber: "blue", saberType: "single", humanLooks: 2 };
     }
 
     // Repairs a saved record, so an old or edited save can't crash the art code.
     static normalize(record) {
       const j = { ...JediCustomization.defaults(), ...(record || {}) };
+      // Saves from before the six human looks: 2 was "Long Hair", 3 was "Shaved + Beard".
+      if (record && record.humanLooks !== 2 && j.species === 0) {
+        if (j.pattern === 2) j.pattern = 3;
+        else if (j.pattern === 3) j.pattern = 2;
+      }
+      j.humanLooks = 2;
       const within = (value, length) => (Number.isInteger(value) && value >= 0 && value < length ? value : 0);
       j.species = within(j.species, SPECIES.length);
       const species = SPECIES[j.species];
