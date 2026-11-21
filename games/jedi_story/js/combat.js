@@ -124,7 +124,8 @@
       return this.spec.rainbow ? `hsl(${rand(360)},100%,62%)` : this.spec.fx || this.spec.blade;
     }
 
-    drawBlade(ctx, x0, y0, x1, y1, t) {
+    // `w` thins the blade: 1 for a main blade, less for crossguard vents.
+    drawBlade(ctx, x0, y0, x1, y1, t, w = 1) {
       const lengthScale = this.power;
       if (lengthScale <= 0.01) return;
       const x = x0 + (x1 - x0) * lengthScale;
@@ -143,7 +144,7 @@
       ctx.strokeStyle = color;
       for (const [width, alpha] of [[13, 0.1], [9, 0.18], [6, 0.42]]) {
         ctx.globalAlpha = alpha;
-        ctx.lineWidth = width * pulse;
+        ctx.lineWidth = width * pulse * w;
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x, y);
@@ -151,7 +152,7 @@
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
-      ctx.lineWidth = this.spec.dark ? 4 : 3.2;
+      ctx.lineWidth = (this.spec.dark ? 4 : 3.2) * w;
       ctx.strokeStyle = this.spec.dark ? this.spec.blade : this.colorKey === "white" ? "#fff" : "#fdfeff";
       ctx.beginPath();
       ctx.moveTo(x0, y0);
@@ -177,6 +178,23 @@
       ctx.moveTo(x - dx * (half - 1), y - dy * (half - 1));
       ctx.lineTo(x + dx * (half - 1), y + dy * (half - 1));
       ctx.stroke();
+      if (this.type === "crossguard") {
+        // Two short vents jut sideways just below the emitter, drawn under the main blade.
+        const px = dy;
+        const py = -dx;
+        const vx = x + dx * (half - 2);
+        const vy = y + dy * (half - 2);
+        const vent = 8 * scale;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#20242c";
+        ctx.beginPath();
+        ctx.moveTo(vx - px * 2.6, vy - py * 2.6);
+        ctx.lineTo(vx + px * 2.6, vy + py * 2.6);
+        ctx.stroke();
+        for (const s of [1, -1]) {
+          this.drawBlade(ctx, vx + px * s * 2.6, vy + py * s * 2.6, vx + px * s * (2.6 + vent), vy + py * s * (2.6 + vent), t, 0.6);
+        }
+      }
       this.drawBlade(ctx, x + dx * half, y + dy * half, x + dx * (half + length), y + dy * (half + length), t);
       if (this.type === "double") {
         this.drawBlade(ctx, x - dx * half, y - dy * half, x - dx * (half + length), y - dy * (half + length), t);

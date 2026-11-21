@@ -60,7 +60,7 @@
     { name: "Crimson Order", tunic: "#7c2a2a", tabard: "#511a1a", belt: "#2a0e0e", pants: "#5e2020", boots: "#1f0b0b", cloak: "#3e1414" },
   ];
 
-  const SABER_TYPES = [{ id: "single", name: "Single Blade" }, { id: "double", name: "Double Blade" }];
+  const SABER_TYPES = [{ id: "single", name: "Single Blade" }, { id: "double", name: "Double Blade" }, { id: "crossguard", name: "Crossguard" }];
 
   class JediCustomization {
     static defaults() {
@@ -85,7 +85,7 @@
       j.outfit = within(j.outfit, OUTFITS.length);
       j.palette = within(j.palette, PALETTES.length);
       if (!J.Lightsaber.COLORS[j.saber]) j.saber = "blue";
-      if (j.saberType !== "double") j.saberType = "single";
+      if (!SABER_TYPES.some((type) => type.id === j.saberType)) j.saberType = "single";
       j.name = JediCustomization.cleanName(j.name);
       return j;
     }

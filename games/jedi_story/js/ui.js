@@ -572,7 +572,7 @@
         });
         state.saber = new J.Lightsaber(jedi.saber, jedi.saberType);
         state.skin = Art.jediSkin(jedi);
-        summary.textContent = `${species.name} · ${OUTFITS[jedi.outfit].name} · ${J.Lightsaber.COLORS[jedi.saber].name} ${jedi.saberType === "double" ? "double blade" : "blade"}`;
+        summary.textContent = `${species.name} · ${OUTFITS[jedi.outfit].name} · ${J.Lightsaber.COLORS[jedi.saber].name} ${jedi.saberType === "double" ? "double blade" : jedi.saberType === "crossguard" ? "crossguard" : "blade"}`;
       };
 
       const ANIMS = [["Auto", "auto"], ["Idle", "idle"], ["Run", "run"], ["Attack", "attack"], ["Deflect", "deflect"], ["Push", "push"]];
