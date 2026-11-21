@@ -141,7 +141,7 @@
     paintIcon({ context: c, art, dpr, w, h }) {
       c.setTransform(dpr, 0, 0, dpr, w / 2 * dpr, h / 2 * dpr);
       if (art === "gear") D.Art.gear(c, Math.min(w, h) * 0.3, "#ffe88a", "#3a3010");
-      else D.Art.insignia(c, Math.min(w, h) * 0.42, "#ff6a4a");
+      else D.Art.powerCell(c, Math.min(w, h) * 0.42);
     }
 
     // Keeps every visible droid portrait moving. Called once per frame.
@@ -611,7 +611,7 @@
               <p>Collect every gear in the maze to clear the level. Clear all ten worlds, then do it again, faster.</p>
               <ul class="items">
                 <li><canvas data-art="gear" aria-hidden="true"></canvas><div><b>Gear</b><span>10 points</span></div></li>
-                <li><canvas data-art="power" aria-hidden="true"></canvas><div><b>Rebel Insignia</b><span>50 points. Enemies turn blue and can be defeated, for about 8 seconds.</span></div></li>
+                <li><canvas data-art="power" aria-hidden="true"></canvas><div><b>Power Cell</b><span>50 points. Enemies turn blue and can be defeated, for about 8 seconds.</span></div></li>
               </ul>
               <h3>Controls</h3>
               <table class="keys">
@@ -626,7 +626,7 @@
               <ul class="items">${enemies}</ul>
               <h3>Scoring</h3>
               <table class="keys">
-                <tr><th>Enemies on one insignia</th><td>200, 400, 800, 1,600</td></tr>
+                <tr><th>Enemies on one power cell</th><td>200, 400, 800, 1,600</td></tr>
                 <tr><th>Level complete</th><td>1,000</td></tr>
                 <tr><th>All ten levels</th><td>5,000</td></tr>
               </table>

@@ -2,7 +2,7 @@
  * The ten mazes. Each layout is the left half of the board, 11 columns by 23 rows, and
  * Maze mirrors it across the last column to make the full 21 x 23 board.
  *
- *   #  wall       .  gear         o  Rebel power-up (two per half, so four per board)
+ *   #  wall       .  gear         o  power cell (two per half, so four per board)
  *   -  house door G  house floor  (space)  open floor with no gear
  *
  * An open cell in column 0 makes a tunnel that wraps to the other side of the board.

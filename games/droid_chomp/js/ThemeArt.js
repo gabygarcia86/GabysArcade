@@ -778,11 +778,12 @@
       canvas.height = px;
       const c = canvas.getContext("2d");
       c.translate(px / 2, px / 2);
-      c.shadowColor = "#ff5a3c";
+      // Glow pass, then a clean pass on top so the bolt stays crisp.
+      c.shadowColor = "#ff5a1f";
       c.shadowBlur = s * 0.34 * dpr;
-      D.Art.insignia(c, s * 0.5 * dpr, "#ff6a4a");
+      D.Art.powerCell(c, s * 0.46 * dpr);
       c.shadowBlur = 0;
-      D.Art.insignia(c, s * 0.46 * dpr, "#fff0e0");
+      D.Art.powerCell(c, s * 0.46 * dpr);
     }
 
     // Blinking lights on the props. Coordinates are relative to the board.

@@ -1,5 +1,5 @@
 /*
- * DroidArt draws all twelve droids, the gear and the Rebel insignia in code. Every droid
+ * DroidArt draws all twelve droids, the gear and the power cell in code. Every droid
  * is a function that paints inside a box from -1 to 1 around the origin. It receives a
  * pose:
  *
@@ -563,32 +563,49 @@
       c.fill();
     },
 
-    // The Alliance starbird, built from one spike and two sweeping wings.
-    insignia(c, r, fill) {
+    // The power-up: a droid power cell with metal caps and a charged core.
+    powerCell(c, r) {
+      const box = (x, y, w, h, rad) => {
+        c.beginPath();
+        c.moveTo(x + rad, y);
+        c.arcTo(x + w, y, x + w, y + h, rad);
+        c.arcTo(x + w, y + h, x, y + h, rad);
+        c.arcTo(x, y + h, x, y, rad);
+        c.arcTo(x, y, x + w, y, rad);
+        c.closePath();
+      };
       c.save();
       c.scale(r, r);
-      c.fillStyle = fill;
-      c.beginPath();
-      c.moveTo(0, -1);
-      c.quadraticCurveTo(0.09, -0.45, 0.11, -0.1);
-      c.lineTo(0.06, 0.62);
-      c.lineTo(0, 0.82);
-      c.lineTo(-0.06, 0.62);
-      c.lineTo(-0.11, -0.1);
-      c.quadraticCurveTo(-0.09, -0.45, 0, -1);
+      // Terminal nub on top.
+      c.fillStyle = "#c9d2de";
+      box(-0.22, -0.94, 0.44, 0.26, 0.07);
       c.fill();
-      for (const side of [-1, 1]) {
-        c.beginPath();
-        c.moveTo(side * 0.2, -0.86);
-        c.quadraticCurveTo(side * 0.5, -0.82, side * 0.74, -0.6);
-        c.quadraticCurveTo(side * 1.06, -0.26, side * 0.96, 0.22);
-        c.quadraticCurveTo(side * 0.82, 0.8, side * 0.2, 0.98);
-        c.lineTo(side * 0.13, 0.72);
-        c.quadraticCurveTo(side * 0.5, 0.56, side * 0.6, 0.1);
-        c.quadraticCurveTo(side * 0.42, 0.32, side * 0.22, 0.26);
-        c.quadraticCurveTo(side * 0.3, -0.2, side * 0.2, -0.86);
-        c.fill();
-      }
+      // Casing.
+      c.fillStyle = "#2e333d";
+      box(-0.54, -0.74, 1.08, 1.62, 0.2);
+      c.fill();
+      c.strokeStyle = "#c9d2de";
+      c.lineWidth = 0.1;
+      c.stroke();
+      // Glowing core.
+      const glow = c.createLinearGradient(-0.36, 0, 0.36, 0);
+      glow.addColorStop(0, "#ff3a10");
+      glow.addColorStop(0.5, "#ffb070");
+      glow.addColorStop(1, "#ff3a10");
+      c.fillStyle = glow;
+      box(-0.36, -0.56, 0.72, 1.26, 0.1);
+      c.fill();
+      // Lightning bolt.
+      c.fillStyle = "#fffbe8";
+      c.beginPath();
+      c.moveTo(0.12, -0.48);
+      c.lineTo(-0.22, 0.1);
+      c.lineTo(-0.01, 0.1);
+      c.lineTo(-0.12, 0.62);
+      c.lineTo(0.24, -0.02);
+      c.lineTo(0.03, -0.02);
+      c.closePath();
+      c.fill();
       c.restore();
     },
   };

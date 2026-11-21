@@ -47,17 +47,17 @@ Movement is grid-based, and a direction press is buffered for half a second. Pre
 
 ## How to play
 
-Collect every gear to clear the level. Enemies hunt you the whole time, and one touch costs a life. Rebel insignias turn the tables for about 8 seconds: enemies turn blue, slow down and can be defeated. Blue enemies flash white just before the effect ends. Tunnels at the maze edges wrap to the other side and slow enemies down, but Exegol has none.
+Collect every gear to clear the level. Enemies hunt you the whole time, and one touch costs a life. Power cells turn the tables for about 8 seconds: enemies turn blue, slow down and can be defeated. Blue enemies flash white just before the effect ends. Tunnels at the maze edges wrap to the other side and slow enemies down, but Exegol has none.
 
 | Item                    | Points               |
 | ----------------------- | -------------------- |
 | Gear                    | 10                   |
-| Rebel insignia          | 50                   |
-| Enemies on one insignia | 200, 400, 800, 1,600 |
+| Power cell              | 50                   |
+| Enemies on one cell     | 200, 400, 800, 1,600 |
 | Level complete          | 1,000                |
 | All ten levels          | 5,000                |
 
-Leftover insignias don't block a level from ending. Only gears count.
+Leftover power cells don't block a level from ending. Only gears count.
 
 ## The droids
 
@@ -93,13 +93,13 @@ After Level 10 comes the galaxy celebration, then Level 1 again on the next cycl
 
 Options has three settings, which apply from the next new game.
 
-| Setting     | Lives | Enemy speed  | Insignia time |
+| Setting     | Lives | Enemy speed  | Power time    |
 | ----------- | ----- | ------------ | ------------- |
 | Cadet       | 5     | 78% of yours | 10 s          |
 | Pilot       | 3     | 82% of yours | 8 s           |
 | Jedi Master | 3     | 90% of yours | 6 s           |
 
-Each level and each cycle then adds speed for both sides, makes enemies react faster and chase harder, and shortens insignias. Insignias never drop below 3 seconds, and enemies never go above 97% of your speed, so the game gets very hard but stays beatable at any cycle. All these numbers are at the top of `js/LevelManager.js`.
+Each level and each cycle then adds speed for both sides, makes enemies react faster and chase harder, and shortens power cells. Power cells never drop below 3 seconds, and enemies never go above 97% of your speed, so the game gets very hard but stays beatable at any cycle. All these numbers are at the top of `js/LevelManager.js`.
 
 ## Leaderboard
 
@@ -124,7 +124,7 @@ Scores are checked for a valid format, but they're sent from the player's browse
 node games/droid_chomp/tools/check-mazes.mjs
 ```
 
-It reports dead ends, open rooms, unreachable tiles, the wrong number of insignias, unfair enemy starts and mazes that are too similar. All ten mazes pass it.
+It reports dead ends, open rooms, unreachable tiles, the wrong number of power cells, unfair enemy starts and mazes that are too similar. All ten mazes pass it.
 
 **Adjust difficulty:** `js/LevelManager.js`.
 
