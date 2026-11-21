@@ -100,6 +100,9 @@
     orange: { name: "Orange", blade: "#ff9326", glow: "255,147,38" },
     white: { name: "White", blade: "#f1f6ff", glow: "225,235,255" },
     red: { name: "Red", blade: "#ff2f2f", glow: "255,47,47" },
+    pink: { name: "Pink", blade: "#ff6ec7", glow: "255,110,199" },
+    // A black blade can't glow by adding light, so it gets a pale halo and silver effects.
+    black: { name: "Black", blade: "#0b0b10", glow: "200,206,220", halo: "#c9cfdc", fx: "#c9cfdc", dark: true },
     rainbow: { name: "Rainbow", blade: "#ff5ad0", glow: "255,120,220", rainbow: true },
   };
 
@@ -114,11 +117,11 @@
 
     // The color used by this moment's sparks, waves and trails.
     fxColor(t = performance.now() / 1000) {
-      return this.spec.rainbow ? `hsl(${(t * 220) % 360},100%,62%)` : this.spec.blade;
+      return this.spec.rainbow ? `hsl(${(t * 220) % 360},100%,62%)` : this.spec.fx || this.spec.blade;
     }
 
     fxPick() {
-      return this.spec.rainbow ? `hsl(${rand(360)},100%,62%)` : this.spec.blade;
+      return this.spec.rainbow ? `hsl(${rand(360)},100%,62%)` : this.spec.fx || this.spec.blade;
     }
 
     drawBlade(ctx, x0, y0, x1, y1, t) {
@@ -132,7 +135,7 @@
         for (let i = 0; i <= 6; i++) g.addColorStop(i / 6, `hsl(${(i * 60 + t * 260) % 360},100%,60%)`);
         color = g;
       } else {
-        color = this.spec.blade;
+        color = this.spec.halo || this.spec.blade;
       }
       const pulse = 1 + Math.sin(t * 34) * 0.06;
       ctx.lineCap = "round";
@@ -148,8 +151,8 @@
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
-      ctx.lineWidth = 3.2;
-      ctx.strokeStyle = this.colorKey === "white" ? "#fff" : "#fdfeff";
+      ctx.lineWidth = this.spec.dark ? 4 : 3.2;
+      ctx.strokeStyle = this.spec.dark ? this.spec.blade : this.colorKey === "white" ? "#fff" : "#fdfeff";
       ctx.beginPath();
       ctx.moveTo(x0, y0);
       ctx.lineTo(x, y);
