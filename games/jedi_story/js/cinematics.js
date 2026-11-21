@@ -52,9 +52,14 @@
       this.onDone = onDone;
       this.t = 0;
       this.stars = new J.Starfield();
-      this.lines = J.OPENING_CRAWL;
-      this.speed = 42;
-      this.length = this.lines.length * 66 / this.speed + 8;
+      // The big title leads the crawl, with a wider gap before the story lines.
+      const titleGap = 170;
+      this.items = [
+        { text: "JEDI STORY", at: 0, size: 96, weight: 800, title: true },
+        ...J.OPENING_CRAWL.map((text, i) => ({ text, at: titleGap + i * 66, size: 34, weight: i < 2 ? 800 : 600 })),
+      ];
+      this.speed = 26.25;
+      this.length = (titleGap + J.OPENING_CRAWL.length * 66) / this.speed + 8;
       game.audio.playMusic("cinematic");
     }
 
@@ -70,20 +75,31 @@
       this.stars.draw(ctx, this.t);
       const horizon = 96;
       ctx.textAlign = "center";
-      ctx.fillStyle = "#ffd76a";
-      this.lines.forEach((line, i) => {
-        if (!line) return;
+      ctx.lineJoin = "round";
+      for (const item of this.items) {
+        if (!item.text) continue;
         // Each line recedes up the screen, shrinking toward the horizon.
-        const s = this.t * this.speed - i * 66 - 40;
-        if (s < 0) return;
+        const s = this.t * this.speed - item.at - 40;
+        if (s < 0) continue;
         const depth = 1 / (1 + s * 0.0052);
-        const y = horizon + (H + 30 - horizon) * depth;
-        const size = 34 * depth;
-        if (size < 5) return;
+        // Bigger text starts lower so it slides in from below rather than popping in.
+        const y = horizon + (H + 30 + (item.size - 34) - horizon) * depth;
+        const size = item.size * depth;
+        if (size < 5) continue;
         ctx.globalAlpha = clamp((size - 5) / 7, 0, 1);
-        ctx.font = `${i < 2 ? 800 : 600} ${size}px ${J.FONT}`;
-        ctx.fillText(line, W / 2, y);
-      });
+        ctx.font = `${item.weight} ${size}px ${J.FONT}`;
+        if (item.title) {
+          // Same look as the menu logo: dark letters with a gold outline.
+          ctx.lineWidth = 8 * depth;
+          ctx.strokeStyle = "#ffd76a";
+          ctx.strokeText(item.text, W / 2, y);
+          ctx.fillStyle = "#05060f";
+          ctx.fillText(item.text, W / 2, y);
+        } else {
+          ctx.fillStyle = "#ffd76a";
+          ctx.fillText(item.text, W / 2, y);
+        }
+      }
       ctx.globalAlpha = 1;
       prompt(ctx, this.game, this.t, "ESC TO SKIP");
       fadeIn(ctx, this.t, 1.2);
