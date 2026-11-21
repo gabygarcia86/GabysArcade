@@ -2,7 +2,7 @@
 
 A 2D side-scrolling lightsaber platformer. Build your own Jedi and cross ten worlds, from a burning Jedi Temple to the Emperor's throne room on Exegol, with a boss fight every second level.
 
-Built with HTML5 Canvas 2D, the Web Audio API and vanilla JavaScript. There are no libraries, no build step and no downloaded assets: every character, planet, effect, sound and music cue is generated in code, apart from the site icons in `icon/`. The menus use the arcade's Oxanium font when it's available.
+Built with HTML5 Canvas 2D, the Web Audio API and vanilla JavaScript. There are no libraries, no build step and no downloaded assets: every character, planet, effect, sound and music cue is generated in code, apart from the site icons in `icon/` and the music tracks in `assets/audio/` for the menu, opening crawl, boss fights and ending. The menus use the arcade's Oxanium font when it's available.
 
 This is a free, non-commercial fan project. Star Wars and its names and characters belong to Lucasfilm Ltd. and The Walt Disney Company, and this game isn't affiliated with or endorsed by them. The music is original.
 
@@ -15,6 +15,7 @@ This is a free, non-commercial fan project. Star Wars and its names and characte
 - [Add your own sounds and music](#add-your-own-sounds-and-music)
 - [Change the game](#change-the-game)
 - [Saved data](#saved-data)
+- [Leaderboard](#leaderboard)
 - [Publish it](#publish-it)
 - [Code map](#code-map)
 
@@ -32,18 +33,18 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 
 ## Controls
 
-| Action | Keyboard | Touch |
-| --- | --- | --- |
-| Move | A / D or Left / Right | Arrow buttons |
-| Jump (hold to jump higher) | Space | JUMP |
-| Double jump (from level 3) | Space in midair | JUMP in midair |
-| Lightsaber attack | J | SABER |
-| Force Push | K | PUSH |
-| Deflect (hold) | L | DEFLECT |
-| Drop through a thin platform | S or Down + Space | Not available |
-| Pause | Esc | II button |
-| Advance a story screen | Space, J or Enter | Tap the game |
-| Skip a story screen | Esc | Tap through it |
+| Action                       | Keyboard              | Touch          |
+| ---------------------------- | --------------------- | -------------- |
+| Move                         | A / D or Left / Right | Arrow buttons  |
+| Jump (hold to jump higher)   | Space                 | JUMP           |
+| Double jump (from level 3)   | Space in midair       | JUMP in midair |
+| Lightsaber attack            | J                     | SABER          |
+| Force Push                   | K                     | PUSH           |
+| Deflect (hold)               | L                     | DEFLECT        |
+| Drop through a thin platform | S or Down + Space     | Not available  |
+| Pause                        | Esc                   | II button      |
+| Advance a story screen       | Space, J or Enter     | Tap the game   |
+| Skip a story screen          | Esc                   | Tap through it |
 
 Menus also work with the arrow keys, Enter and Esc. Touch controls appear automatically on touch screens, and Options can force them on or off. On a phone the game plays best held sideways.
 
@@ -59,51 +60,51 @@ Menus also work with the arrow keys, Enter and Esc. Touch controls appear automa
 
 **Bosses.** A boss guards while idle, so swinging at one usually gets blocked. Wait for an attack, then punish the recovery, parry it with a timed Deflect, or break the guard with Force Push. Bosses drop bacta at set points in the fight.
 
-**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are behind cracked walls, on ledges just inside pits, and on high platforms above the usual view.
+**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are behind cracked walls, on ledges just inside pits, and on high platforms above the usual view. Finding them all unlocks a bonus line from Master Gale Garcian after the Exegol vision (every holocron up to that point), and three bonus ending scenes (every holocron in all ten levels). Holocrons found on any run of a level count.
 
 ### Upgrades
 
 An upgrade arrives when you start its level, and upgrades are kept for replays.
 
-| Level | Upgrade |
-| --- | --- |
-| 1 | Lightsaber, Jump, Force Push, Deflect |
-| 2 | Three-strike combo |
-| 3 | Double jump |
-| 4 | Stronger, longer, cheaper Force Push |
-| 5 | Wider perfect window, and perfect deflections home in on targets |
-| 6 | Aerial saber spin: attack in midair, up to three times per jump |
-| 7 | Force meter grows to 150 and refills faster |
-| 8 | Four-strike combo with a whirling finisher |
-| 9 | Force Push shatters guards and stuns longer |
-| 10 | All powers |
+| Level | Upgrade                                                          |
+| ----- | ---------------------------------------------------------------- |
+| 1     | Lightsaber, Jump, Force Push, Deflect                            |
+| 2     | Three-strike combo                                               |
+| 3     | Double jump                                                      |
+| 4     | Stronger, longer, cheaper Force Push                             |
+| 5     | Wider perfect window, and perfect deflections home in on targets |
+| 6     | Aerial saber spin: attack in midair, up to three times per jump  |
+| 7     | Force meter grows to 150 and refills faster                      |
+| 8     | Four-strike combo with a whirling finisher                       |
+| 9     | Force Push shatters guards and stuns longer                      |
+| 10    | All powers                                                       |
 
 ## The campaign
 
-| # | Level | Location | Boss |
-| --- | --- | --- | --- |
-| 1 | The Jedi Awakening | Jedi Temple, Coruscant | |
-| 2 | The Forest of Secrets | Kashyyyk | Darth Maul |
-| 3 | The Desert Trial | Tatooine | |
-| 4 | The Fallen Temple | Mustafar | Count Dooku |
-| 5 | The Frozen Frontier | Hoth | |
-| 6 | The Shadow City | Nar Shaddaa | Asajj Ventress |
-| 7 | The Imperial Stronghold | Forest Moon of Endor | |
-| 8 | The Dark Side Rises | Death Star II | Darth Vader |
-| 9 | The Ancient Sith World | Exegol | |
-| 10 | The Final Confrontation | Emperor's Throne Room, Exegol | Emperor Palpatine |
+| #   | Level                   | Location                      | Boss              |
+| --- | ----------------------- | ----------------------------- | ----------------- |
+| 1   | The Jedi Awakening      | Jedi Temple, Coruscant        |                   |
+| 2   | The Forest of Secrets   | Kashyyyk                      | Darth Maul        |
+| 3   | The Desert Trial        | Tatooine                      |                   |
+| 4   | The Fallen Temple       | Mustafar                      | Count Dooku       |
+| 5   | The Frozen Frontier     | Hoth                          |                   |
+| 6   | The Shadow City         | Nar Shaddaa                   | Asajj Ventress    |
+| 7   | The Imperial Stronghold | Forest Moon of Endor          |                   |
+| 8   | The Dark Side Rises     | Death Star II                 | Darth Vader       |
+| 9   | The Ancient Sith World  | Exegol                        |                   |
+| 10  | The Final Confrontation | Emperor's Throne Room, Exegol | Emperor Palpatine |
 
 Story Mode runs the levels in order and unlocks each one as you finish the last. Level Select replays any unlocked level. Replays keep your best score and never move your campaign backward.
 
 ### Boss guide
 
-| Boss | Moves | How to beat them |
-| --- | --- | --- |
-| Darth Maul | Dash slash, advancing blade spin, thrown double blade, leap with shockwaves, Force shove | Jump the shockwaves and the throw. He's dizzy after a spin and unarmed while his blade is away |
-| Count Dooku | Triple thrust, counter stance, Force Lightning, thrown rocks, lava flares | Don't strike his counter stance: Force Push breaks it. Push rocks back at him. Jump the lightning or time a Deflect to reflect it |
-| Asajj Ventress | Four-hit flurry, twin thrown blades, perch and plunge, vanish and backstab, shadow copies | When she vanishes, watch for smoke behind you. One saber touch dissolves a shadow copy |
-| Darth Vader | Heavy slash, slash chains, straight saber throw, Force Choke, Force Pull, hurled debris, floor surges | Hit or push him during the choke wind-up to stop it. If you're caught, hammer any action button. He ignores Force Push the rest of the time. In the surges, stand in the gap |
-| Emperor Palpatine | Homing orbs, lightning strikes, teleports, lightning sweeps, orb rings, summoned guards, lightning clashes | Reflect his orbs back at him. Beat the guards to drop his shield. In a clash, hammer Attack. The killing blow starts one last clash |
+| Boss              | Moves                                                                                                      | How to beat them                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Darth Maul        | Dash slash, advancing blade spin, thrown double blade, leap with shockwaves, Force shove                   | Jump the shockwaves and the throw. He's dizzy after a spin and unarmed while his blade is away                                                                               |
+| Count Dooku       | Triple thrust, counter stance, Force Lightning, thrown rocks, lava flares                                  | Don't strike his counter stance: Force Push breaks it. Push rocks back at him. Jump the lightning or time a Deflect to reflect it                                            |
+| Asajj Ventress    | Four-hit flurry, twin thrown blades, perch and plunge, vanish and backstab, shadow copies                  | When she vanishes, watch for smoke behind you. One saber touch dissolves a shadow copy                                                                                       |
+| Darth Vader       | Heavy slash, slash chains, straight saber throw, Force Choke, Force Pull, hurled debris, floor surges      | Hit or push him during the choke wind-up to stop it. If you're caught, hammer any action button. He ignores Force Push the rest of the time. In the surges, stand in the gap |
+| Emperor Palpatine | Homing orbs, lightning strikes, teleports, lightning sweeps, orb rings, summoned guards, lightning clashes | Reflect his orbs back at him. Beat the guards to drop his shield. In a clash, hammer Attack. The killing blow starts one last clash                                          |
 
 ## Add your own sounds and music
 
@@ -127,33 +128,35 @@ Every sound and music track has a generated version, so you can replace as few o
 
 Paths are relative to `games/jedi_story/`, and their capitals must match the file exactly, because GitHub Pages is case-sensitive.
 
-| Group | Names | How it plays |
-| --- | --- | --- |
-| `music` | `menu`, `cinematic`, `ending`, `level1` to `level10`, `boss`, `bossMaul`, `bossDooku`, `bossVentress`, `bossVader`, `bossPalpatine` | Loops until the next track |
-| `sfx` | See the list in `js/audio-config.js` | Plays once each time |
-| `ambient` | `temple`, `kashyyyk`, `tatooine`, `mustafar`, `hoth`, `narshaddaa`, `endor`, `deathstar`, `exegol`, `throne` | Loops under a level |
+| Group     | Names                                                                                                                               | How it plays               |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `music`   | `menu`, `crawl`, `cinematic`, `ending`, `level1` to `level10`, `boss`, `bossMaul`, `bossDooku`, `bossVentress`, `bossVader`, `bossPalpatine` | Loops until the next track |
+| `sfx`     | See the list in `js/audio-config.js`                                                                                                | Plays once each time       |
+| `ambient` | `temple`, `kashyyyk`, `tatooine`, `mustafar`, `hoth`, `narshaddaa`, `endor`, `deathstar`, `exegol`, `throne`                        | Loops under a level        |
 
 - **Music volume** follows the Music slider in Options, and sounds and ambience follow the Sound effects slider.
 - **A file that won't load** is skipped, the generated version plays, and the browser console says which file failed.
+- **To play a track once** instead of looping, write it as `{ file: "assets/audio/song.mp3", loop: false }`. The opening crawl (`crawl`) is set up this way.
+- **To make a quiet track louder**, add a `volume` boost, such as `{ file: "assets/audio/song.mp3", volume: 1.6 }`. The menu music uses 1.6. Browsers cap a file at full volume, so a big boost only helps when the Music slider is below 100%.
 - **Looping music** should end cleanly, because MP3s can leave a tiny gap at the loop point. OGG usually loops more smoothly.
 - **Keep sound effects short**, because the first version of each sound is loaded when the game starts, and large files delay it.
 - **Only use audio you have the right to use**, because this folder is published with the site.
 
 ## Change the game
 
-| To change | Edit |
-| --- | --- |
-| Story text and level order | `js/level-data.js` |
-| A level's layout | Its `build(b)` function in `js/level-data.js`, using the chunks in `js/levels.js` |
-| Enemy stats, or add an enemy | The `TYPES` table in `js/enemies.js`. New looks go in `SKINS` in `js/characters.js` |
-| Boss health, dialogue and moves | `DEFS` and the boss classes in `js/bosses.js` |
-| Species, robes and colors | The tables at the top of `js/customization.js`, with species heads in `HEADS` in `js/characters.js` |
-| Lightsaber colors | `COLORS` in `js/combat.js` |
-| Jump height and run speed | `J.PHYS` in `js/combat.js`. Changing these can make levels impossible, so keep to the reach limits at the top of `js/levels.js` |
-| Upgrades | `UNLOCKS` in `js/abilities.js` |
-| Difficulty settings | `DIFFICULTY` in `js/game.js` |
-| Planet colors and textures | `THEMES` in `js/renderer.js` and `BUILDERS` in `js/backgrounds.js` |
-| Generated music | `SONGS` and `STYLES` at the top of `js/audio.js` |
+| To change                       | Edit                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Story text and level order      | `js/level-data.js`                                                                                                              |
+| A level's layout                | Its `build(b)` function in `js/level-data.js`, using the chunks in `js/levels.js`                                               |
+| Enemy stats, or add an enemy    | The `TYPES` table in `js/enemies.js`. New looks go in `SKINS` in `js/characters.js`                                             |
+| Boss health, dialogue and moves | `DEFS` and the boss classes in `js/bosses.js`                                                                                   |
+| Species, robes and colors       | The tables at the top of `js/customization.js`, with species heads in `HEADS` in `js/characters.js`                             |
+| Lightsaber colors               | `COLORS` in `js/combat.js`                                                                                                      |
+| Jump height and run speed       | `J.PHYS` in `js/combat.js`. Changing these can make levels impossible, so keep to the reach limits at the top of `js/levels.js` |
+| Upgrades                        | `UNLOCKS` in `js/abilities.js`                                                                                                  |
+| Difficulty settings             | `DIFFICULTY` in `js/game.js`                                                                                                    |
+| Planet colors and textures      | `THEMES` in `js/renderer.js` and `BUILDERS` in `js/backgrounds.js`                                                              |
+| Generated music                 | `SONGS` and `STYLES` at the top of `js/audio.js`                                                                                |
 
 Levels are written left to right, and each call adds a chunk where the last one ended:
 
@@ -175,7 +178,18 @@ If you change the campaign's save format, change `KEY` in `js/save.js` so old sa
 
 ## Saved data
 
-Everything is saved in the browser's `localStorage` under `jediStory.save.v1`: your Jedi, unlocked levels, completed levels with best scores, upgrades, and options. It stays in that browser on that device, and it's lost if the player clears site data. Options has **Reset All Progress**, and starting a **New Campaign** clears progress but keeps your Jedi.
+Everything is saved in the browser's `localStorage` under `jediStory.save.v1`: your Jedi, unlocked levels, completed levels with best scores, upgrades, and options. It stays in that browser on that device, and it's lost if the player clears site data. Options has **Reset All Progress**, and starting a **New Campaign** clears progress but keeps your Jedi. Your leaderboard name is saved separately under `jediStory.playerName`.
+
+## Leaderboard
+
+The online top 10 uses the arcade's Supabase project, with its own `jedi_story_scores` table.
+
+**Set it up once:** in the Supabase dashboard, open **SQL Editor → New query**, paste in all of [leaderboard.sql](leaderboard.sql), and click **Run**. Until then, the leaderboard says it's unavailable and submitting a score fails, but the rest of the game works normally.
+
+- **The score** is the campaign score: the best score from every level cleared, added together. After a game over it also includes the score from the level being played, if that beats the level's best.
+- **Submitting:** a name box appears on the game over screen, and on the Campaign Complete screen after the ending credits. Sending a score opens the leaderboard with that entry highlighted.
+- **Viewing:** use **LEADERBOARD** on the main menu, or **VIEW LEADERBOARD** on those two screens. Each entry shows the name, score, and how many levels were cleared, or ★ for a player who beat the game.
+- **Rules:** visitors can read the board and add scores, but can't change or delete them. Names are 1 to 16 characters. `leaderboard.sql` also has commented-out examples for removing an entry or wiping the board.
 
 ## Publish it
 
@@ -187,6 +201,7 @@ The game is in the Coming Soon section now. To release it, follow [Move a game f
 games/jedi_story/
 ├── index.html          Page, touch buttons and script order
 ├── style.css           Menus and touch controls
+├── leaderboard.sql     Supabase setup for the online leaderboard
 ├── assets/audio/       Your own sound and music files
 └── js/
     ├── utils.js        Shared namespace and helpers
@@ -208,7 +223,10 @@ games/jedi_story/
     ├── levels.js       Level, LevelBuilder chunks and LevelManager
     ├── level-data.js   ★ The story and all ten level layouts
     ├── cinematics.js   Opening crawl, title cards, dialogue and ending
-    ├── ui.js           HUD and menus
+    ├── leaderboard.js  Reads and submits online scores
+    ├── ui.js           HUD, menus and leaderboard screens
     ├── game.js         GameEngine, GameStateManager and campaign flow
     └── main.js         Starts the game
 ```
+
+## TODO

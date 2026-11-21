@@ -19,7 +19,7 @@
       ],
       outro: [
         ["maul", "Darth Maul", "This changes nothing... the dark side gathers on Tatooine... and beyond..."],
-        ["mentor", "Master Orin Vael", "Well fought. Follow that clue, and watch your anger. It is the door he wanted you to open."],
+        ["mentor", "Master Gale Garcian", "Well fought. Follow that clue, and watch your anger. It is the door he wanted you to open."],
       ],
     },
     dooku: {
@@ -57,7 +57,7 @@
       outro: [
         ["vader", "Darth Vader", "Impressive. Most impressive."],
         ["vader", "Darth Vader", "You will find him on Exegol, where he has always been. Go. Learn what I learned."],
-        ["mentor", "Master Orin Vael", "You stood against the fist of the Empire. There is only the hand that moves it left."],
+        ["mentor", "Master Gale Garcian", "You stood against the fist of the Empire. There is only the hand that moves it left."],
       ],
     },
     palpatine: {

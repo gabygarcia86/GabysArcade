@@ -6,11 +6,14 @@
  */
 (function (J) {
   J.AUDIO_FILES = {
-    // Music: one looping track per name.
+    // Music: one looping track per name. To play a track once instead of looping,
+    // write { file: "assets/audio/song.mp3", loop: false }. Add volume: 1.5 to make
+    // a quiet track louder (1 is normal).
     music: {
-      menu: null, // e.g. "assets/audio/menu-theme.mp3"
-      cinematic: null,
-      ending: null,
+      menu: { file: "assets/audio/Music - Menu.mp3", volume: 1.6 },
+      crawl: { file: "assets/audio/Music - Opening Crawl.mp3", loop: false }, // Opening crawl
+      cinematic: null, // Level title cards
+      ending: "assets/audio/Music - Ending.mp3",
       level1: null, // Jedi Temple
       level2: null, // Kashyyyk
       level3: null, // Tatooine
@@ -22,11 +25,11 @@
       level9: null, // Exegol
       level10: null, // Throne Room
       boss: null, // Used by any boss without its own track
-      bossMaul: null,
-      bossDooku: null,
-      bossVentress: null,
-      bossVader: null,
-      bossPalpatine: null,
+      bossMaul: "assets/audio/Music - Boss Fight - Maul.mp3",
+      bossDooku: "assets/audio/Music - Boss Fight - Dooku.mp3",
+      bossVentress: "assets/audio/Music - Boss Fight - Ventress.mp3",
+      bossVader: "assets/audio/Music - Boss Fight - Vader.mp3",
+      bossPalpatine: "assets/audio/Music - Boss Fight - Palpatine.mp3",
     },
 
     // Sound effects: played once each time they happen.

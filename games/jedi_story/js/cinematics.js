@@ -52,10 +52,15 @@
       this.onDone = onDone;
       this.t = 0;
       this.stars = new J.Starfield();
-      this.lines = J.OPENING_CRAWL;
-      this.speed = 42;
-      this.length = this.lines.length * 66 / this.speed + 8;
-      game.audio.playMusic("cinematic");
+      // The big title leads the crawl, with a wider gap before the story lines.
+      const titleGap = 170;
+      this.items = [
+        { text: "JEDI STORY", at: 0, size: 96, weight: 800, title: true },
+        ...J.OPENING_CRAWL.map((text, i) => ({ text, at: titleGap + i * 66, size: 34, weight: i < 2 ? 800 : 600 })),
+      ];
+      this.speed = 26.25;
+      this.length = (titleGap + J.OPENING_CRAWL.length * 66) / this.speed + 8;
+      game.audio.playMusic("crawl");
     }
 
     update(dt) {
@@ -70,20 +75,31 @@
       this.stars.draw(ctx, this.t);
       const horizon = 96;
       ctx.textAlign = "center";
-      ctx.fillStyle = "#ffd76a";
-      this.lines.forEach((line, i) => {
-        if (!line) return;
+      ctx.lineJoin = "round";
+      for (const item of this.items) {
+        if (!item.text) continue;
         // Each line recedes up the screen, shrinking toward the horizon.
-        const s = this.t * this.speed - i * 66 - 40;
-        if (s < 0) return;
+        const s = this.t * this.speed - item.at - 40;
+        if (s < 0) continue;
         const depth = 1 / (1 + s * 0.0052);
-        const y = horizon + (H + 30 - horizon) * depth;
-        const size = 34 * depth;
-        if (size < 5) return;
+        // Bigger text starts lower so it slides in from below rather than popping in.
+        const y = horizon + (H + 30 + (item.size - 34) - horizon) * depth;
+        const size = item.size * depth;
+        if (size < 5) continue;
         ctx.globalAlpha = clamp((size - 5) / 7, 0, 1);
-        ctx.font = `${i < 2 ? 800 : 600} ${size}px ${J.FONT}`;
-        ctx.fillText(line, W / 2, y);
-      });
+        ctx.font = `${item.weight} ${size}px ${J.FONT}`;
+        if (item.title) {
+          // Same look as the menu logo: dark letters with a gold outline.
+          ctx.lineWidth = 8 * depth;
+          ctx.strokeStyle = "#ffd76a";
+          ctx.strokeText(item.text, W / 2, y);
+          ctx.fillStyle = "#05060f";
+          ctx.fillText(item.text, W / 2, y);
+        } else {
+          ctx.fillStyle = "#ffd76a";
+          ctx.fillText(item.text, W / 2, y);
+        }
+      }
       ctx.globalAlpha = 1;
       prompt(ctx, this.game, this.t, "ESC TO SKIP");
       fadeIn(ctx, this.t, 1.2);
@@ -191,7 +207,9 @@
     constructor(game, onDone) {
       this.game = game;
       this.onDone = onDone;
-      this.shots = J.ENDING_SHOTS;
+      // Finding every holocron in the campaign adds the bonus shots before THE END.
+      this.shots = game.holocronsFoundBefore(J.LEVELS.length)
+        ? [...J.ENDING_SHOTS, ...J.ENDING_SHOTS_HOLOCRONS] : J.ENDING_SHOTS;
       this.index = 0;
       this.t = 0;
       this.stars = new J.Starfield();
@@ -302,14 +320,127 @@
       });
       Art.jedi(ctx, this.skin, this.saber, W / 2, 395, 1, Art.pose("victory", clamp(t * 0.5, 0, 1)), t, Math.sin(t * 1.3) * 0.25, 1.35);
     }
+
+    // ----- Bonus shots for finding every holocron -----
+
+    // The archive: ten holocrons, one per world, circling the Jedi and waking up.
+    holocron(ctx, t) {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#070a18");
+      g.addColorStop(1, "#141a30");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++) {
+        const x = 40 + i * 110;
+        ctx.fillStyle = "#0f1428";
+        ctx.fillRect(x, 60, 70, 360);
+        ctx.fillStyle = "#1b2240";
+        for (let r = 0; r < 6; r++) ctx.fillRect(x + 4, 76 + r * 56, 62, 4);
+      }
+      ctx.fillStyle = "#0a0d1c";
+      ctx.fillRect(0, 400, W, H - 400);
+
+      const wake = clamp(t / 3, 0, 1);
+      const cx = W / 2;
+      const cy = 250;
+      const glow = ctx.createRadialGradient(cx, cy, 10, cx, cy, 300);
+      glow.addColorStop(0, `rgba(255,207,106,${0.35 * wake})`);
+      glow.addColorStop(1, "rgba(255,207,106,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      const cube = (i, front) => {
+        const a = t * 0.4 + (i * Math.PI * 2) / 10;
+        if ((Math.sin(a) > 0) !== front) return;
+        const s = 13 + Math.sin(a) * 4;
+        ctx.save();
+        ctx.translate(cx + Math.cos(a) * 200, cy + Math.sin(a) * 60);
+        ctx.rotate(t * 0.8 + i);
+        ctx.globalAlpha = 0.35 + 0.65 * wake;
+        ctx.shadowColor = "#ffcf6a";
+        ctx.shadowBlur = 18 * wake;
+        ctx.fillStyle = "#ffcf6a";
+        ctx.fillRect(-s / 2, -s / 2, s, s);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "#7a5a1a";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-s / 2, -s / 2, s, s);
+        ctx.beginPath();
+        ctx.moveTo(-s / 2, 0);
+        ctx.lineTo(s / 2, 0);
+        ctx.moveTo(0, -s / 2);
+        ctx.lineTo(0, s / 2);
+        ctx.stroke();
+        ctx.restore();
+      };
+      // The far half of the ring passes behind the Jedi, the near half in front.
+      for (let i = 0; i < 10; i++) cube(i, false);
+      Art.jedi(ctx, this.skin, this.saber, cx, 400, 1, Art.pose("relaxed", t), t, Math.sin(t) * 0.2, 1.25, false);
+      for (let i = 0; i < 10; i++) cube(i, true);
+      ctx.globalAlpha = 1;
+    }
+
+    // Master Gale Garcian and the Jedi, together in the rebuilt temple.
+    gale(ctx, t) {
+      this.bgTemple.drawLayers(ctx, 200, 0, 0, t);
+      ctx.fillStyle = "rgba(255,200,130,.16)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#e2d2a8";
+      ctx.fillRect(0, 395, W, 8);
+      ctx.fillStyle = "#b8ab92";
+      ctx.fillRect(0, 403, W, 137);
+      Art.jedi(ctx, Art.BOSS_SKINS.mentor, this.saber, W / 2 - 80, 395, 1, Art.pose("relaxed", t), t, Math.sin(t * 0.9) * 0.2, 1.4, false);
+      Art.jedi(ctx, this.skin, this.saber, W / 2 + 90, 395, -1, Art.pose("relaxed", t + 1.3), t, Math.sin(t * 1.1) * 0.2, 1.3, false);
+    }
+
+    // Twin suns climbing over the dunes while the Jedi watches from a ridge.
+    sunrise(ctx, t) {
+      const rise = ease.out(clamp(t / 5, 0, 1));
+      const sky = ctx.createLinearGradient(0, 0, 0, 420);
+      sky.addColorStop(0, "#26345e");
+      sky.addColorStop(0.55, "#e0875a");
+      sky.addColorStop(1, "#ffd39a");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+      [[W / 2 - 60, 36, "#fff2c8", 0], [W / 2 + 70, 24, "#ffd27a", 30]].forEach(([x, r, color, lag]) => {
+        const y = 380 - rise * (170 - lag);
+        const halo = ctx.createRadialGradient(x, y, r * 0.6, x, y, r * 4);
+        halo.addColorStop(0, "rgba(255,230,170,.55)");
+        halo.addColorStop(1, "rgba(255,230,170,0)");
+        ctx.fillStyle = halo;
+        ctx.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#c0874a";
+      ctx.beginPath();
+      ctx.moveTo(0, 390);
+      ctx.quadraticCurveTo(300, 350, 560, 392);
+      ctx.quadraticCurveTo(780, 420, W, 380);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.fill();
+      ctx.fillStyle = "#8a5a30";
+      ctx.beginPath();
+      ctx.moveTo(0, 418);
+      ctx.quadraticCurveTo(180, 388, 420, 420);
+      ctx.quadraticCurveTo(700, 455, W, 425);
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.fill();
+      Art.jedi(ctx, this.skin, this.saber, 190, 405, 1, Art.pose("relaxed", t), t, Math.sin(t * 1.2) * 0.3, 1.1, false);
+    }
   }
 
   // ---------- Dialogue box ----------
 
-  function drawDialogue(ctx, game, line, t) {
+  // `top` puts the box at the top of the screen instead of the bottom.
+  function drawDialogue(ctx, game, line, t, top = false) {
     const [who, speaker, text] = line;
     const boxH = 104;
-    const y = H - boxH - 14;
+    const y = top ? 14 : H - boxH - 14;
     ctx.fillStyle = "rgba(6,10,24,.9)";
     ctx.strokeStyle = "rgba(124,200,255,.55)";
     ctx.lineWidth = 1.5;
@@ -328,10 +459,12 @@
 
   // A run of dialogue lines shown over the paused action.
   class DialogueScene {
-    constructor(game, lines, onDone) {
+    // Pass { top: true } to show the box at the top of the screen (boss fights).
+    constructor(game, lines, onDone, { top = false } = {}) {
       this.game = game;
       this.lines = lines;
       this.onDone = onDone;
+      this.top = top;
       this.i = 0;
       this.t = 0;
     }
@@ -363,7 +496,7 @@
 
     draw(ctx) {
       const line = this.lines[this.i];
-      if (line) drawDialogue(ctx, this.game, line, this.t);
+      if (line) drawDialogue(ctx, this.game, line, this.t, this.top);
       ctx.globalAlpha = 0.6;
       ctx.fillStyle = "#cfe4ff";
       ctx.font = `600 12px ${J.FONT}`;

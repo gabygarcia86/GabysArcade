@@ -298,6 +298,21 @@
 
     addScore(points) { this.stats.score += points; }
 
+    // The leaderboard's campaign score: each cleared level's best score, plus the
+    // score in the level being played now (if it beats that level's best).
+    leaderboardRun(current = null) {
+      const { completed } = this.save.data;
+      let score = 0;
+      let levels = 0;
+      J.LEVELS.forEach((def, i) => {
+        let best = completed[i] ? completed[i].score : 0;
+        if (completed[i]) levels++;
+        if (current && i === this.levelIndex) best = Math.max(best, current.score);
+        score += best;
+      });
+      return { score, levels, finished: levels === J.LEVELS.length, submitted: false };
+    }
+
     collect(p) {
       switch (p.kind) {
         case "crystal":
@@ -434,7 +449,22 @@
       v.trigger.walls.forEach((wall) => { wall.active = false; });
       this.player.heal(40);
       this.player.frozen = true;
-      this.scene = new J.Cinematics.DialogueScene(this, J.VISION_END, () => { this.player.frozen = false; });
+      // Every holocron so far: all of them in earlier levels, and each one before the vision here.
+      const foundHere = this.level.pickups.every((p) => p.kind !== "holocron" || p.taken || p.x > v.trigger.x);
+      const lines = foundHere && this.holocronsFoundBefore(this.levelIndex)
+        ? [...J.VISION_END, ...J.VISION_END_HOLOCRONS] : J.VISION_END;
+      this.scene = new J.Cinematics.DialogueScene(this, lines, () => { this.player.frozen = false; });
+    }
+
+    // True when every level before `index` has been cleared with all its holocrons
+    // (across any of its runs, since the save keeps the most found).
+    holocronsFoundBefore(index) {
+      const { completed } = this.save.data;
+      for (let i = 0; i < index; i++) {
+        const level = completed[i];
+        if (!level || level.holocrons < level.totalHolocrons) return false;
+      }
+      return true;
     }
 
     startBoss(trigger) {
@@ -451,7 +481,8 @@
       player.frozen = true;
       player.facing = 1;
       this.letterboxTarget = 1;
-      this.audio.stopMusic();
+      // The boss theme starts with the dialogue and runs until the level complete screen.
+      this.audio.playMusic(def.music);
       this.audio.play("bossIntro");
       this.audio.play(def.sting);
       this.bossCard = { name: def.name, title: def.title, t: 0 };
@@ -461,13 +492,12 @@
         this.letterboxTarget = 0;
         this.bossCard = null;
         this.boss.begin();
-        this.audio.playMusic(def.music);
         this.audio.play("saberOn");
       };
       // A retry goes straight back into the fight.
       const lines = trigger.seen ? [def.intro[def.intro.length - 1]] : def.intro;
       trigger.seen = true;
-      this.scene = new J.Cinematics.DialogueScene(this, lines, begin);
+      this.scene = new J.Cinematics.DialogueScene(this, lines, begin, { top: true });
     }
 
     onBossDefeated(boss) {
@@ -477,7 +507,6 @@
         if (enemy.wave === "emperor" && !enemy.dead) enemy.kill(0);
       });
       this.addScore(5000);
-      this.audio.stopMusic();
       this.audio.play("bossDown");
       this.camera.shake(12, 0.8);
       this.slowMo(0.3, 1.1);
@@ -509,7 +538,7 @@
         player.scriptT = 0;
         player.facing = Math.sign(boss.x - player.x) || 1;
         this.audio.play("victory");
-        this.scene = new J.Cinematics.DialogueScene(this, boss.def.outro, () => { end.phase = 2; end.t = 0; });
+        this.scene = new J.Cinematics.DialogueScene(this, boss.def.outro, () => { end.phase = 2; end.t = 0; }, { top: true });
       }
       if (end.phase >= 1) player.scriptT = clamp((player.scriptT || 0) + dt, 0, 1);
       if (end.phase === 2) {
@@ -556,7 +585,7 @@
           this.states.menu();
           this.level = null;
           this.player = null;
-          this.ui.showComplete(stats, index);
+          this.ui.showComplete(stats, index, this.leaderboardRun());
         }));
         return;
       }
@@ -577,7 +606,7 @@
         this.input.releaseAll();
         this.touchRoot.hidden = true;
         this.states.gameOver();
-        this.ui.showGameOver();
+        this.ui.showGameOver(this.leaderboardRun(this.stats));
         return;
       }
       player.lives--;

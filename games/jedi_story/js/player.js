@@ -72,7 +72,8 @@
     }
 
     get regen() {
-      const base = this.has("forcePlus") ? 15 : 10;
+      // Force energy per second.
+      const base = this.has("forcePlus") ? 7.5 : 5;
       return this.has("forceMaster") ? base * 1.3 : base;
     }
 

@@ -19,15 +19,15 @@
     "gathering strength beyond the stars.",
     "",
     "In a forgotten outpost beneath the Jedi",
-    "Temple, Master Orin Vael trains the last",
-    "of the young Padawans, unaware that the",
-    "Empire has finally found them....",
+    "Temple, Master Gale Garcian trains the",
+    "last of the young Padawans, unaware that",
+    "the Empire has finally found them....",
   ];
 
   J.LEVELS = [
     level({
       id: "temple", theme: "temple", music: "level1", name: "The Jedi Awakening", planet: "Jedi Temple, Coruscant", difficulty: 1,
-      intro: "A routine training mission turns to fire. Imperial forces have found the Jedi outpost. Master Vael holds the gate so you can run. Fight your way out of the temple grounds.",
+      intro: "A routine training mission turns to fire. Imperial forces have found the Jedi outpost. Master Garcian holds the gate so you can run. Fight your way out of the temple grounds.",
       build(b) {
         b.start().tip("Move with A / D or the Arrow keys. Press Space to jump.", "move");
         b.run(420, ["training"], { crystals: 5 }).tip("Press J to swing your lightsaber. Press it again to chain a combo.", "attack");
@@ -357,7 +357,12 @@
   ];
 
   J.VISION_END = [
-    ["mentor", "Master Orin Vael", "Fear is a shadow, nothing more. You have walked through yours. Now go. The citadel is close."],
+    ["mentor", "Master Gale Garcian", "Fear is a shadow, nothing more. You have walked through yours. Now go. The citadel is close."],
+  ];
+
+  // Added after VISION_END when every holocron so far has been found.
+  J.VISION_END_HOLOCRONS = [
+    ["mentor", "Master Gale Garcian", "Remember this, young Jedi. The Force is not measured by the enemies you defeat, but by the lives you protect. Whatever happens today, never lose sight of who you are."],
   ];
 
   J.ENDING_SHOTS = [
@@ -365,5 +370,12 @@
     { scene: "fleet", text: "Across the galaxy the droid armies stopped mid-stride. Imperial fleets lost their voice. Worlds that had forgotten the sky looked up." },
     { scene: "planets", text: "Kashyyyk's forests began to grow back. On Tatooine, Coruscant and Hoth, people came out of hiding and started to rebuild." },
     { scene: "temple", text: "And in the ruins of the Jedi Temple, a Knight lit one lightsaber, and the first new Padawans gathered to learn." },
+  ];
+
+  // Added after ENDING_SHOTS when every holocron in all ten levels has been found.
+  J.ENDING_SHOTS_HOLOCRONS = [
+    { scene: "holocron", text: "Deep within the ancient Jedi archives, the collected Holocrons awakened. Their ancient knowledge illuminated the path for a new generation of Jedi." },
+    { scene: "gale", text: "Master Gale Garcian had faced the darkness and emerged victorious. Yet he knew his greatest achievement was not defeating the Sith, but preserving the hope of the galaxy." },
+    { scene: "sunrise", text: "As twin suns rose over a peaceful horizon, a new chapter began. The Jedi Order would rise again, guided by courage, wisdom, and the light of the Force." },
   ];
 })(window.JEDI);
