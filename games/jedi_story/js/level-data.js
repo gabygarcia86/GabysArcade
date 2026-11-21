@@ -19,15 +19,15 @@
     "gathering strength beyond the stars.",
     "",
     "In a forgotten outpost beneath the Jedi",
-    "Temple, Master Orin Vael trains the last",
-    "of the young Padawans, unaware that the",
-    "Empire has finally found them....",
+    "Temple, Master Gale Garcian trains the",
+    "last of the young Padawans, unaware that",
+    "the Empire has finally found them....",
   ];
 
   J.LEVELS = [
     level({
       id: "temple", theme: "temple", music: "level1", name: "The Jedi Awakening", planet: "Jedi Temple, Coruscant", difficulty: 1,
-      intro: "A routine training mission turns to fire. Imperial forces have found the Jedi outpost. Master Vael holds the gate so you can run. Fight your way out of the temple grounds.",
+      intro: "A routine training mission turns to fire. Imperial forces have found the Jedi outpost. Master Garcian holds the gate so you can run. Fight your way out of the temple grounds.",
       build(b) {
         b.start().tip("Move with A / D or the Arrow keys. Press Space to jump.", "move");
         b.run(420, ["training"], { crystals: 5 }).tip("Press J to swing your lightsaber. Press it again to chain a combo.", "attack");
@@ -357,7 +357,7 @@
   ];
 
   J.VISION_END = [
-    ["mentor", "Master Orin Vael", "Fear is a shadow, nothing more. You have walked through yours. Now go. The citadel is close."],
+    ["mentor", "Master Gale Garcian", "Fear is a shadow, nothing more. You have walked through yours. Now go. The citadel is close."],
   ];
 
   J.ENDING_SHOTS = [
