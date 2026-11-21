@@ -497,7 +497,7 @@
       // A retry goes straight back into the fight.
       const lines = trigger.seen ? [def.intro[def.intro.length - 1]] : def.intro;
       trigger.seen = true;
-      this.scene = new J.Cinematics.DialogueScene(this, lines, begin);
+      this.scene = new J.Cinematics.DialogueScene(this, lines, begin, { top: true });
     }
 
     onBossDefeated(boss) {
@@ -538,7 +538,7 @@
         player.scriptT = 0;
         player.facing = Math.sign(boss.x - player.x) || 1;
         this.audio.play("victory");
-        this.scene = new J.Cinematics.DialogueScene(this, boss.def.outro, () => { end.phase = 2; end.t = 0; });
+        this.scene = new J.Cinematics.DialogueScene(this, boss.def.outro, () => { end.phase = 2; end.t = 0; }, { top: true });
       }
       if (end.phase >= 1) player.scriptT = clamp((player.scriptT || 0) + dt, 0, 1);
       if (end.phase === 2) {

@@ -436,10 +436,11 @@
 
   // ---------- Dialogue box ----------
 
-  function drawDialogue(ctx, game, line, t) {
+  // `top` puts the box at the top of the screen instead of the bottom.
+  function drawDialogue(ctx, game, line, t, top = false) {
     const [who, speaker, text] = line;
     const boxH = 104;
-    const y = H - boxH - 14;
+    const y = top ? 14 : H - boxH - 14;
     ctx.fillStyle = "rgba(6,10,24,.9)";
     ctx.strokeStyle = "rgba(124,200,255,.55)";
     ctx.lineWidth = 1.5;
@@ -458,10 +459,12 @@
 
   // A run of dialogue lines shown over the paused action.
   class DialogueScene {
-    constructor(game, lines, onDone) {
+    // Pass { top: true } to show the box at the top of the screen (boss fights).
+    constructor(game, lines, onDone, { top = false } = {}) {
       this.game = game;
       this.lines = lines;
       this.onDone = onDone;
+      this.top = top;
       this.i = 0;
       this.t = 0;
     }
@@ -493,7 +496,7 @@
 
     draw(ctx) {
       const line = this.lines[this.i];
-      if (line) drawDialogue(ctx, this.game, line, this.t);
+      if (line) drawDialogue(ctx, this.game, line, this.t, this.top);
       ctx.globalAlpha = 0.6;
       ctx.fillStyle = "#cfe4ff";
       ctx.font = `600 12px ${J.FONT}`;
