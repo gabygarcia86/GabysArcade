@@ -34,9 +34,13 @@
       </div>
 
       <div id="touch" hidden>
-        <div class="touch-move" data-move-pad>
-          <div class="touch-btn" data-action="left" aria-label="Move left"><span>&#9664;</span></div>
-          <div class="touch-btn" data-action="right" aria-label="Move right"><span>&#9654;</span></div>
+        <div class="touch-left">
+          <div class="touch-move" data-move-pad>
+            <div class="touch-btn" data-action="left" aria-label="Move left"><span>&#9664;</span></div>
+            <div class="touch-btn" data-action="right" aria-label="Move right"><span>&#9654;</span></div>
+          </div>
+          <!-- Outside the pad, so sliding between the arrows can't drop through a ledge. -->
+          <div class="touch-btn drop" data-action="down" aria-label="Drop through ledge"><span>&#9660;<small>Drop</small></span></div>
         </div>
         <div class="touch-actions">
           <div class="touch-btn small" data-action="switch"><span>Weapon</span></div>

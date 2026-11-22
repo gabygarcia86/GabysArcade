@@ -1252,6 +1252,10 @@ p {
   touch-action: none;
 }
 
+.touch-left {
+  position: relative;
+}
+
 .touch-move {
   display: flex;
   gap: 12px;
@@ -1305,6 +1309,25 @@ p {
   width: calc(var(--size) * 0.8);
   height: calc(var(--size) * 0.8);
   font-size: calc(var(--size) * 0.145);
+}
+
+/* Beside the arrows and raised, clear of Mando and of the boss bar along the bottom. */
+.touch-btn.drop {
+  position: absolute;
+  top: 10px;
+  left: 100%;
+  width: max(48px, var(--size) * 0.8);
+  height: max(44px, var(--size) * 0.64);
+  border-radius: 14px;
+  font-size: calc(var(--size) * 0.24);
+  line-height: 1;
+}
+
+.touch-btn.drop small {
+  display: block;
+  margin-top: 3px;
+  color: inherit;
+  font-size: max(10px, 0.64em);
 }
 
 .touch-btn.fire {
@@ -1414,6 +1437,14 @@ p {
 
   .touch-move .touch-btn {
     width: calc(var(--size) * 0.86);
+  }
+
+  /* No room beside the arrows, so it goes above them, level with Weapon and Force. */
+  .touch-btn.drop {
+    top: auto;
+    bottom: calc(var(--size) + 12px);
+    left: calc(50% - 2px);
+    translate: -50%;
   }
 
   .touch-actions {
