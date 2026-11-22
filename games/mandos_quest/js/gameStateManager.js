@@ -71,6 +71,7 @@
 
     startLevel(id, withIntro = true) {
       if (!this.progression.isUnlocked(id)) return;
+      this.autoFullscreen();
       const level = MQ.LEVELS[id - 1];
       if (withIntro) this.playCinematic(level.intro, () => this.beginLevel(level), `Level ${id}: ${level.title}`);
       else this.beginLevel(level);
@@ -172,7 +173,10 @@
             title: "Restart level?",
             message: "You'll lose your progress in this attempt. Collected Bounty Pucks are kept.",
             label: "Restart",
-            run: () => this.beginLevel(this.world.def),
+            run: () => {
+              this.autoFullscreen();
+              this.beginLevel(this.world.def);
+            },
           });
           break;
         case "quit":
@@ -184,6 +188,7 @@
           });
           break;
         case "retry":
+          this.autoFullscreen();
           this.beginLevel(data.level);
           break;
         case "toMenu":
@@ -229,8 +234,24 @@
     }
 
     toggleFullscreen() {
-      const request = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-      request.catch(() => {});
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else this.requestFullscreen();
+    }
+
+    // Phones and tablets go full screen when a level starts. It has to be called straight from
+    // the button, as browsers only allow it just after a tap.
+    autoFullscreen() {
+      if (!window.matchMedia("(pointer: coarse)").matches) return;
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      this.requestFullscreen();
+    }
+
+    requestFullscreen() {
+      const root = document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!request) return; // iPhones only allow fullscreen video.
+      // The prefixed version returns no promise. If refused, the game runs in the normal window.
+      Promise.resolve(request.call(root, { navigationUI: "hide" })).catch(() => {});
     }
 
     equip(id) {

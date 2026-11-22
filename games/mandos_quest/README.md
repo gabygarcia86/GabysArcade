@@ -43,6 +43,8 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 | Drop through a ledge | S or Down | Walk off the edge |
 | Pause | Escape | Pause button |
 
+On phones and tablets, starting, restarting or retrying a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there. **Options > Toggle fullscreen** works on any browser that supports it.
+
 ## Campaign
 
 | Level | Title | Planet | Boss | Unlocks |
