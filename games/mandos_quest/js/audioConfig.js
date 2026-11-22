@@ -15,13 +15,16 @@
       level1: null, // The Hidden Child
       level2: null, // The Mudhorn Valley
       level3: null, // The Nevarro Underworld
-      level4: null, // The Reptavian Nest
-      level5: null, // The Sands of Tatooine
-      level6: null, // The Mythosaur Awakens
-      level7: null, // The Living Legend
-      level8: null, // The Imperial Fortress
-      level9: null, // The Star Map Core
-      level10: null, // The Darksaber
+      level4: null, // Space: Escape from Nevarro
+      level5: null, // The Reptavian Nest
+      level6: null, // The Sands of Tatooine
+      level7: null, // The Mythosaur Awakens
+      level8: null, // Space: Mandalore Orbit
+      level9: null, // The Living Legend
+      level10: null, // The Imperial Fortress
+      level11: null, // The Star Map Core
+      level12: null, // Space: Assault on Gideon's Fleet
+      level13: null, // The Darksaber
       boss: null, // Used by any boss without its own track
       bossMudhorn: null,
       bossReptavians: null,
@@ -29,6 +32,9 @@
       bossMythosaur: null,
       bossGuardian: null,
       bossGideon: null,
+      bossWarden: null,
+      bossBastion: null,
+      bossCommand: null,
     },
 
     sfx: {
@@ -88,6 +94,26 @@
       gameOver: null,
       unlock: null,
       transmission: null,
+      // Space stages
+      shipBlaster: null,
+      shipLaser: null,
+      shipMissile: null,
+      shipPop: null,
+      shipExplosion: null,
+      shipBurst: null,
+      shipHit: null,
+      shipDown: null,
+      shipRespawn: null,
+      shieldUp: null,
+      shieldHit: null,
+      capsule: null,
+      upgrade: null,
+      shipBossShot: null,
+      shipBeam: null,
+      bossIntroWarden: null,
+      bossIntroBastion: null,
+      bossIntroCommand: null,
+      spaceComplete: null,
       hover: null,
       click: null,
     },

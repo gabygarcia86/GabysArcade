@@ -110,7 +110,7 @@ window.ARCADE_CATALOG = {
       folder: "mandos_quest",
       title: "Coming Soon - Mando's Quest",
       description:
-        "Protect Baby G across ten worlds with a jetpack, a growing arsenal, custom armor and epic boss fights.",
+        "Protect Baby G across ten worlds and three space battles, with a jetpack, a gunship, custom armor and epic boss fights.",
       categories: ["Arcade", "Platformer", "RPG"],
       tags: [
         "platformer",

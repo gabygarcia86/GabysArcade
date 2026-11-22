@@ -14,6 +14,7 @@
       this.app = document.getElementById("app");
       this.stage = document.getElementById("stage");
       this.touch = document.getElementById("touch");
+      this.spaceTouch = document.getElementById("space-touch");
       this.pauseButton = document.getElementById("pause");
       this.cinematicControls = document.getElementById("cinematic-controls");
       this.accumulator = 0;
@@ -25,6 +26,8 @@
       const audio = new MQ.AudioManager(() => saveManager.data.settings);
       this.input = new MQ.InputManager();
       this.input.bindTouch(this.touch);
+      this.input.bindTouch(this.spaceTouch);
+      this.input.bindStick(this.spaceTouch.querySelector(".space-stick"));
 
       this.states = new MQ.GameStateManager({
         saveManager, progression, customization, audio,
@@ -71,7 +74,7 @@
       // Safari ignores user-scalable=no.
       document.addEventListener("gesturestart", (event) => event.preventDefault());
       document.addEventListener("dblclick", (event) => {
-        if (event.target.closest("#touch, #stage")) event.preventDefault();
+        if (event.target.closest("#touch, #space-touch, #stage")) event.preventDefault();
       });
     }
 
@@ -81,7 +84,9 @@
       const playing = state === STATE.PLAYING;
       const touchWanted = preference === "on" || (preference === "auto" && this.input.usingTouch);
 
-      this.touch.hidden = !(playing && touchWanted);
+      const inSpace = this.states.world?.mode === "space";
+      this.touch.hidden = !(playing && touchWanted && !inSpace);
+      this.spaceTouch.hidden = !(playing && touchWanted && inSpace);
       this.pauseButton.hidden = !playing;
       this.cinematicControls.hidden = state !== STATE.CINEMATIC;
       this.app.dataset.state = state;
@@ -132,13 +137,19 @@
       // Measured after the stage moves, as the touch controls can overlap it.
       const stageLeft = safeLeft + left;
       const stageTop = safeTop + top;
-      const buttons = this.touch.hidden ? [] : [...this.touch.querySelectorAll(".touch-btn")].map((el) => el.getBoundingClientRect());
+      const shown = [this.touch, this.spaceTouch].filter((el) => !el.hidden);
+      const controls = shown.flatMap((el) => [...el.querySelectorAll(".touch-btn, .stick-base")]);
+      const buttons = controls.map((el) => el.getBoundingClientRect());
       const smallOrTouch = hud.crowded || this.input.usingTouch || this.app.classList.contains("touch-mode");
       hud.notices.layout(
         { left: stageLeft, right: stageLeft + cssWidth, bottom: stageTop + cssHeight },
         { left: safeLeft, right: safeLeft + width, bottom: safeTop + height },
         buttons,
         smallOrTouch,
+      );
+      this.states.spaceUI.layout(
+        { left: stageLeft, right: stageLeft + cssWidth, top: stageTop },
+        this.spaceTouch.hidden ? [] : controls,
       );
     }
 

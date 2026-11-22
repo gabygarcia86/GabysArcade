@@ -8,7 +8,7 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="theme-color" content="#03050c">
     <meta name="description"
-      content="Mando's Quest: a 2D platform action-adventure across ten worlds. Protect Baby G, upgrade your arsenal and face Moff Gideon.">
+      content="Mando's Quest: a 2D platform action-adventure across ten worlds and three space battles. Protect Baby G, upgrade your arsenal and face Moff Gideon.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
@@ -51,6 +51,18 @@
         </div>
       </div>
 
+      <div id="space-touch" hidden>
+        <div class="space-stick" aria-label="Flight stick">
+          <div class="stick-base"><i class="stick-knob"></i></div>
+        </div>
+        <div class="touch-actions">
+          <div class="touch-btn small upgrade" data-action="switch"><span>Upgrade<small id="space-upgrade-name">None</small></span></div>
+          <div class="touch-btn small shield" data-action="dodge"><span>Shield</span></div>
+          <div class="touch-btn rockets" data-action="force"><span>Rockets</span></div>
+          <div class="touch-btn fire" data-action="attack"><span>Fire</span></div>
+        </div>
+      </div>
+
       <button id="pause" type="button" aria-label="Pause" hidden><i></i><i></i></button>
 
       <div id="cinematic-controls" hidden>
@@ -84,6 +96,7 @@
     <script src="js/art/backgrounds.js"></script>
     <script src="js/art/terrainArt.js"></script>
     <script src="js/art/objectArt.js"></script>
+    <script src="js/art/spaceArt.js"></script>
 
     <script src="js/projectile.js"></script>
     <script src="js/jetpack.js"></script>
@@ -98,6 +111,21 @@
     <script src="js/levelManager.js"></script>
     <script src="js/world.js"></script>
 
+    <script src="js/space/spaceData.js"></script>
+    <script src="js/space/spaceParticleSystem.js"></script>
+    <script src="js/space/spaceBackground.js"></script>
+    <script src="js/space/spaceCollisionManager.js"></script>
+    <script src="js/space/spaceProjectile.js"></script>
+    <script src="js/space/spacePowerUp.js"></script>
+    <script src="js/space/spaceObstacle.js"></script>
+    <script src="js/space/spaceWeaponManager.js"></script>
+    <script src="js/space/spacePlayer.js"></script>
+    <script src="js/space/spaceEnemy.js"></script>
+    <script src="js/space/spaceBoss.js"></script>
+    <script src="js/space/spaceWaveManager.js"></script>
+    <script src="js/space/spaceUIManager.js"></script>
+    <script src="js/space/spaceLevelManager.js"></script>
+
     <script src="js/levels/level01.js"></script>
     <script src="js/levels/level02.js"></script>
     <script src="js/levels/level03.js"></script>
@@ -108,6 +136,9 @@
     <script src="js/levels/level08.js"></script>
     <script src="js/levels/level09.js"></script>
     <script src="js/levels/level10.js"></script>
+    <script src="js/levels/space01.js"></script>
+    <script src="js/levels/space02.js"></script>
+    <script src="js/levels/space03.js"></script>
 
     <script src="js/leaderboard.js"></script>
     <script src="js/notices.js"></script>

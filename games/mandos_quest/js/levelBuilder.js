@@ -101,7 +101,7 @@
       this.rubble.push({ x, y: bottom - h, w, h, id, seed: x * 3 + bottom });
     }
 
-    // Force Push slides it by [dx, dy]. Heavy ones need Baby G's Level 7 upgrade.
+    // Force Push slides it by [dx, dy]. Heavy ones need Baby G's Level 9 upgrade.
     boulder(x, bottom, w, h, [dx, dy], options = {}) {
       this.boulders.push({ x, y: bottom - h, w, h, fromX: x, fromY: bottom - h, dx, dy, heavy: !!options.heavy, id: options.id, dynamic: true, moved: false, k: 0 });
     }

@@ -218,5 +218,6 @@
     }
   }
 
+  ParticleSystem.KIND = { DOT, SPARK, SMOKE, CHUNK };
   MQ.ParticleSystem = ParticleSystem;
 })(window.MQ);

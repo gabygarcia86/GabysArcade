@@ -34,6 +34,7 @@ audio/
 ├── music-level-02.mp3
 ├── music-boss.mp3
 ├── music-boss-gideon.mp3
+├── music-space-01.mp3
 ├── sfx-blaster.wav
 └── sfx-force-push.wav
 ```
@@ -56,11 +57,12 @@ These work the same way:
 
 ## Level music
 
-Each level has its own entry, from `level1` to `level10`:
+Each level has its own entry, from `level1` to `level13`, numbered as on the Galaxy Map. `level4`, `level8` and `level12` are the space battles:
 
 ```js
 level1: "audio/music-level-01.mp3",
 level2: "audio/music-level-02.mp3",
+level4: "audio/music-space-01.mp3",
 ```
 
 ## Boss music
@@ -75,11 +77,14 @@ bossGideon: "audio/music-boss-gideon.mp3", // Overrides "boss" for this fight
 | Name | Fight |
 | --- | --- |
 | `bossMudhorn` | Level 2: Mudhorn |
-| `bossReptavians` | Level 4: Nevarro Reptavians |
-| `bossKrayt` | Level 6: Krayt Dragon |
-| `bossMythosaur` | Level 7: Mythosaur |
-| `bossGuardian` | Level 8: Imperial Guardian |
-| `bossGideon` | Level 10: Moff Gideon |
+| `bossWarden` | Level 4: Warden Gunship |
+| `bossReptavians` | Level 5: Nevarro Reptavians |
+| `bossKrayt` | Level 7: Krayt Dragon |
+| `bossBastion` | Level 8: Orbital Bastion |
+| `bossMythosaur` | Level 9: Mythosaur |
+| `bossGuardian` | Level 10: Imperial Guardian |
+| `bossCommand` | Level 12: Gideon's Command Ship |
+| `bossGideon` | Level 13: Moff Gideon |
 
 ## Sound effects
 
@@ -101,9 +106,15 @@ forcePush: "audio/sfx-force-push.wav",
 | Boss introductions | `bossIntroMudhorn`, `bossIntroReptavians`, `bossIntroKrayt`, `bossIntroMythosaur`, `bossIntroGuardian`, `bossIntroGideon` |
 | Boss attacks | `bossAttackMudhorn`, `bossAttackReptavians`, `bossAttackKrayt`, `bossAttackMythosaur`, `bossAttackGuardian`, `bossAttackGideon` |
 | Results | `bossDown`, `levelComplete`, `gameOver`, `unlock` |
+| Space weapons | `shipBlaster`, `shipLaser`, `shipMissile` |
+| Space explosions | `shipPop` (small ships), `shipExplosion` (large ships), `shipBurst` (bombs and lightning) |
+| Space ship | `shipHit`, `shipDown`, `shipRespawn`, `shieldUp`, `shieldHit` |
+| Space upgrades | `capsule`, `upgrade` |
+| Space bosses | `bossIntroWarden`, `bossIntroBastion`, `bossIntroCommand`, `shipBossShot`, `shipBeam` |
+| Space results | `spaceComplete` |
 | Menus | `hover`, `click` |
 
-Keep effects short, with no silence at the start. `jetpack` repeats about ten times a second and `flame` about eleven, so give those two very short clips.
+Keep effects short, with no silence at the start. `jetpack` repeats about ten times a second and `flame` about eleven, so give those two very short clips. In space, `shipBlaster` repeats about seven times a second while Fire is held, and needs the same.
 
 ## Volume
 

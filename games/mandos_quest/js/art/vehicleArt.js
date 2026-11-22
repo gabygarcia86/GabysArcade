@@ -68,6 +68,9 @@
   };
 
   MQ.VehicleArt = {
+    register(kind, paint) {
+      SHIPS[kind] = paint;
+    },
     draw(ctx, kind, time = 0, thrust = 1) {
       SHIPS[kind](ctx, time, thrust);
     },

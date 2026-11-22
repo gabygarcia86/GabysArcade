@@ -483,7 +483,7 @@
     constructor(world, typeId, x, y, options = {}) {
       const def = TYPES[typeId];
       if (!def) throw new Error(`Unknown enemy type "${typeId}"`);
-      const { id } = world.def;
+      const { ground } = world.def; // Its place among the ten worlds.
 
       this.world = world;
       this.def = def;
@@ -495,8 +495,8 @@
       this.vy = 0;
       this.w = def.w;
       this.h = def.h;
-      this.hp = this.maxHp = def.hp * (1 + (id - 1) * 0.09);
-      this.damage = def.damage * (1 + (id - 1) * 0.04);
+      this.hp = this.maxHp = def.hp * (1 + (ground - 1) * 0.09);
+      this.damage = def.damage * (1 + (ground - 1) * 0.04);
       this.baseDamage = this.damage;
       this.points = options.points ?? def.points;
       this.group = options.group || null;

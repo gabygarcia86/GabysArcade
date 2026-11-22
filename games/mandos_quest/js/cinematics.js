@@ -209,8 +209,11 @@
 
     draw(ctx, shot, t, time) {
       const pan = t * 9;
-      const background = MQ.Backgrounds.get(shot.scene);
-      background.draw(ctx, pan * 6, 60, time);
+      // The space stages share their own backdrops with their cinematics.
+      const inSpace = MQ.SpaceBackground.has(shot.scene);
+      const background = inSpace ? MQ.SpaceBackground.get(shot.scene) : MQ.Backgrounds.get(shot.scene);
+      if (inSpace) background.draw(ctx, pan * 14, time);
+      else background.draw(ctx, pan * 6, 60, time);
 
       ctx.save();
       // A slow push in.
@@ -228,7 +231,7 @@
       }
       for (const actor of shot.cast) drawActor(ctx, actor, t, this);
       ctx.restore();
-      background.drawFront(ctx, pan * 6, time);
+      if (!inSpace) background.drawFront(ctx, pan * 6, time);
     }
   }
 
