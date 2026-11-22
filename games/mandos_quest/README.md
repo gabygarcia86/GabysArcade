@@ -136,7 +136,7 @@ A jump climbs about 150px and crosses about 250px. Keep exactly three pucks in e
 
 ## Saved progress
 
-Progress saves automatically in this browser under `mandosQuest.save.v1`. **Options > Reset all progress** erases it after a confirmation and keeps the settings.
+Progress saves automatically in this browser under `mandosQuest.save.v1`. **Reset all progress**, in the Story Mode menu and in Options, erases it after a confirmation and keeps the settings. The Story Mode menu appears once there's a cleared level or a collected puck.
 
 ## Publishing
 

@@ -153,7 +153,7 @@
     action(name, id, data) {
       switch (name) {
         case "story":
-          if (this.save.completed) this.ui.open("story");
+          if (this.progression.started) this.ui.open("story");
           else this.startLevel(1);
           break;
         case "storyContinue":
@@ -214,7 +214,7 @@
         case "reset":
           this.ui.open("confirm", {
             title: "Reset all progress?",
-            message: "This erases levels, upgrades, armor, pucks and the Darksaber from this browser. It can't be undone.",
+            message: "Levels, XP, scores, times and pucks go back to 0, and every unlock and custom look is erased from this browser. Your settings are kept. This can't be undone.",
             label: "Erase progress",
             run: () => this.resetProgress(),
           });

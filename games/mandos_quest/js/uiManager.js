@@ -2,6 +2,7 @@
 (function (MQ) {
   const ROOT_SCREENS = new Set(["main", "pause", "complete", "levelUp", "gameOver", "finalScore"]);
   const PREVIEW_DPR_MAX = 2;
+  const CONFIRM_DELAY_MS = 500;
 
   class UIManager {
     constructor(root, app) {
@@ -56,7 +57,7 @@
     }
 
     open(name, data = {}) {
-      const entry = { name, data };
+      const entry = { name, data, openedAt: performance.now() };
       if (name === "map") entry.data.selected ??= this.app.progression.nextLevel();
       if (name === "customize") entry.data.tab ??= "sets";
       this.stack.push(entry);
@@ -217,6 +218,8 @@
           this.loadBoard();
           break;
         case "confirm":
+          // The second tap of a double tap can land on this button as the dialog appears.
+          if (performance.now() - this.current.openedAt < CONFIRM_DELAY_MS) break;
           this.current.data.run();
           break;
         default:

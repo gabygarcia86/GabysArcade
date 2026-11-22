@@ -52,6 +52,11 @@
       return weapon.secret ? this.save.darksaber : this.save.completed >= weapon.after;
     }
 
+    // Pucks count, as they're kept from levels that weren't finished.
+    get started() {
+      return this.save.completed > 0 || this.totalPucks() > 0;
+    }
+
     isUnlocked(levelId) {
       return levelId <= Math.min(D.TOTAL_LEVELS, this.save.completed + 1);
     }

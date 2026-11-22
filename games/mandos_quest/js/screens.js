@@ -389,6 +389,7 @@
     story(app) {
       const { completed } = app.save;
       const finished = completed >= 10;
+      const canReplay = completed > 0 && !finished;
       return `
         <section class="screen dialog-screen">
           <div class="dialog">
@@ -397,8 +398,9 @@
             <p>${finished ? "Play the story again with every weapon, upgrade and collectible you've earned." : `Next up: Level ${completed + 1}, ${MQ.LEVELS[completed].title}.`}</p>
             <div class="button-stack">
               ${button("storyContinue", finished ? "Play from Level 1" : `Continue Level ${completed + 1}`, { kind: "primary wide" })}
-              ${finished ? "" : button("storyStart", "Replay from Level 1")}
-              ${button("back", "Cancel", { kind: "ghost" })}
+              ${canReplay ? button("storyStart", "Replay from Level 1") : ""}
+              ${button("back", "Cancel", { kind: canReplay ? "ghost" : "ghost wide" })}
+              ${button("reset", "Reset all progress", { kind: "danger wide" })}
             </div>
           </div>
         </section>`;
