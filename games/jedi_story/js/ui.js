@@ -127,7 +127,7 @@
       ctx.font = `800 20px ${J.FONT}`;
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(0,0,0,.6)";
-      const right = game.touchActive ? W - 66 : W - 16;
+      const right = game.touchActive ? game.scoreRight : W - 16;
       ctx.strokeText(String(stats.score).padStart(6, "0"), right, 32);
       ctx.fillStyle = "#fff";
       ctx.fillText(String(stats.score).padStart(6, "0"), right, 32);

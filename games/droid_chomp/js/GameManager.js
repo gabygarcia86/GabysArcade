@@ -31,6 +31,7 @@
 
   class GameManager {
     constructor() {
+      this.app = document.getElementById("app");
       this.canvas = document.getElementById("game");
       this.ctx = this.canvas.getContext("2d", { alpha: false });
       this.save = new D.SaveData();
@@ -94,6 +95,11 @@
       window.addEventListener("keydown", unlock);
       window.addEventListener("resize", () => this.resize());
       window.addEventListener("orientationchange", () => this.resize());
+      // Notch insets can change without a resize event, as when going full screen. #safe-corner
+      // catches a half turn, which moves the notch but leaves #app the same size.
+      const safeArea = new ResizeObserver(() => this.resize());
+      safeArea.observe(this.app);
+      safeArea.observe(document.getElementById("safe-corner"));
       window.addEventListener("blur", () => this.autoPause());
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) this.autoPause();
@@ -129,10 +135,11 @@
 
       const hud = this.ui.hud.getBoundingClientRect();
       const pad = this.ui.pad.getBoundingClientRect();
-      let left = 6;
-      let right = W - 6;
-      let top = 6;
-      let bottom = H - 6;
+      const safe = getComputedStyle(this.app);
+      let left = 6 + parseFloat(safe.paddingLeft);
+      let right = W - 6 - parseFloat(safe.paddingRight);
+      let top = 6 + parseFloat(safe.paddingTop);
+      let bottom = H - 6 - parseFloat(safe.paddingBottom);
       if (compact) {
         left = hud.right + 6;
         if (showPad) right = pad.left - 6;
@@ -144,6 +151,8 @@
           left = W - right;
         }
       }
+      // The end screens keep the board's place, but not the pad itself.
+      if (this.state === "clear" || this.state === "gameover") this.ui.pad.hidden = true;
 
       const cols = 21;
       const rows = 23;

@@ -48,6 +48,8 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 
 Menus also work with the arrow keys, Enter and Esc. Touch controls appear automatically on touch screens, and Options can force them on or off. On a phone the game plays best held sideways.
 
+On phones and tablets, starting, restarting or continuing a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there.
+
 ## How to play
 
 **Health and lives.** You have 100 health and 3 lives per level. Falling in a pit costs 25 health and puts you back on the last safe ground. Losing all your health costs a life and returns you to the last checkpoint. In a boss fight, you and the boss both go back to your corners and the boss keeps its damage. With no lives left you can continue from the checkpoint at half score, or restart the level.

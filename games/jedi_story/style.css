@@ -43,6 +43,17 @@ html, body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* As big as the left and top insets, so a resize observer can see them change. */
+#safe-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: env(safe-area-inset-left, 0px);
+  height: env(safe-area-inset-top, 0px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
 #stage {
   position: relative;
   background: #000;
@@ -342,7 +353,12 @@ html, body {
 @media (orientation: portrait) {
   #app { align-items: flex-start; }
   #touch-move { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 104px); }
-  #touch-pause { top: calc(56.25vw + 10px); }
+  #touch-pause { top: calc(env(safe-area-inset-top, 0px) + 56.25vw + 10px); }
+}
+
+/* Narrow phones: DEFLECT sits above JUMP, or it would cover the right arrow. */
+@media (orientation: portrait) and (max-width: 389.98px) {
+  #touch-actions [data-action=deflect] { grid-column: 3; justify-self: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

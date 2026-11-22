@@ -37,7 +37,19 @@ html, body {
   user-select: none;
 }
 
-#app { position: fixed; inset: 0; overflow: hidden; }
+/* The padding moves nothing, as every child is absolute. GameManager reads it as the safe area. */
+#app { position: fixed; inset: 0; overflow: hidden; padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l); }
+
+/* As big as the left and top insets, so a resize observer can see them change. */
+#safe-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--safe-l);
+  height: var(--safe-t);
+  visibility: hidden;
+  pointer-events: none;
+}
 
 #game {
   position: absolute;
