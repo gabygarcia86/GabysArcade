@@ -107,6 +107,29 @@ window.ARCADE_CATALOG = {
       added: "",
     },
     {
+      folder: "mandos_quest",
+      title: "Coming Soon - Mando's Quest",
+      description:
+        "Protect Baby G across ten worlds with a jetpack, a growing arsenal, custom armor and epic boss fights.",
+      categories: ["Arcade", "Platformer", "RPG"],
+      tags: [
+        "platformer",
+        "action",
+        "adventure",
+        "mandalorian",
+        "baby g",
+        "jetpack",
+        "sci-fi",
+        "story",
+        "boss fights",
+        "customization",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "photo_scavenger_hunt_halloween",
       title: "Halloween Photo Scavenger Hunt",
       description:

@@ -1,0 +1,188 @@
+/* Keyboard and multi-touch input, merged into one set of actions. */
+(function (MQ) {
+  const ACTIONS = ["left", "right", "down", "jump", "attack", "force", "switch", "dodge"];
+  const KEYS = {
+    KeyA: "left", ArrowLeft: "left",
+    KeyD: "right", ArrowRight: "right",
+    KeyS: "down", ArrowDown: "down",
+    Space: "jump",
+    KeyJ: "attack",
+    KeyK: "force",
+    KeyL: "switch",
+    ShiftLeft: "dodge", ShiftRight: "dodge",
+  };
+  const DOUBLE_TAP_MS = 250;
+  const VIBRATE_MS = 8;
+
+  class InputManager {
+    constructor() {
+      this.held = {};
+      this.queued = {};
+      this.counts = {};
+      this.keys = new Set();
+      this.pointers = new Map();
+      this.enabled = false;
+      this.usingTouch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+      this.onPause = () => {};
+      this.onDeviceChange = () => {};
+      this.lastTap = { action: "", at: -Infinity };
+      this.tapDodge = 0;
+      for (const action of ACTIONS) {
+        this.held[action] = false;
+        this.queued[action] = false;
+        this.counts[action] = 0;
+      }
+
+      window.addEventListener("keydown", (event) => this.keyDown(event));
+      window.addEventListener("keyup", (event) => this.keyUp(event));
+      window.addEventListener("blur", () => this.clear());
+      window.addEventListener("pointerdown", (event) => this.setTouch(event.pointerType === "touch"), true);
+    }
+
+    setTouch(on) {
+      if (on === this.usingTouch) return;
+      this.usingTouch = on;
+      this.onDeviceChange(on);
+    }
+
+    keyDown(event) {
+      // Escape works even while a menu is open.
+      if (event.code === "Escape") {
+        if (!event.repeat) this.onPause();
+        event.preventDefault();
+        return;
+      }
+      const action = KEYS[event.code];
+      if (!action || !this.enabled || event.ctrlKey || event.metaKey || event.altKey) return;
+      event.preventDefault();
+      if (event.repeat || this.keys.has(event.code)) return;
+      this.setTouch(false);
+      this.keys.add(event.code);
+      this.press(action);
+    }
+
+    keyUp(event) {
+      if (!this.keys.delete(event.code)) return;
+      this.release(KEYS[event.code]);
+    }
+
+    press(action) {
+      if (this.counts[action]++ > 0) return;
+      this.held[action] = true;
+      this.queued[action] = true;
+      if (action === "left" || action === "right") {
+        const now = performance.now();
+        if (this.lastTap.action === action && now - this.lastTap.at < DOUBLE_TAP_MS) {
+          this.tapDodge = action === "left" ? -1 : 1;
+          this.lastTap.action = "";
+        } else {
+          this.lastTap.action = action;
+          this.lastTap.at = now;
+        }
+      }
+    }
+
+    release(action) {
+      this.counts[action] = Math.max(0, this.counts[action] - 1);
+      if (!this.counts[action]) this.held[action] = false;
+    }
+
+    // True once for each press.
+    take(action) {
+      if (!this.queued[action]) return false;
+      this.queued[action] = false;
+      return true;
+    }
+
+    // -1 or 1 after a double tap on a direction, otherwise 0.
+    takeTapDodge() {
+      const direction = this.tapDodge;
+      this.tapDodge = 0;
+      return direction;
+    }
+
+    axis() {
+      return (this.held.right ? 1 : 0) - (this.held.left ? 1 : 0);
+    }
+
+    setEnabled(on) {
+      if (on === this.enabled) return;
+      this.enabled = on;
+      this.clear();
+    }
+
+    clear() {
+      this.keys.clear();
+      this.tapDodge = 0;
+      this.lastTap.action = "";
+      for (const pointer of this.pointers.values()) pointer.element?.classList.remove("is-down");
+      this.pointers.clear();
+      for (const action of ACTIONS) {
+        this.held[action] = false;
+        this.queued[action] = false;
+        this.counts[action] = 0;
+      }
+    }
+
+    /*
+     * Binds the on-screen buttons. Movement pointers can slide between left and right
+     * without lifting, and near misses still land on the closest movement button.
+     */
+    bindTouch(root) {
+      const pad = root.querySelector("[data-move-pad]");
+      const left = pad.querySelector('[data-action="left"]');
+      const right = pad.querySelector('[data-action="right"]');
+
+      const moveTarget = (event) => {
+        const rect = pad.getBoundingClientRect();
+        return event.clientX < rect.left + rect.width / 2 ? left : right;
+      };
+
+      const setTarget = (pointer, element) => {
+        if (pointer.element === element) return;
+        if (pointer.element) {
+          this.release(pointer.element.dataset.action);
+          pointer.element.classList.remove("is-down");
+        }
+        pointer.element = element;
+        element.classList.add("is-down");
+        this.press(element.dataset.action);
+      };
+
+      root.addEventListener("pointerdown", (event) => {
+        const inPad = pad.contains(event.target);
+        const element = inPad ? moveTarget(event) : event.target.closest("[data-action]");
+        if (!element || !this.enabled) return;
+        event.preventDefault();
+        const pointer = { element: null, slide: inPad };
+        this.pointers.set(event.pointerId, pointer);
+        try {
+          root.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // The pointer was already released.
+        }
+        setTarget(pointer, element);
+        if (event.pointerType === "touch" && navigator.userActivation?.hasBeenActive) navigator.vibrate?.(VIBRATE_MS);
+      });
+
+      root.addEventListener("pointermove", (event) => {
+        const pointer = this.pointers.get(event.pointerId);
+        if (pointer?.slide) setTarget(pointer, moveTarget(event));
+      });
+
+      const end = (event) => {
+        const pointer = this.pointers.get(event.pointerId);
+        if (!pointer) return;
+        this.pointers.delete(event.pointerId);
+        pointer.element.classList.remove("is-down");
+        this.release(pointer.element.dataset.action);
+      };
+      root.addEventListener("pointerup", end);
+      root.addEventListener("pointercancel", end);
+      root.addEventListener("lostpointercapture", end);
+      root.addEventListener("contextmenu", (event) => event.preventDefault());
+    }
+  }
+
+  MQ.InputManager = InputManager;
+})(window.MQ);
