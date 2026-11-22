@@ -1027,7 +1027,9 @@
         this.animTime = 0;
       }
       this.animTime += dt;
-      this.phase += max(abs(this.vx), this.def.fly ? 120 : 0) * 0.045 * dt;
+      // Humanoids step in reverse when backing away from what they face.
+      const step = this.pose && this.vx * this.facing < 0 ? -1 : 1;
+      this.phase += step * max(abs(this.vx), this.def.fly ? 120 : 0) * 0.045 * dt;
     }
 
     drawArms() {

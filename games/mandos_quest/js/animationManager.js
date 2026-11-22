@@ -35,7 +35,7 @@
     p.hby = by;
   }
 
-  // Full body movement.
+  // Full body movement. As phase rises, a foot is planted while it moves back and lifted while it swings forward.
   const MOVES = {
     idle(p, t) {
       const breath = sin(t * 2.4);
@@ -49,7 +49,7 @@
       const c = cos(phase);
       p.hip = HIP + 1 - abs(sin(phase)) * 1.5;
       p.lean = 0.06;
-      feet(p, c * 14, -max(0, sin(phase)) * 6, -c * 14, -max(0, -sin(phase)) * 6);
+      feet(p, c * 14, -max(0, -sin(phase)) * 6, -c * 14, -max(0, sin(phase)) * 6);
       hands(p, 13 - c * 4, 18, -5 + c * 10, 24);
       p.weapon = 0.35;
     },
@@ -58,7 +58,7 @@
       p.hip = HIP + 3 - abs(sin(phase)) * 5;
       p.lean = 0.22;
       p.head = -0.12;
-      feet(p, c * 23, -max(0, sin(phase)) * 15, -c * 23, -max(0, -sin(phase)) * 15);
+      feet(p, c * 23, -max(0, -sin(phase)) * 15, -c * 23, -max(0, sin(phase)) * 15);
       hands(p, 14 - c * 8, 14, -4 + c * 18, 18);
       p.weapon = 0.25;
     },

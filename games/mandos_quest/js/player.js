@@ -282,7 +282,7 @@
 
       const previous = this.phase;
       if (this.grounded) {
-        this.phase += abs(this.vx) * STRIDE * (anim === "walk" ? 1.5 : 1) * dt;
+        this.phase += this.vx * this.facing * STRIDE * (anim === "walk" ? 1.5 : 1) * dt;
         const stepped = Math.floor(previous / Math.PI) !== Math.floor(this.phase / Math.PI);
         if (stepped && anim === "run") this.world.particles.dust(this.x - this.facing * 10, this.y, this.world.dustColor, 1, 40);
       }
