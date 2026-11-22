@@ -779,13 +779,15 @@
       warning.setAttribute("role", "note");
       warning.append(
         el("h3", null, "MUSIC COPYRIGHT WARNING"),
-        el("p", null, "This game plays copyrighted music from the Star Wars films. Crediting it does not give permission to use it, so please don't copy, download or reuse it."),
+        el("p", null, "This game plays copyrighted music from the Star Wars films and The Clone Wars. Crediting it does not give permission to use it, so please don't copy, download or reuse it."),
         el("p", null, "Videos and streams that include this music may be muted, blocked, demonetized or given a copyright strike. Before you record or stream, open Options and slide Music all the way to the left."),
       );
       box.append(warning);
       add("JEDI STORY", "Designed and built for Gaby's Arcade.");
       add("MUSIC",
-        "The music in the main menu, opening crawl, five boss fights and ending comes from the Star Wars films. John Williams composed the scores for the nine Skywalker saga films. All film compositions and recordings belong to their respective rights holders.",
+        "The main menu, opening crawl, ending and the Maul, Dooku, Vader and Palpatine boss fights use music from the Star Wars films. John Williams composed the scores for the nine Skywalker saga films.",
+        "The Asajj Ventress boss fight uses music from Star Wars: The Clone Wars, composed by Kevin Kiner.",
+        "All of these compositions and recordings belong to their respective rights holders.",
         "The music in the levels and on their title cards was made for this game and is generated in code.");
       add("STORY AND CHARACTERS",
         "An original fan story set across ten worlds, starring your own Jedi and Master Gale Garcian.",
@@ -793,7 +795,7 @@
       add("ART AND SOUND EFFECTS", "The characters, worlds, visual effects, sound effects and ambience are all generated in code.");
       add("BUILT WITH", "HTML5 Canvas, the Web Audio API and vanilla JavaScript. The online leaderboard runs on Supabase.");
       add("TYPEFACE", "Oxanium by Severin Meyer and The Oxanium Project Authors, used under the SIL Open Font License 1.1.");
-      add("A FAN PROJECT", "This is a free, non-commercial fan tribute. Star Wars and all related names and characters belong to Lucasfilm Ltd. and The Walt Disney Company. This game is not affiliated with, endorsed by or sponsored by them, John Williams or any music rights holder.");
+      add("A FAN PROJECT", "This is a free, non-commercial fan tribute. Star Wars and all related names and characters belong to Lucasfilm Ltd. and The Walt Disney Company. This game is not affiliated with, endorsed by or sponsored by them, John Williams, Kevin Kiner or any music rights holder.");
       add("THANK YOU", "Thanks for playing, and may the Force be with you.");
       s.append(box);
       const row = el("div", "row");

@@ -6,9 +6,9 @@ Built with HTML5 Canvas 2D, the Web Audio API and vanilla JavaScript. There are 
 
 This is a free, non-commercial fan project. Star Wars and its names and characters belong to Lucasfilm Ltd. and The Walt Disney Company, and this game isn't affiliated with or endorsed by them.
 
-The music in the menu, opening crawl, five boss fights and ending comes from the Star Wars films, and John Williams composed the scores for the nine Skywalker saga films. Those compositions and recordings belong to their respective rights holders. The level and title card music is original and generated in code.
+The menu, opening crawl, ending and the Maul, Dooku, Vader and Palpatine boss fights use music from the Star Wars films, and John Williams composed the scores for the nine Skywalker saga films. The Asajj Ventress boss fight uses music from *Star Wars: The Clone Wars*, composed by Kevin Kiner. All of these compositions and recordings belong to their respective rights holders. The level and title card music is original and generated in code.
 
-> **Music copyright warning:** The film music is copyrighted. It isn't covered by any license for this game's code, and crediting it doesn't give permission to copy, host or reuse it. Videos and streams that include it may be muted, blocked, demonetized or given a copyright strike. Before recording or streaming, slide Music all the way to the left in Options.
+> **Music copyright warning:** The music from the films and *The Clone Wars* is copyrighted. It isn't covered by any license for this game's code, and crediting it doesn't give permission to copy, host or reuse it. Videos and streams that include it may be muted, blocked, demonetized or given a copyright strike. Before recording or streaming, slide Music all the way to the left in Options.
 
 ## Contents
 
