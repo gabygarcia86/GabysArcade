@@ -89,6 +89,13 @@ p {
   height: 100%;
 }
 
+/* Popups go here when there's room below the picture. GameEngine positions it. */
+#notices {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

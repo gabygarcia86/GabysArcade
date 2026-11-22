@@ -6,18 +6,27 @@
   const EDGE = "rgba(143,220,255,0.3)";
   const GOLD = "#ffd45c";
   const MAX_TOASTS = 3;
+  const CROWDED = 1.12; // Past this scale there's no room between the two panels.
+  const HINT_WIDTH = 430;
+  const PORTRAIT_WIDTH = 300; // Narrower dialogue leaves out the portrait.
 
   class Hud {
     constructor(input) {
       this.input = input;
       this.scale = 1;
       this.rightInset = 72;
+      this.notices = new MQ.Notices(document.getElementById("notices"), this);
       this.portraitPose = MQ.Anim.createPose();
       MQ.Anim.human(this.portraitPose, "idle", 0, 0, 0);
       this.reset();
     }
 
+    get crowded() {
+      return this.scale > CROWDED;
+    }
+
     reset() {
+      this.showing = null; // The popup on screen when they take turns, otherwise null.
       this.time = 0;
       this.messages = [];
       this.message = null;
@@ -77,22 +86,23 @@
 
     update(dt) {
       this.time += dt;
-      this.bannerTime -= dt;
-      this.titleTime -= dt;
-      this.weaponTime -= dt;
+      const runs = (kind) => this.showing === null || this.showing === kind;
+      if (runs("banner")) this.bannerTime -= dt;
+      if (runs("title")) this.titleTime -= dt;
+      if (runs("weapon")) this.weaponTime -= dt;
 
       if (!this.message && this.messages.length) this.message = this.messages.shift();
-      if (this.message) {
+      if (this.message && runs("message")) {
         this.message.age += dt;
         // Hurry along when more lines are waiting.
         this.message.life -= dt * (this.messages.length ? 1.4 : 1);
         if (this.message.life <= 0) this.message = null;
       }
-      if (this.hintItem) {
+      if (this.hintItem && runs("hint")) {
         this.hintItem.life -= dt;
         if (this.hintItem.life <= 0) this.hintItem = null;
       }
-      if (this.toasts.length) {
+      if (this.toasts.length && runs("toast")) {
         const toast = this.toasts[0];
         toast.life -= dt * (this.toasts.length > 1 ? 1.5 : 1);
         toast.age += dt;
@@ -101,43 +111,53 @@
     }
 
     draw(ctx, world) {
+      const { notices } = this;
+      const takeTurns = notices.enabled;
+      this.showing = takeTurns ? "none" : null;
       if (this.introBoss && world.state === "bossIntro") {
         this.drawBossIntro(ctx, world);
         return;
       }
-      const { scale: s } = this;
+      const { scale: s, crowded } = this;
+      if (takeTurns) {
+        notices.plan(ctx, world);
+        if (notices.place) this.showing = notices.place.kind;
+      }
 
       ctx.save();
       ctx.scale(s, s);
       this.drawStatus(ctx, world);
       ctx.restore();
 
-      ctx.save();
-      ctx.translate(MQ.VW - this.rightInset, 0);
-      ctx.scale(s, s);
-      this.drawMission(ctx, world);
-      ctx.restore();
+      if (!takeTurns || !notices.place?.coversMission) {
+        ctx.save();
+        ctx.translate(MQ.VW - this.rightInset, 0);
+        ctx.scale(s, s);
+        this.drawMission(ctx, world);
+        ctx.restore();
+      }
 
       // Everything in the middle is laid out top to bottom.
       ctx.save();
       ctx.translate(MQ.VW / 2, 0);
       ctx.scale(s, s);
-      // With the HUD enlarged on small screens there's no room between the two panels.
-      const crowded = s > 1.12;
       let y = crowded ? 166 : 14;
-      if (world.boss && world.arena?.locked && !world.boss.dead) {
+      if (this.bossFight(world)) {
         ctx.save();
         if (crowded) ctx.translate(0, MQ.VH / s - 66);
         this.drawBossBar(ctx, world.boss);
         ctx.restore();
         if (!crowded) y = 66;
       }
-      if (this.message) y = this.drawMessage(ctx, world, y);
-      if (this.hintItem) y = this.drawHint(ctx, y);
-      if (this.toasts.length) this.drawToast(ctx, Math.max(y, 80));
+      if (!takeTurns) {
+        if (this.message) y = this.drawMessage(ctx, world, y);
+        if (this.hintItem) y = this.drawHint(ctx, y);
+        if (this.toasts.length) this.drawToast(ctx, Math.max(y, 80));
+      }
       ctx.restore();
 
-      this.drawTitles(ctx);
+      if (takeTurns) notices.draw(ctx, world);
+      else this.drawTitles(ctx);
       if (world.player.hp < world.player.maxHp * 0.25 && !world.player.dead) {
         const pulse = 0.12 + sin(this.time * 7) * 0.06;
         ctx.fillStyle = `rgba(255,50,50,${pulse})`;
@@ -146,6 +166,77 @@
         ctx.fillRect(0, 0, 10, MQ.VH);
         ctx.fillRect(MQ.VW - 10, 0, 10, MQ.VH);
       }
+    }
+
+    bossFight(world) {
+      return !!(world.boss && world.arena?.locked && !world.boss.dead);
+    }
+
+    /* ---------- Popups that take turns ---------- */
+
+    // The most urgent popup waiting.
+    nextPopup() {
+      if (this.bannerTime > 0) return "banner";
+      if (this.weaponTime > 0) return "weapon";
+      if (this.titleTime > 0) return "title";
+      if (this.hintItem) return "hint";
+      if (this.toasts.length) return "toast";
+      if (this.message) return "message";
+      return null;
+    }
+
+    // A popup's size and wrapped lines, no wider than room.
+    popup(ctx, kind, room) {
+      if (kind === "message") return this.messageLayout(ctx, min(room, 560));
+      if (kind === "hint") return this.hintLayout(ctx, min(room, HINT_WIDTH));
+      if (kind === "toast") return this.toastLayout(ctx, room);
+      return this.headlineLayout(ctx, kind, min(room, HINT_WIDTH));
+    }
+
+    // Draws it centered on x = 0, with its top at y = 0.
+    drawPopup(ctx, world, kind, card) {
+      if (kind === "message") this.drawMessage(ctx, world, 0, card);
+      else if (kind === "hint") this.drawHint(ctx, 0, card);
+      else if (kind === "toast") this.drawToast(ctx, 0, card);
+      else this.drawHeadline(ctx, card);
+    }
+
+    // Banners, level titles and weapon names, which are loose text on big screens.
+    headlineLayout(ctx, kind, maxWidth) {
+      let top = "";
+      let main;
+      let color = "#ffffff";
+      let opacity;
+      if (kind === "banner") {
+        main = this.bannerText;
+        color = GOLD;
+        opacity = min(1, this.bannerTime * 2, (2.4 - this.bannerTime) * 5);
+      } else if (kind === "title") {
+        top = this.titleTop;
+        main = this.titleMain.toUpperCase();
+        opacity = min(1, this.titleTime, (3.4 - this.titleTime) * 3);
+      } else {
+        main = this.weaponName.toUpperCase();
+        opacity = min(1, this.weaponTime * 3);
+      }
+      ctx.font = `800 20px ${MQ.FONT}`;
+      const lines = wrap(ctx, main, maxWidth - 30);
+      let width = max(...lines.map((line) => ctx.measureText(line).width));
+      ctx.font = `700 13px ${MQ.FONT}`;
+      const topWidth = top ? ctx.measureText(top).width : 0;
+      const topSize = 13 * min(1, (maxWidth - 16) / max(1, topWidth)); // Shrinks to stay on one line.
+      width = min(maxWidth, max(width, topWidth) + 30);
+      const height = (top ? 34 : 16) + lines.length * 24;
+      return { top, topSize, lines, color, opacity, width, height };
+    }
+
+    drawHeadline(ctx, card) {
+      const { top, topSize, lines, color, width, height } = card;
+      ctx.globalAlpha = max(0, card.opacity);
+      box(ctx, -width / 2, 0, width, height, 8, INK, EDGE, 1.5);
+      if (top) text(ctx, top, 0, 21, topSize, "#8fdcff", "center", 700);
+      for (let i = 0; i < lines.length; i++) text(ctx, lines[i], 0, (top ? 45 : 27) + i * 24, 20, color, "center", 800);
+      ctx.globalAlpha = 1;
     }
 
     bar(ctx, x, y, w, h, fraction, color) {
@@ -264,13 +355,16 @@
       }
     }
 
-    drawMessage(ctx, world, y) {
-      const m = this.message;
-      const available = MQ.VW / this.scale - 2 * 310;
-      const width = clamp(available, 340, 560);
+    messageLayout(ctx, width = clamp(MQ.VW / this.scale - 2 * 310, 340, 560)) {
       ctx.font = `600 15px ${MQ.FONT}`;
-      const lines = wrap(ctx, m.text, width - 92);
-      const height = max(70, 38 + lines.length * 18);
+      const textX = width < PORTRAIT_WIDTH ? 14 : 76;
+      const lines = wrap(ctx, this.message.text, width - textX - 16);
+      return { width, lines, textX, height: max(70, 38 + lines.length * 18) };
+    }
+
+    drawMessage(ctx, world, y, card = this.messageLayout(ctx)) {
+      const m = this.message;
+      const { width, lines, height, textX } = card;
       ctx.globalAlpha = min(1, m.age * 5, m.life * 3);
 
       const villain = m.who === "Moff Gideon" || m.who === "Imperial Radio";
@@ -278,28 +372,30 @@
       const x = -width / 2;
       box(ctx, x, y, width, height, 9, "rgba(6,9,16,0.84)", alpha(color, 0.6), 1.5);
 
-      const size = 56;
-      ctx.save();
-      MQ.U.roundPath(ctx, x + 8, y + 7, size, size, 6);
-      ctx.fillStyle = shade(color, -0.75);
-      ctx.fill();
-      ctx.clip();
-      ctx.translate(x + 8 + size / 2, y + 7 + size / 2);
-      this.drawPortrait(ctx, world, m.who);
-      if (villain) {
-        for (let i = -28; i < 28; i += 5) {
-          ctx.fillStyle = "rgba(255,80,70,0.18)";
-          ctx.fillRect(-28, i + ((this.time * 20) % 5), 56, 2);
+      if (width >= PORTRAIT_WIDTH) {
+        const size = 56;
+        ctx.save();
+        MQ.U.roundPath(ctx, x + 8, y + 7, size, size, 6);
+        ctx.fillStyle = shade(color, -0.75);
+        ctx.fill();
+        ctx.clip();
+        ctx.translate(x + 8 + size / 2, y + 7 + size / 2);
+        this.drawPortrait(ctx, world, m.who);
+        if (villain) {
+          for (let i = -28; i < 28; i += 5) {
+            ctx.fillStyle = "rgba(255,80,70,0.18)";
+            ctx.fillRect(-28, i + ((this.time * 20) % 5), 56, 2);
+          }
         }
+        ctx.restore();
       }
-      ctx.restore();
 
-      text(ctx, m.who.toUpperCase(), x + 76, y + 24, 13, color, "left", 800);
+      text(ctx, m.who.toUpperCase(), x + textX, y + 24, 13, color, "left", 800);
       const visible = Math.floor(m.age * 70);
       let used = 0;
       for (let i = 0; i < lines.length; i++) {
         if (visible <= used) break;
-        text(ctx, lines[i].slice(0, visible - used), x + 76, y + 44 + i * 18, 15, "#ffffff", "left", 600);
+        text(ctx, lines[i].slice(0, visible - used), x + textX, y + 44 + i * 18, 15, "#ffffff", "left", 600);
         used += lines[i].length;
       }
       ctx.globalAlpha = 1;
@@ -329,13 +425,17 @@
       }
     }
 
-    drawHint(ctx, y) {
+    hintLayout(ctx, width = HINT_WIDTH) {
       const hint = this.hintItem;
       const message = this.input.usingTouch && hint.touch ? hint.touch : hint.text;
-      const width = 430;
       ctx.font = `600 15px ${MQ.FONT}`;
       const lines = wrap(ctx, message, width - 30);
-      const height = 18 + lines.length * 19;
+      return { width, lines, height: 18 + lines.length * 19 };
+    }
+
+    drawHint(ctx, y, card = this.hintLayout(ctx)) {
+      const hint = this.hintItem;
+      const { width, lines, height } = card;
       ctx.globalAlpha = min(1, hint.life * 2);
       box(ctx, -width / 2, y, width, height, 8, "rgba(44,36,10,0.86)", "rgba(255,212,92,0.75)", 1.5);
       for (let i = 0; i < lines.length; i++) text(ctx, lines[i], 0, y + 24 + i * 19, 15, "#fff3c8", "center", 600);
@@ -343,15 +443,23 @@
       return y + height + 8;
     }
 
-    drawToast(ctx, y) {
+    toastLayout(ctx, maxWidth = Infinity) {
       const t = this.toasts[0];
+      ctx.font = `600 14px ${MQ.FONT}`;
+      const width = min(maxWidth, max(260, ctx.measureText(t.detail).width + 36, t.title.length * 12));
+      // Only wrap when squeezed, as measuring can round the last word onto a new line.
+      const lines = width < maxWidth ? [t.detail] : wrap(ctx, t.detail, width - 24);
+      return { width, lines, height: 32 + lines.length * 18 };
+    }
+
+    drawToast(ctx, y, card = this.toastLayout(ctx)) {
+      const t = this.toasts[0];
+      const { width, lines, height } = card;
       ctx.globalAlpha = min(1, t.age * 5, t.life * 2.5);
       const slide = (1 - smooth(t.age * 4)) * -12;
-      ctx.font = `600 14px ${MQ.FONT}`;
-      const width = max(260, ctx.measureText(t.detail).width + 36, t.title.length * 12);
-      box(ctx, -width / 2, y + slide, width, 50, 8, INK, "rgba(255,212,92,0.6)", 1.5);
+      box(ctx, -width / 2, y + slide, width, height, 8, INK, "rgba(255,212,92,0.6)", 1.5);
       text(ctx, t.title, 0, y + slide + 21, 14, GOLD, "center", 800);
-      text(ctx, t.detail, 0, y + slide + 39, 14, "#e6edf5", "center", 600);
+      for (let i = 0; i < lines.length; i++) text(ctx, lines[i], 0, y + slide + 39 + i * 18, 14, "#e6edf5", "center", 600);
       ctx.globalAlpha = 1;
     }
 
@@ -359,7 +467,7 @@
       const cx = MQ.VW / 2;
       if (this.titleTime > 0) {
         ctx.globalAlpha = min(1, this.titleTime, (3.4 - this.titleTime) * 3);
-        const top = this.scale > 1.12 ? 420 : 270;
+        const top = this.crowded ? 420 : 270;
         text(ctx, this.titleTop, cx, top, 22, "#8fdcff", "center", 700);
         text(ctx, this.titleMain.toUpperCase(), cx, top + 56, 54, "#ffffff", "center", 800);
         ctx.globalAlpha = 1;

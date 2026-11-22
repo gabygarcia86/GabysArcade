@@ -128,6 +128,18 @@
       hud.scale = clamp(0.8 / scale, 1, 1.5);
       const buttonReaches = top < 56;
       hud.rightInset = buttonReaches ? Math.max(12, (PAUSE_BUTTON_SPACE - left) / scale) : 12;
+
+      // Measured after the stage moves, as the touch controls can overlap it.
+      const stageLeft = safeLeft + left;
+      const stageTop = safeTop + top;
+      const buttons = this.touch.hidden ? [] : [...this.touch.querySelectorAll(".touch-btn")].map((el) => el.getBoundingClientRect());
+      const smallOrTouch = hud.crowded || this.input.usingTouch || this.app.classList.contains("touch-mode");
+      hud.notices.layout(
+        { left: stageLeft, right: stageLeft + cssWidth, bottom: stageTop + cssHeight },
+        { left: safeLeft, right: safeLeft + width, bottom: safeTop + height },
+        buttons,
+        smallOrTouch,
+      );
     }
 
     start() {
@@ -158,6 +170,7 @@
       ctx.setTransform(canvas.width / MQ.VW, 0, 0, canvas.height / MQ.VH, 0, 0);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
+      this.states.hud.notices.clear();
       this.states.draw(ctx);
     }
   }

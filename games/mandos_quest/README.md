@@ -111,6 +111,7 @@ mandos_quest/
     ├── inputManager.js     Keyboard and multi-touch
     ├── leaderboard.js      Supabase requests
     ├── hud.js              In-game display
+    ├── notices.js          Popup placement on touch and small screens
     ├── cinematics.js       Story scenes
     ├── screens.js          Menu markup
     ├── uiManager.js        Menu behavior
@@ -143,11 +144,11 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 ## TODO
 
-- Fix text popups appearing over the character making it unable to see what your doing
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- Add ship levels?
+- Add ship levels? Gradius
 - On main menu, easter egg clicking on baby G does different animations 
 - On main menu, easter egg clicking on Mando makes him fart and do other animations
 - fix spawn location of laser blast from  main character
 - Make flame thrower shoot farther 
+- Add pickups to gain additional points through out all the levels
