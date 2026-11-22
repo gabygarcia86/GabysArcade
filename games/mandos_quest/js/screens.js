@@ -4,8 +4,13 @@
   const { escapeHtml: esc, formatTime } = MQ.U;
 
   // Where each planet sits on the galaxy map, in percent.
-  const MAP_POINTS = [[9, 72], [20, 48], [12, 22], [33, 14], [42, 40], [36, 74], [56, 80], [66, 52], [61, 20], [87, 34]];
-  const PLANET_COLORS = ["#d99a62", "#a4644f", "#c4562c", "#5f8a4a", "#e6c48a", "#4f7a6c", "#3fb8c9", "#c8d8e2", "#6f7cc9", "#9a5cc9"];
+  // Three rows in a winding route.
+  const MAP_POINTS = [
+    [10, 15], [30, 15], [50, 15], [70, 15], [90, 15],
+    [84, 46], [62, 46], [39, 46], [16, 46],
+    [12, 77], [37, 77], [62, 77], [88, 77],
+  ];
+  const PLANET_COLORS = ["#d99a62", "#a4644f", "#c4562c", "#8f3a24", "#5f8a4a", "#e6c48a", "#4f7a6c", "#1f5f5a", "#3fb8c9", "#c8d8e2", "#6f7cc9", "#4a2a68", "#9a5cc9"];
 
   const button = (action, label, options = {}) => {
     const { id, kind = "", disabled = false } = options;
@@ -99,7 +104,7 @@
             data-slot="visor" data-field="color" title="${v.name}" aria-label="${v.name} visor" aria-pressed="${v.hex === look.visor}"></button>`).join("")}
         </div>`;
     } else if (tab === "jetpack" && !app.progression.stats.jetpack) {
-      html += `<p class="muted">The jetpack appears in gameplay once you clear Level 5.</p>`;
+      html += `<p class="muted">The jetpack appears in gameplay once you clear Level 6.</p>`;
     }
     return html;
   }
@@ -128,7 +133,7 @@
     let highlighted = false;
     return `
       <table class="board">
-        <thead><tr><th>#</th><th>Hunter</th><th>Score</th><th>Levels</th><th>Pucks</th></tr></thead>
+        <thead><tr><th>#</th><th>Hunter</th><th>Score</th><th>Worlds</th><th>Pucks</th></tr></thead>
         <tbody>
           ${board.rows.map((row, i) => {
             const mine = !highlighted && board.mine && row.name === board.mine.name && row.score === board.mine.score;
@@ -137,7 +142,7 @@
               <td>${i + 1}</td>
               <td>${esc(row.name)}${row.finished ? ' <span class="crown" title="Finished Story Mode">&#9733;</span>' : ""}</td>
               <td>${row.score.toLocaleString()}</td>
-              <td>${row.levels}/10</td>
+              <td>${row.levels}/${D.TOTAL_GROUND}</td>
               <td>${row.pucks}/30</td>
             </tr>`;
           }).join("")}
@@ -155,7 +160,7 @@
           <div class="menu-column">
             <h1 class="logo"><span>Mando&rsquo;s</span><strong>Quest</strong><em>The Last Star Map</em></h1>
             <nav class="menu-list" aria-label="Main menu">
-              ${button("story", `Story Mode <small>${save.completed ? (save.completed >= 10 ? "Completed" : `Continue: Level ${save.completed + 1}`) : "New adventure"}</small>`, { kind: "primary wide" })}
+              ${button("story", `Story Mode <small>${save.completed ? (progression.allCleared ? "Completed" : `Continue: Level ${progression.nextLevel()}`) : "New adventure"}</small>`, { kind: "primary wide" })}
               ${button("open", "Level Select", { id: "map" })}
               ${button("open", "Customize Character", { id: "customize" })}
               ${button("open", "Weapons", { id: "weapons" })}
@@ -173,24 +178,26 @@
       const { save, progression } = app;
       const selected = MQ.LEVELS[data.selected - 1];
       const open = progression.isUnlocked(selected.id);
-      const done = selected.id <= save.completed;
+      const done = save.cleared[selected.id - 1];
+      const space = selected.mode === "space";
       const best = save.best[selected.id - 1];
 
       const nodes = MQ.LEVELS.map((level, i) => {
         const unlocked = progression.isUnlocked(level.id);
-        const status = level.id <= save.completed ? "done" : unlocked ? "open" : "locked";
-        return `<button class="planet ${status} ${level.boss ? "has-boss" : ""}" type="button" data-action-ui="selectLevel" data-id="${level.id}"
+        const status = save.cleared[i] ? "done" : unlocked ? "open" : "locked";
+        const battle = level.mode === "space";
+        return `<button class="planet ${status} ${battle ? "space" : level.boss ? "has-boss" : ""}" type="button" data-action-ui="selectLevel" data-id="${level.id}"
           aria-pressed="${level.id === selected.id}" style="--x:${MAP_POINTS[i][0]}%;--y:${MAP_POINTS[i][1]}%;--c:${PLANET_COLORS[i]}">
           <i class="orb">${status === "locked" ? "&#128274;" : level.id}</i>
-          <span class="planet-name"><b>${level.planet}</b>${level.title}</span>
-          ${puckDots(save.pucks[i])}
+          <span class="planet-name"><b>${battle ? "Space Battle" : level.planet}</b>${level.title}</span>
+          ${battle ? "" : puckDots(save.pucks[i])}
           <span class="sr-only">${status === "done" ? "Completed" : status === "open" ? "Available" : "Locked"}</span>
         </button>`;
       }).join("");
 
       return `
         <section class="screen panel-screen map-screen">
-          ${header("Galaxy Map", `${save.completed}/10 levels &middot; ${progression.totalPucks()}/30 pucks &middot; ${progression.percent()}% complete`)}
+          ${header("Galaxy Map", `${progression.clearedCount}/${D.TOTAL_LEVELS} levels &middot; ${progression.totalPucks()}/30 pucks &middot; ${progression.percent()}% complete`)}
           <div class="map-layout">
             <div class="galaxy" data-scroll="galaxy">
               <svg class="routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -199,17 +206,19 @@
               ${nodes}
             </div>
             <aside class="level-card">
-              <p class="eyebrow">Level ${selected.id} &middot; ${selected.planet}</p>
+              <p class="eyebrow">Level ${selected.id} of ${D.TOTAL_LEVELS} &middot; ${space ? "Space Battle" : selected.planet}</p>
               <h2>${selected.title}</h2>
               <p class="muted">${selected.theme}</p>
               <dl class="stats">
                 ${stat("Status", done ? "Completed" : open ? "Available" : "Locked")}
                 ${stat("Boss", bossLabel(selected))}
-                ${stat("Bounty Pucks", `${puckDots(save.pucks[selected.id - 1])} ${progression.levelPucks(selected.id)}/3`)}
+                ${space
+                  ? stat("Reward", D.REWARDS[selected.id - 1][0].split(/ for the |:/)[0])
+                  : stat("Bounty Pucks", `${puckDots(save.pucks[selected.id - 1])} ${progression.levelPucks(selected.id)}/3`)}
                 ${stat("Best time", formatTime(best.time))}
                 ${stat("Best score", best.score ? best.score.toLocaleString() : "--")}
               </dl>
-              ${button("play", open ? (done ? "Replay level" : "Start level") : `Clear Level ${selected.id - 1} to unlock`, { id: selected.id, kind: "primary wide", disabled: !open })}
+              ${button("play", open ? `${done ? "Replay" : "Start"} ${space ? "mission" : "level"}` : `Clear Level ${selected.id - 1} to unlock`, { id: selected.id, kind: "primary wide", disabled: !open })}
             </aside>
           </div>
         </section>`;
@@ -240,7 +249,7 @@
         const unlocked = progression.hasWeapon(weapon.id);
         const equipped = save.weapon === weapon.id;
         const requirement = weapon.secret
-          ? `Clear all 10 levels and find all 30 pucks (${save.completed}/10, ${progression.totalPucks()}/30)`
+          ? `Clear all 10 worlds and find all 30 pucks (${progression.groundCleared}/10, ${progression.totalPucks()}/30)`
           : `Clear Level ${weapon.after}`;
         const notes = [];
         if (weapon.id === "blaster" && progression.stats.fastBlaster) notes.push("Faster firing");
@@ -274,6 +283,14 @@
             <div class="upgrade-columns">
               <div><h2>Baby G&rsquo;s Force</h2><ul class="upgrades">${upgrades(D.FORCE_UPGRADES)}</ul></div>
               <div><h2>Jetpack</h2><ul class="upgrades">${upgrades(D.JETPACK_UPGRADES)}</ul></div>
+              <div><h2>Gunship</h2><ul class="upgrades">${D.SPACE_STAGES.map((id) => {
+                const on = save.cleared[id - 1];
+                // Collectibles are on the Bounty Pucks screen.
+                return D.REWARDS[id - 1]
+                  .filter((reward) => !/collectible|Citadel/.test(reward))
+                  .map((reward) => `<li class="${on ? "on" : ""}"><b>${reward.replace(" for the gunship", "")}</b><span>${on ? "Installed" : `Clear Level ${id}`}</span></li>`)
+                  .join("");
+              }).join("")}</ul></div>
             </div>
           </div>
         </section>`;
@@ -291,19 +308,29 @@
               <div>
                 <p class="eyebrow">Secret weapon</p>
                 <h2>${save.darksaber ? "The Darksaber is yours" : "The Darksaber"}</h2>
-                <p>${save.completed}/10 levels completed</p>${progress(save.completed * 10, "Levels completed")}
+                <p>${progression.groundCleared}/10 worlds completed</p>${progress(progression.groundCleared * 10, "Worlds completed")}
                 <p>${total}/30 pucks collected</p>${progress(Math.round((total / 30) * 100), "Pucks collected")}
               </div>
             </div>
             <ul class="puck-list">
-              ${MQ.LEVELS.map((level, i) => `
+              ${MQ.LEVELS.filter((level) => level.mode !== "space").map((level) => `
                 <li class="${progression.isUnlocked(level.id) ? "" : "is-locked"}">
                   <span><b>${level.id}. ${level.title}</b><small>${level.planet}</small></span>
-                  ${puckDots(save.pucks[i])}
+                  ${puckDots(save.pucks[level.id - 1])}
                   ${button("play", progression.isUnlocked(level.id) ? "Play" : "Locked", { id: level.id, kind: "small", disabled: !progression.isUnlocked(level.id) || app.inLevel })}
                 </li>`).join("")}
             </ul>
             <p class="muted center">Some pucks need upgrades from later levels, so come back with new gear.</p>
+            <h2 class="relic-heading">Space mission collectibles</h2>
+            <ul class="relics">
+              ${D.RELICS.map((relic) => {
+                const owned = save.relics.includes(relic.id);
+                return `<li class="${owned ? "on" : ""}">
+                  <canvas data-preview="relic" data-id="${relic.id}" width="84" height="84" aria-hidden="true"></canvas>
+                  <span><b>${relic.name}</b><small>${owned ? relic.info : `Clear Level ${relic.after}`}</small></span>
+                </li>`;
+              }).join("")}
+            </ul>
           </div>
         </section>`;
     },
@@ -342,9 +369,15 @@
               ${app.canFullscreen ? button("fullscreen", "Toggle fullscreen") : ""}
             </div>
             <div class="option-group">
-              <h2>Controls</h2>
+              <h2>Ground controls</h2>
               <dl class="keys">
                 ${[["Move", "A / D or &#8592; / &#8594;"], ["Jump / Jetpack", "Space"], ["Attack", "J"], ["Force Push", "K"], ["Change weapon", "L"], ["Dodge", "Shift or double-tap a direction"], ["Drop through ledge", "S or &#8595;"], ["Pause", "Escape"]].map(([a, b]) => stat(a, b)).join("")}
+              </dl>
+            </div>
+            <div class="option-group">
+              <h2>Space controls</h2>
+              <dl class="keys">
+                ${[["Fly", "WASD or arrow keys"], ["Fire", "J (hold)"], ["Seeker rockets", "K"], ["Install upgrade", "L"], ["Shield", "Shift"], ["Pause", "Escape"]].map(([a, b]) => stat(a, b)).join("")}
               </dl>
             </div>
             ${app.inLevel ? "" : `<div class="option-group danger-zone"><h2>Saved progress</h2>${button("reset", "Reset all progress", { kind: "danger" })}</div>`}
@@ -360,8 +393,8 @@
               <h1 class="logo"><span>Mando&rsquo;s</span><strong>Quest</strong><em>The Last Star Map</em></h1>
               <h2>A game from</h2><p>Gaby&rsquo;s Arcade</p>
               <h2>Starring</h2><p>The Mandalorian</p><p>Baby G</p><p>and Moff Gideon</p>
-              <h2>Featuring</h2><p>The Mudhorn</p><p>The Nevarro Reptavians</p><p>The Krayt Dragon</p><p>The Mythosaur</p><p>The Imperial Guardian</p>
-              <h2>Worlds visited</h2>${MQ.LEVELS.map((level) => `<p>${level.planet}: ${level.title}</p>`).join("")}
+              <h2>Featuring</h2><p>The Mudhorn</p><p>The Nevarro Reptavians</p><p>The Krayt Dragon</p><p>The Mythosaur</p><p>The Imperial Guardian</p><p>The Warden Gunship</p><p>The Orbital Bastion</p><p>Gideon&rsquo;s Command Ship</p>
+              <h2>Worlds and space battles</h2>${MQ.LEVELS.map((level) => `<p>${level.planet}: ${level.title}</p>`).join("")}
               <h2>Story, levels, art, animation and code</h2><p>Gaby&rsquo;s Arcade, built with Claude</p>
               <h2>Music and sound</h2><p>Generated live with the Web Audio API</p>
               <h2>Typeface</h2><p>Oxanium, under the SIL Open Font License</p>
@@ -387,18 +420,20 @@
     },
 
     story(app) {
-      const { completed } = app.save;
-      const finished = completed >= 10;
+      const finished = app.progression.allCleared;
+      const canReplay = app.save.completed > 0 && !finished;
+      const next = MQ.LEVELS[app.progression.nextLevel() - 1];
       return `
         <section class="screen dialog-screen">
           <div class="dialog">
             <p class="eyebrow">Story Mode</p>
             <h1>${finished ? "The journey continues" : "Continue your journey"}</h1>
-            <p>${finished ? "Play the story again with every weapon, upgrade and collectible you've earned." : `Next up: Level ${completed + 1}, ${MQ.LEVELS[completed].title}.`}</p>
+            <p>${finished ? "Play the story again with every weapon, upgrade and collectible you've earned." : `Next up: Level ${next.id}, ${next.title}${next.mode === "space" ? " (space battle)" : ""}.`}</p>
             <div class="button-stack">
-              ${button("storyContinue", finished ? "Play from Level 1" : `Continue Level ${completed + 1}`, { kind: "primary wide" })}
-              ${finished ? "" : button("storyStart", "Replay from Level 1")}
-              ${button("back", "Cancel", { kind: "ghost" })}
+              ${button("storyContinue", finished ? "Play from Level 1" : `Continue Level ${next.id}`, { kind: "primary wide" })}
+              ${canReplay ? button("storyStart", "Replay from Level 1") : ""}
+              ${button("back", "Cancel", { kind: canReplay ? "ghost" : "ghost wide" })}
+              ${button("reset", "Reset all progress", { kind: "danger wide" })}
             </div>
           </div>
         </section>`;
@@ -406,16 +441,17 @@
 
     pause(app) {
       const { world, progression } = app;
+      const space = world.mode === "space";
       return `
         <section class="screen dialog-screen">
           <div class="dialog">
-            <p class="eyebrow">Level ${world.def.id} &middot; ${progression.levelPucks(world.def.id)}/3 pucks</p>
+            <p class="eyebrow">Level ${world.def.id} &middot; ${space ? esc(world.def.title) : `${progression.levelPucks(world.def.id)}/3 pucks`}</p>
             <h1>Paused</h1>
             <div class="button-stack">
               ${button("resume", "Resume", { kind: "primary wide" })}
-              ${button("restart", "Restart Level")}
-              ${button("open", "Weapon Selection", { id: "weapons" })}
-              ${button("open", "Character Customization", { id: "customize" })}
+              ${button("restart", space ? "Restart Mission" : "Restart Level")}
+              ${space ? "" : button("open", "Weapon Selection", { id: "weapons" })}
+              ${space ? "" : button("open", "Character Customization", { id: "customize" })}
               ${button("open", "Options", { id: "options" })}
               ${button("quit", "Main Menu", { kind: "ghost" })}
             </div>
@@ -452,10 +488,40 @@
         </section>`;
     },
 
+    spaceComplete(app, data) {
+      const { result } = data;
+      const { level } = result;
+      return `
+        <section class="screen panel-screen narrow result mission-result" style="--accent:${level.accent}">
+          <div class="scroll" data-scroll="complete">
+            <p class="eyebrow center">Level ${level.id} &middot; Space Battle</p>
+            <h1 class="center">${level.victory}</h1>
+            <canvas class="mission-art" data-preview="mission" data-id="${level.id}" width="760" height="190" aria-hidden="true"></canvas>
+            <p class="conclusion">${level.conclusion}</p>
+            <dl class="stats result-stats mission-stats">
+              ${stat("Mission time", `${formatTime(Math.max(1, result.time))}${result.newBestTime ? ' <em class="best">Best</em>' : ""}`)}
+              ${stat("Ships destroyed", result.kills)}
+              ${stat("Capsules collected", result.capsules)}
+              ${stat("Upgrades installed", result.upgrades)}
+              ${stat("Lives remaining", `${result.lives}/${D.LIVES}`)}
+              ${stat("Score", result.score.toLocaleString())}
+              ${stat("Experience", `+${result.xp.toLocaleString()} XP`)}
+              ${stat("Mission rewards", result.rewards.length ? result.rewards.join(", ") : "Already earned")}
+            </dl>
+            <p class="completion">Overall completion <strong>${app.progression.percent()}%</strong></p>
+            ${progress(app.progression.percent(), "Overall completion")}
+            <div class="button-row">
+              ${button("afterComplete", "Continue", { kind: "primary" })}
+            </div>
+          </div>
+        </section>`;
+    },
+
     levelUp(app, data) {
       const { result } = data;
       const { stats } = app.progression;
-      const last = result.level.id === D.TOTAL_LEVELS;
+      const space = result.level.mode === "space";
+      const last = result.finale;
       return `
         <section class="screen panel-screen narrow result levelup">
           <div class="scroll" data-scroll="levelup">
@@ -467,13 +533,18 @@
               ${result.saberUnlocked ? `<li class="secret" style="--i:${result.rewards.length}">Secret weapon unlocked: the Darksaber</li>` : ""}
             </ul>
             <dl class="stats">
-              ${stat("Maximum health", `${stats.maxHp}${result.hpGain > 0 ? ` <em class="best">+${result.hpGain}</em>` : ""}`)}
-              ${stat("Weapon damage", `${Math.round(stats.damage * 100)}%`)}
-              ${stat("Damage taken", `${Math.round(stats.armor * 100)}%`)}
+              ${space ? `
+                ${stat("Ship health", stats.ship.maxHp)}
+                ${stat("Ship speed", stats.ship.speed)}
+                ${stat("Energy Shield", stats.ship.shield)}
+                ${stat("Configuration", stats.ship.vanguard ? "Vanguard" : "Standard")}` : `
+                ${stat("Maximum health", `${stats.maxHp}${result.hpGain > 0 ? ` <em class="best">+${result.hpGain}</em>` : ""}`)}
+                ${stat("Weapon damage", `${Math.round(stats.damage * 100)}%`)}
+                ${stat("Damage taken", `${Math.round(stats.armor * 100)}%`)}`}
             </dl>
             <div class="button-row">
-              ${last ? "" : button("resultCustomize", "Customize")}
-              ${button("afterRewards", last ? "Roll Credits" : result.level.id === 5 && result.first ? "Start Jetpack Tutorial" : "Next Level", { kind: "primary" })}
+              ${last || space ? "" : button("resultCustomize", "Customize")}
+              ${button("afterRewards", last ? "Roll Credits" : result.level.id === 6 && result.first && app.progression.nextLevel() === 7 ? "Start Jetpack Tutorial" : "Next Level", { kind: "primary" })}
               ${last ? "" : button("toMenu", "Main Menu", { kind: "ghost" })}
             </div>
           </div>
@@ -488,7 +559,7 @@
             <h1>Game Over</h1>
             ${data.submitted ? `<p class="success">Your score is on the HoloNet.</p>` : scoreForm(data.entry)}
             <div class="button-row">
-              ${button("retry", "Retry Level", { kind: "primary" })}
+              ${button("retry", data.level.mode === "space" ? "Retry Mission" : "Retry Level", { kind: "primary" })}
               ${button("open", "Leaderboard", { id: "leaderboard" })}
               ${button("toMenu", "Main Menu", { kind: "ghost" })}
             </div>

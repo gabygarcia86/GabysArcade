@@ -14,6 +14,7 @@
       this.app = document.getElementById("app");
       this.stage = document.getElementById("stage");
       this.touch = document.getElementById("touch");
+      this.spaceTouch = document.getElementById("space-touch");
       this.pauseButton = document.getElementById("pause");
       this.cinematicControls = document.getElementById("cinematic-controls");
       this.accumulator = 0;
@@ -25,6 +26,8 @@
       const audio = new MQ.AudioManager(() => saveManager.data.settings);
       this.input = new MQ.InputManager();
       this.input.bindTouch(this.touch);
+      this.input.bindTouch(this.spaceTouch);
+      this.input.bindStick(this.spaceTouch.querySelector(".space-stick"));
 
       this.states = new MQ.GameStateManager({
         saveManager, progression, customization, audio,
@@ -34,6 +37,7 @@
       });
       this.input.onDeviceChange = () => this.syncControls();
       this.bindEvents();
+      this.bindMenuAntics();
     }
 
     bindEvents() {
@@ -71,8 +75,34 @@
       // Safari ignores user-scalable=no.
       document.addEventListener("gesturestart", (event) => event.preventDefault());
       document.addEventListener("dblclick", (event) => {
-        if (event.target.closest("#touch, #stage")) event.preventDefault();
+        if (event.target.closest("#touch, #space-touch, #stage")) event.preventDefault();
       });
+    }
+
+    /*
+     * The menu's HTML covers the Canvas, so the easter eggs listen on it. They use click,
+     * as pointerdown would also fire when scrolling the menu.
+     */
+    bindMenuAntics() {
+      const ui = document.getElementById("ui");
+      const heroAt = (event) => {
+        const { states } = this;
+        if (states.state !== STATE.MENU || states.ui.current?.name !== "main") return null;
+        if (event.target.closest?.("button, a")) return null;
+        const rect = this.stage.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * MQ.VW;
+        const y = ((event.clientY - rect.top) / rect.height) * MQ.VH;
+        if (x < 0 || x > MQ.VW || y < 0 || y > MQ.VH) return null;
+        return states.antics.hit(x, y);
+      };
+      ui.addEventListener("click", (event) => {
+        const who = heroAt(event);
+        if (who) this.states.antics.poke(who);
+      });
+      ui.addEventListener("pointermove", (event) => {
+        ui.classList.toggle("over-hero", event.pointerType === "mouse" && !!heroAt(event));
+      });
+      ui.addEventListener("pointerleave", () => ui.classList.remove("over-hero"));
     }
 
     syncControls() {
@@ -81,7 +111,9 @@
       const playing = state === STATE.PLAYING;
       const touchWanted = preference === "on" || (preference === "auto" && this.input.usingTouch);
 
-      this.touch.hidden = !(playing && touchWanted);
+      const inSpace = this.states.world?.mode === "space";
+      this.touch.hidden = !(playing && touchWanted && !inSpace);
+      this.spaceTouch.hidden = !(playing && touchWanted && inSpace);
       this.pauseButton.hidden = !playing;
       this.cinematicControls.hidden = state !== STATE.CINEMATIC;
       this.app.dataset.state = state;
@@ -128,6 +160,24 @@
       hud.scale = clamp(0.8 / scale, 1, 1.5);
       const buttonReaches = top < 56;
       hud.rightInset = buttonReaches ? Math.max(12, (PAUSE_BUTTON_SPACE - left) / scale) : 12;
+
+      // Measured after the stage moves, as the touch controls can overlap it.
+      const stageLeft = safeLeft + left;
+      const stageTop = safeTop + top;
+      const shown = [this.touch, this.spaceTouch].filter((el) => !el.hidden);
+      const controls = shown.flatMap((el) => [...el.querySelectorAll(".touch-btn, .stick-base")]);
+      const buttons = controls.map((el) => el.getBoundingClientRect());
+      const smallOrTouch = hud.crowded || this.input.usingTouch || this.app.classList.contains("touch-mode");
+      hud.notices.layout(
+        { left: stageLeft, right: stageLeft + cssWidth, bottom: stageTop + cssHeight },
+        { left: safeLeft, right: safeLeft + width, bottom: safeTop + height },
+        buttons,
+        smallOrTouch,
+      );
+      this.states.spaceUI.layout(
+        { left: stageLeft, right: stageLeft + cssWidth, top: stageTop },
+        this.spaceTouch.hidden ? [] : controls,
+      );
     }
 
     start() {
@@ -158,6 +208,7 @@
       ctx.setTransform(canvas.width / MQ.VW, 0, 0, canvas.height / MQ.VH, 0, 0);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
+      this.states.hud.notices.clear();
       this.states.draw(ctx);
     }
   }

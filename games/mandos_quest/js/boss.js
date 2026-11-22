@@ -1600,7 +1600,7 @@
         this.y = this.arena.floor;
         this.vy = 0;
       }
-      this.gait += abs(this.vx) * dt * 0.034;
+      this.gait += this.vx * this.facing * dt * 0.034;
     }
 
     choose() {

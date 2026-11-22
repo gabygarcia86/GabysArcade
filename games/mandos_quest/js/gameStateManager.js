@@ -1,6 +1,7 @@
 /*
  * The game's flow: menu, cinematic, playing, paused and results, and the moves between them.
  * Story Mode runs intro, level, outro, completion, rewards, then the next intro.
+ * A level is played by World on the ground, or by SpaceLevelManager in space.
  */
 (function (MQ) {
   const D = MQ.DATA;
@@ -23,9 +24,11 @@
       this.canFullscreen = !!document.fullscreenEnabled;
 
       this.hud = new MQ.Hud(input);
+      this.spaceUI = new MQ.SpaceUIManager(this.hud);
       this.stage = new MQ.Stage(() => this.customization.look);
       this.cinematic = new MQ.CinematicPlayer(this.stage, audio, input);
-      this.menuScene = new MQ.MenuScene(this.stage);
+      this.antics = new MQ.MenuAntics(() => this.customization.look, audio, () => this.save.settings);
+      this.menuScene = new MQ.MenuScene(this.stage, this.antics);
       this.ui = new MQ.UIManager(uiRoot, this);
       input.onPause = () => this.escape();
     }
@@ -81,12 +84,14 @@
       this.disposeWorld();
       this.ui.hide();
       this.progression.refresh();
-      this.world = new MQ.World(level, {
+      const Mode = level.mode === "space" ? MQ.SpaceLevelManager : MQ.World;
+      this.world = new Mode(level, {
         saveManager: this.saveManager,
         progression: this.progression,
         customization: this.customization,
         audio: this.audio,
         hud: this.hud,
+        spaceUI: this.spaceUI,
         onFinish: (world) => this.levelFinished(world),
         onGameOver: (world) => this.gameOver(world),
         onWeapon: () => this.saveManager.write(),
@@ -109,12 +114,13 @@
 
     levelFinished(world) {
       const result = this.progression.completeLevel(world.def, world.run);
-      const last = world.def.id === D.TOTAL_LEVELS;
+      const last = result.finale;
+      const screen = world.mode === "space" ? "spaceComplete" : "complete";
       this.playCinematic(
         world.def.outro,
         () => {
           this.setState(STATE.RESULT);
-          this.ui.show("complete", { result });
+          this.ui.show(screen, { result });
           this.audio.music(last ? "ending" : "menu");
           if (result.rewards.length) this.audio.sfx("unlock");
         },
@@ -153,7 +159,7 @@
     action(name, id, data) {
       switch (name) {
         case "story":
-          if (this.save.completed) this.ui.open("story");
+          if (this.progression.started) this.ui.open("story");
           else this.startLevel(1);
           break;
         case "storyContinue":
@@ -170,8 +176,8 @@
           break;
         case "restart":
           this.ui.open("confirm", {
-            title: "Restart level?",
-            message: "You'll lose your progress in this attempt. Collected Bounty Pucks are kept.",
+            title: this.world.mode === "space" ? "Restart mission?" : "Restart level?",
+            message: this.attemptWarning(),
             label: "Restart",
             run: () => {
               this.autoFullscreen();
@@ -181,8 +187,8 @@
           break;
         case "quit":
           this.ui.open("confirm", {
-            title: "Leave this level?",
-            message: "You'll lose your progress in this attempt. Collected Bounty Pucks are kept.",
+            title: this.world.mode === "space" ? "Leave this mission?" : "Leave this level?",
+            message: this.attemptWarning(),
             label: "Main Menu",
             run: () => this.showMenu(),
           });
@@ -201,8 +207,9 @@
           this.ui.open("customize");
           break;
         case "afterRewards":
-          if (data.result.level.id < D.TOTAL_LEVELS) {
-            this.startLevel(data.result.level.id + 1);
+          if (!data.result.finale) {
+            // The next uncleared stage, or the following one on a replay.
+            this.startLevel(data.result.first ? this.progression.nextLevel() : data.result.level.id + 1);
           } else {
             this.ui.show("credits", { ending: true });
             this.audio.music("credits");
@@ -214,7 +221,7 @@
         case "reset":
           this.ui.open("confirm", {
             title: "Reset all progress?",
-            message: "This erases levels, upgrades, armor, pucks and the Darksaber from this browser. It can't be undone.",
+            message: "Levels, XP, scores, times and pucks go back to 0, and every unlock and custom look is erased from this browser. Your settings are kept. This can't be undone.",
             label: "Erase progress",
             run: () => this.resetProgress(),
           });
@@ -223,6 +230,11 @@
           this.toggleFullscreen();
           break;
       }
+    }
+
+    attemptWarning() {
+      const lost = "You'll lose your progress in this attempt.";
+      return this.world.mode === "space" ? `${lost} Ship upgrades from capsules are lost too.` : `${lost} Collected Bounty Pucks are kept.`;
     }
 
     resetProgress() {
@@ -256,7 +268,7 @@
 
     equip(id) {
       if (!this.progression.hasWeapon(id)) return;
-      if (this.world && this.inLevel) this.world.player.weapons.select(id);
+      if (this.world && this.inLevel && this.world.mode !== "space") this.world.player.weapons.select(id);
       this.save.weapon = id;
       this.saveManager.write();
     }
@@ -302,7 +314,8 @@
       if (this.world) {
         this.world.draw(ctx);
         if (this.state === STATE.PLAYING) {
-          this.hud.draw(ctx, this.world);
+          if (this.world.mode === "space") this.world.drawHud(ctx);
+          else this.hud.draw(ctx, this.world);
         } else {
           ctx.fillStyle = "rgba(3,5,12,0.5)";
           ctx.fillRect(0, 0, MQ.VW, MQ.VH);
@@ -310,7 +323,7 @@
       } else if (this.state === STATE.CINEMATIC) {
         this.cinematic.draw(ctx);
       } else {
-        this.menuScene.draw(ctx, this.time, this.ui.current?.name === "main");
+        this.menuScene.draw(ctx, this.time, this.ui.current?.name === "main", this.hud.scale);
       }
       if (this.fade > 0) {
         ctx.fillStyle = `rgba(0,0,0,${this.fade})`;

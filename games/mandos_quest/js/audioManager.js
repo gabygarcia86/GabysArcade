@@ -8,7 +8,7 @@
   const MAX_VOICES = 70;
 
   // Minimum seconds between two plays of the same effect.
-  const GAP = { hit: 0.04, enemyHit: 0.05, flame: 0.09, jetpack: 0.1, hover: 0.05, enemyWarn: 0.15, explosion: 0.06, enemyShot: 0.04, crumble: 0.1 };
+  const GAP = { hit: 0.04, enemyHit: 0.05, flame: 0.09, jetpack: 0.1, hover: 0.05, enemyWarn: 0.15, explosion: 0.06, enemyShot: 0.04, crumble: 0.1, shipBlaster: 0.09, shipPop: 0.05, shipExplosion: 0.08, shipBurst: 0.1, shieldHit: 0.07, shipBossShot: 0.12 };
 
   /* Recipes use t(type, from Hz, to Hz, seconds, volume, delay) and n(filter, from Hz, to Hz, seconds, volume, delay). */
   const SFX = {
@@ -68,6 +68,56 @@
     gameOver: (a) => { [330, 311, 247, 165].forEach((f, i) => a.t("triangle", f, f, 0.7, 0.2, i * 0.3)); },
     unlock: (a) => { [440, 554, 659, 880, 1109, 1319].forEach((f, i) => a.t("sine", f, f, 0.5, 0.15, i * 0.1)); },
     transmission: (a) => { for (let i = 0; i < 4; i++) a.t("sine", 900 + (i % 2) * 420, 900 + (i % 2) * 420, 0.06, 0.07, i * 0.07); },
+    shipBlaster: (a) => { a.t("square", 1500, 420, 0.07, 0.055); a.t("sine", 700, 240, 0.06, 0.06); },
+    shipLaser: (a) => { a.t("sawtooth", 1300, 2100, 0.18, 0.1); a.t("sine", 330, 310, 0.22, 0.16); a.n("highpass", 4000, 2500, 0.15, 0.07); },
+    shipMissile: (a) => { a.n("bandpass", 500, 2600, 0.26, 0.18); a.t("sawtooth", 190, 90, 0.2, 0.05); },
+    shipPop: (a) => { a.n("lowpass", 1800, 120, 0.22, 0.3); a.t("triangle", 260, 60, 0.18, 0.12); },
+    shipExplosion: (a) => { a.n("lowpass", 2200, 50, 0.8, 0.55); a.t("sine", 120, 28, 0.6, 0.35); a.n("bandpass", 900, 200, 0.3, 0.2, 0.12); },
+    shipBurst: (a) => { a.n("bandpass", 2400, 300, 0.3, 0.3); a.t("square", 440, 90, 0.16, 0.07); },
+    shipHit: (a) => { a.t("sawtooth", 160, 50, 0.3, 0.25); a.n("lowpass", 1100, 150, 0.25, 0.35); a.t("square", 880, 660, 0.12, 0.05, 0.1); },
+    shipDown: (a) => { a.n("lowpass", 2600, 40, 1.3, 0.6); a.t("sawtooth", 520, 40, 1.1, 0.16); },
+    shipRespawn: (a) => { a.t("sine", 160, 880, 0.55, 0.16); a.n("bandpass", 300, 3400, 0.5, 0.15); },
+    shieldUp: (a) => { a.t("sine", 260, 1040, 0.3, 0.18); a.t("triangle", 520, 780, 0.35, 0.08, 0.08); },
+    shieldHit: (a) => { a.t("sine", 1250, 820, 0.09, 0.07); a.n("highpass", 3500, 2500, 0.06, 0.06); },
+    capsule: (a) => { [880, 1175, 1480].forEach((f, i) => a.t("triangle", f, f, 0.12, 0.12, i * 0.045)); },
+    upgrade: (a) => { [392, 523, 784, 1047].forEach((f, i) => a.t("square", f, f * 1.01, 0.2, 0.07, i * 0.07)); a.n("bandpass", 600, 3000, 0.35, 0.12); },
+    shipBossShot: (a) => { a.t("square", 300, 80, 0.2, 0.1); a.n("bandpass", 1100, 250, 0.15, 0.15); },
+    shipBeam: (a) => { a.t("sawtooth", 90, 70, 0.8, 0.22); a.t("square", 1800, 1500, 0.7, 0.05); a.n("lowpass", 3000, 400, 0.8, 0.3); },
+    bossIntroWarden: (a) => { for (let i = 0; i < 3; i++) a.t("square", 440, 330, 0.3, 0.12, i * 0.4); a.n("bandpass", 200, 1800, 1.4, 0.3); a.t("sawtooth", 55, 110, 1.4, 0.2); },
+    bossIntroBastion: (a) => { [196, 185, 147, 98].forEach((f, i) => a.t("triangle", f, f, 0.9, 0.22, i * 0.3)); a.n("lowpass", 300, 2000, 1.6, 0.3); },
+    bossIntroCommand: (a) => { for (let i = 0; i < 4; i++) a.t("sawtooth", 73, 69, 0.45, 0.22, i * 0.38); [587, 554, 440].forEach((f, i) => a.t("square", f, f, 0.6, 0.06, 0.4 + i * 0.4)); },
+    spaceComplete: (a) => { [523, 659, 880, 784, 1047, 1319].forEach((f, i) => a.t("triangle", f, f, i === 5 ? 1.1 : 0.2, 0.19, i * 0.13)); a.n("bandpass", 300, 4000, 1, 0.12); },
+    fart: (a) => { a.toot(125, 62, 0.75, 0.45, 27); a.n("lowpass", 600, 120, 0.6, 0.12); },
+    fartSqueak: (a) => a.toot(260, 640, 0.65, 0.2, 38, 0, 2400),
+    fartBig: (a) => { a.toot(98, 36, 1.5, 0.5, 19); a.toot(150, 58, 0.9, 0.2, 31, 0.15); a.n("lowpass", 900, 70, 1.3, 0.2); },
+    fartTiny: (a) => a.toot(300, 210, 0.22, 0.28, 34, 0, 1600),
+    fartNote1: (a) => a.toot(131, 124, 0.3, 0.42, 30),
+    fartNote2: (a) => a.toot(165, 158, 0.26, 0.4, 33),
+    fartNote3: (a) => a.toot(196, 190, 0.26, 0.4, 36),
+    fartNote4: (a) => a.toot(262, 92, 0.55, 0.45, 28),
+    rumble: (a) => { a.toot(45, 80, 0.95, 0.3, 11, 0, 300); a.n("lowpass", 90, 300, 0.95, 0.2); },
+    burp: (a) => { a.toot(170, 88, 0.7, 0.45, 46, 0, 1100); a.toot(84, 70, 0.4, 0.2, 24, 0.15); },
+    gulp: (a) => { a.t("sine", 420, 130, 0.16, 0.25); a.t("sine", 190, 320, 0.1, 0.15, 0.17); },
+    ribbit: (a) => { a.toot(230, 330, 0.16, 0.2, 60, 0, 1800); a.toot(250, 380, 0.22, 0.2, 60, 0.22, 1800); },
+    hiccup: (a) => { a.t("sine", 520, 1150, 0.09, 0.2); a.t("triangle", 900, 700, 0.05, 0.08, 0.09); },
+    sneeze: (a) => { a.n("bandpass", 3000, 600, 0.35, 0.6); a.t("triangle", 480, 120, 0.22, 0.2); },
+    sneezeSmall: (a) => { a.n("highpass", 4500, 1800, 0.22, 0.35); a.t("sine", 1100, 620, 0.16, 0.15); },
+    snore: (a) => { a.toot(62, 88, 0.5, 0.2, 22, 0, 400); a.t("sine", 900, 600, 0.35, 0.05, 0.55); },
+    pop: (a) => { a.n("highpass", 2500, 1200, 0.06, 0.3); a.t("sine", 700, 1500, 0.06, 0.15); },
+    bubble: (a) => { for (let i = 0; i < 3; i++) a.t("sine", 420 + i * 170, 900 + i * 200, 0.07, 0.12, i * 0.06); },
+    bonk: (a) => { a.t("sine", 190, 55, 0.2, 0.4); a.t("triangle", 820, 640, 0.12, 0.12); a.n("lowpass", 800, 120, 0.15, 0.25); },
+    spin: (a) => { for (let i = 0; i < 12; i++) a.t("triangle", 1200 - i * 55, 900 - i * 40, 0.06, 0.1, i * 0.07 + i * i * 0.003); },
+    slideUp: (a) => a.t("sine", 350, 1300, 0.4, 0.14),
+    slideDown: (a) => a.t("sine", 1400, 220, 0.8, 0.13),
+    flap: (a) => a.n("bandpass", 700, 260, 0.11, 0.25),
+    beep: (a) => a.t("square", 1050, 1050, 0.07, 0.06),
+    disco: (a) => {
+      [110, 110, 220, 110, 131, 131, 262, 147].forEach((f, i) => {
+        a.t("square", f, f, 0.16, 0.07, i * 0.23);
+        a.n("highpass", 7000, 6000, 0.05, 0.12, i * 0.23 + 0.115);
+        if (i % 2 === 0) a.t("sine", 150, 42, 0.18, 0.3, i * 0.23);
+      });
+    },
     hover: (a) => a.t("sine", 660, 700, 0.04, 0.04),
     click: (a) => { a.t("sine", 600, 900, 0.07, 0.11); },
   };
@@ -89,19 +139,26 @@
     level1: { root: 50, scale: "desert", bpm: 92, lead: "triangle", drums: 1, chords: [0, 1, 0, 6] },
     level2: { root: 45, scale: "dorian", bpm: 100, lead: "square", drums: 2, chords: [0, 3, 0, 4] },
     level3: { root: 47, scale: "phrygian", bpm: 108, lead: "sawtooth", drums: 2, chords: [0, 1, 5, 1] },
-    level4: { root: 52, scale: "minor", bpm: 96, lead: "sine", drums: 1, chords: [0, 5, 2, 6] },
-    level5: { root: 52, scale: "desert", bpm: 112, lead: "square", drums: 2, chords: [0, 1, 3, 1] },
-    level6: { root: 43, scale: "harmonic", bpm: 90, lead: "triangle", drums: 2, chords: [0, 5, 3, 4] },
-    level7: { root: 48, scale: "dorian", bpm: 78, lead: "sine", drums: 1, chords: [0, 6, 3, 4] },
-    level8: { root: 49, scale: "minor", bpm: 120, lead: "square", drums: 3, chords: [0, 0, 5, 6] },
-    level9: { root: 46, scale: "phrygian", bpm: 116, lead: "sawtooth", drums: 2, chords: [0, 1, 6, 4] },
-    level10: { root: 45, scale: "harmonic", bpm: 124, lead: "sawtooth", drums: 3, chords: [0, 5, 1, 4] },
+    // A seed keeps the melody a level had before the space stages moved it along.
+    level4: { root: 47, scale: "harmonic", bpm: 138, lead: "square", drums: 3, chords: [0, 5, 6, 4], arp: "triangle" },
+    level5: { seed: "level4", root: 52, scale: "minor", bpm: 96, lead: "sine", drums: 1, chords: [0, 5, 2, 6] },
+    level6: { seed: "level5", root: 52, scale: "desert", bpm: 112, lead: "square", drums: 2, chords: [0, 1, 3, 1] },
+    level7: { seed: "level6", root: 43, scale: "harmonic", bpm: 90, lead: "triangle", drums: 2, chords: [0, 5, 3, 4] },
+    level8: { root: 50, scale: "lydian", bpm: 128, lead: "triangle", drums: 2, chords: [0, 1, 4, 5], arp: "sine" },
+    level9: { seed: "level7", root: 48, scale: "dorian", bpm: 78, lead: "sine", drums: 1, chords: [0, 6, 3, 4] },
+    level10: { seed: "level8", root: 49, scale: "minor", bpm: 120, lead: "square", drums: 3, chords: [0, 0, 5, 6] },
+    level11: { seed: "level9", root: 46, scale: "phrygian", bpm: 116, lead: "sawtooth", drums: 2, chords: [0, 1, 6, 4] },
+    level12: { root: 44, scale: "phrygian", bpm: 156, lead: "sawtooth", drums: 3, chords: [0, 1, 5, 6], arp: "square" },
+    level13: { seed: "level10", root: 45, scale: "harmonic", bpm: 124, lead: "sawtooth", drums: 3, chords: [0, 5, 1, 4] },
     boss: { root: 43, scale: "harmonic", bpm: 140, lead: "sawtooth", drums: 3, chords: [0, 1, 0, 4] },
     bossMudhorn: { root: 40, scale: "phrygian", bpm: 132, lead: "square", drums: 3, chords: [0, 1, 0, 3] },
     bossReptavians: { root: 47, scale: "minor", bpm: 148, lead: "triangle", drums: 3, chords: [0, 5, 6, 4] },
     bossKrayt: { root: 42, scale: "desert", bpm: 138, lead: "sawtooth", drums: 3, chords: [0, 1, 4, 1] },
     bossMythosaur: { root: 38, scale: "dorian", bpm: 120, lead: "triangle", drums: 3, chords: [0, 3, 6, 4] },
     bossGuardian: { root: 41, scale: "phrygian", bpm: 144, lead: "square", drums: 3, chords: [0, 0, 1, 5] },
+    bossWarden: { root: 46, scale: "minor", bpm: 150, lead: "square", drums: 3, chords: [0, 6, 5, 4], arp: "triangle" },
+    bossBastion: { root: 41, scale: "dorian", bpm: 142, lead: "triangle", drums: 3, chords: [0, 0, 3, 1], arp: "sine" },
+    bossCommand: { root: 43, scale: "harmonic", bpm: 162, lead: "sawtooth", drums: 3, chords: [0, 5, 1, 4], arp: "square" },
     bossGideon: { root: 45, scale: "harmonic", bpm: 152, lead: "sawtooth", drums: 3, chords: [0, 5, 3, 4] },
   };
 
@@ -270,6 +327,46 @@
       source.stop(start + seconds + 0.02);
     }
 
+    // A buzz that flutters in pitch and volume: the sound of every fart, burp and snore.
+    toot(from, to, seconds, volume, flutter, delay = 0, brightness = 900) {
+      const { ctx } = this;
+      const start = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const wobble = ctx.createOscillator();
+      const bend = ctx.createGain();
+      const pulse = ctx.createGain();
+      const chop = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(from, start);
+      osc.frequency.exponentialRampToValueAtTime(to, start + seconds);
+      wobble.type = "square";
+      wobble.frequency.setValueAtTime(flutter, start);
+      wobble.frequency.linearRampToValueAtTime(flutter * 0.6, start + seconds);
+      bend.gain.value = from * 0.18;
+      pulse.gain.value = 0.4;
+      chop.gain.value = 0.6;
+      wobble.connect(bend).connect(osc.frequency);
+      wobble.connect(pulse).connect(chop.gain);
+      filter.type = "lowpass";
+      filter.frequency.value = brightness;
+      filter.Q.value = 4;
+      // Held nearly to the end, as envelope() would fade it away too soon.
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(volume * 0.6, start + seconds * 0.8);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + seconds);
+      osc.connect(filter).connect(chop).connect(gain).connect(this.sfxGain);
+      this.voice(osc, gain);
+      const end = start + seconds + 0.02;
+      osc.start(start);
+      osc.stop(end);
+      wobble.start(start);
+      wobble.stop(end);
+    }
+
     music(name) {
       const resolved = this.entry("music", name) || !name.startsWith("boss") || !this.entry("music", "boss") ? name : "boss";
       if (resolved === this.track) return;
@@ -307,7 +404,7 @@
 
     compose(name) {
       const spec = TRACKS[name] || TRACKS.menu;
-      const random = rng(hash(name));
+      const random = rng(hash(spec.seed || name));
       const phrase = () => {
         let note = 4;
         return Array.from({ length: 16 }, (_, i) => {
@@ -364,6 +461,12 @@
           const volume = spec.lead === "sine" ? 0.12 : spec.lead === "triangle" ? 0.1 : 0.035;
           this.t(spec.lead, f, f, length * 3, volume, 0, bus, at);
         }
+      }
+
+      // The space tracks run a quick arpeggio under everything.
+      if (spec.arp && bar % 8 >= 2) {
+        const f = freq(chord + [0, 2, 4, 7][step % 4], 2);
+        this.t(spec.arp, f, f, length * 0.8, spec.arp === "square" ? 0.018 : 0.04, 0, bus, at);
       }
 
       if (spec.drums) {

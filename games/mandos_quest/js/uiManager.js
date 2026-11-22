@@ -1,7 +1,8 @@
 /* Shows menu screens, routes their buttons and animates their preview canvases. */
 (function (MQ) {
-  const ROOT_SCREENS = new Set(["main", "pause", "complete", "levelUp", "gameOver", "finalScore"]);
+  const ROOT_SCREENS = new Set(["main", "pause", "complete", "spaceComplete", "levelUp", "gameOver", "finalScore"]);
   const PREVIEW_DPR_MAX = 2;
+  const CONFIRM_DELAY_MS = 500;
 
   class UIManager {
     constructor(root, app) {
@@ -56,7 +57,7 @@
     }
 
     open(name, data = {}) {
-      const entry = { name, data };
+      const entry = { name, data, openedAt: performance.now() };
       if (name === "map") entry.data.selected ??= this.app.progression.nextLevel();
       if (name === "customize") entry.data.tab ??= "sets";
       this.stack.push(entry);
@@ -136,6 +137,12 @@
 
         if (p.kind === "weapon") {
           MQ.WeaponArt.showcase(ctx, p.id, width, height, saber, time);
+        } else if (p.kind === "relic") {
+          MQ.SpaceArt.relic(ctx, p.id, width, height, time, save.relics.includes(p.id));
+        } else if (p.kind === "mission") {
+          const { vanguard, upgrades } = progression.stats.ship;
+          const levels = { speed: 1, twin: 1, rear: 0, missile: 1, spread: upgrades.includes("spread") ? 1 : 0, laser: upgrades.includes("laser") ? 1 : 0 };
+          MQ.SpaceArt.mission(ctx, MQ.LEVELS[p.id - 1], width, height, time, customization.look, vanguard, levels);
         } else if (p.kind === "saber") {
           ctx.save();
           ctx.translate(30, height / 2);
@@ -217,6 +224,8 @@
           this.loadBoard();
           break;
         case "confirm":
+          // The second tap of a double tap can land on this button as the dialog appears.
+          if (performance.now() - this.current.openedAt < CONFIRM_DELAY_MS) break;
           this.current.data.run();
           break;
         default:

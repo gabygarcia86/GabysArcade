@@ -209,8 +209,11 @@
 
     draw(ctx, shot, t, time) {
       const pan = t * 9;
-      const background = MQ.Backgrounds.get(shot.scene);
-      background.draw(ctx, pan * 6, 60, time);
+      // The space stages share their own backdrops with their cinematics.
+      const inSpace = MQ.SpaceBackground.has(shot.scene);
+      const background = inSpace ? MQ.SpaceBackground.get(shot.scene) : MQ.Backgrounds.get(shot.scene);
+      if (inSpace) background.draw(ctx, pan * 14, time);
+      else background.draw(ctx, pan * 6, 60, time);
 
       ctx.save();
       // A slow push in.
@@ -228,7 +231,7 @@
       }
       for (const actor of shot.cast) drawActor(ctx, actor, t, this);
       ctx.restore();
-      background.drawFront(ctx, pan * 6, time);
+      if (!inSpace) background.drawFront(ctx, pan * 6, time);
     }
   }
 
@@ -338,14 +341,13 @@
 
   /* The animated scene behind the main menu. */
   class MenuScene {
-    constructor(stage) {
+    constructor(stage, antics) {
       this.stage = stage;
-      this.hero = { a: "mando", x: 260, y: 600, scale: 3.5, weapon: "blaster", action: "hold", jetpack: true };
-      this.child = { a: "baby", x: 500, y: 452, scale: 2.1, mood: "idle" };
+      this.antics = antics; // Draws Mando and Baby G, and their easter eggs.
       this.ship = { a: "ship", kind: "gunship", x: 0, y: 130, scale: 0.55 };
     }
 
-    draw(ctx, time, showHeroes) {
+    draw(ctx, time, showHeroes, textScale) {
       MQ.Backgrounds.get("galaxy").draw(ctx, time * 14, 0, time);
       this.ship.x = ((time * 60) % 1700) - 220;
       drawActor(ctx, this.ship, time, this.stage);
@@ -360,11 +362,13 @@
       glow(ctx, 420, 560, 260, "#8c3f2b", 0.25);
       poly(ctx, [120, 640, 160, 600, 330, 592, 400, 634, 420, 720, 100, 720], "#3a272c", MQ.INK, 2);
       poly(ctx, [160, 600, 330, 592, 345, 606, 178, 614], "#59393a");
-      if (!showHeroes) return;
-
-      this.child.mood = clamp(sin(time * 0.6), 0, 1) > 0.8 ? "happy" : sin(time * 0.37) > 0.93 ? "force" : "idle";
-      drawActor(ctx, this.hero, time, this.stage);
-      drawActor(ctx, this.child, time, this.stage);
+      if (!showHeroes) {
+        this.antics.stop();
+        return;
+      }
+      const idleMood = clamp(sin(time * 0.6), 0, 1) > 0.8 ? "happy" : sin(time * 0.37) > 0.93 ? "force" : "idle";
+      this.antics.update(time, idleMood);
+      this.antics.draw(ctx, time, textScale);
     }
   }
 

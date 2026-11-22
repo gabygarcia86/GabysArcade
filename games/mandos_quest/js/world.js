@@ -25,7 +25,7 @@
       this.settings = this.save.settings;
       this.stats = { ...services.progression.stats };
       this.difficulty = D.DIFFICULTY[this.settings.difficulty];
-      this.firstVisit = this.save.completed < def.id;
+      this.firstVisit = !this.save.cleared[def.id - 1];
 
       this.state = "play";
       this.stateTime = 0;

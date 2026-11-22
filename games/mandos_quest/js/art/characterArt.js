@@ -406,10 +406,11 @@
 
   /* ---------- Baby G ---------- */
 
-  function babyFace(ctx, mood, time) {
+  // ears bends both ears down, or up if it's negative.
+  function babyFace(ctx, mood, time, ears = 0) {
     const blink = (time * 0.31) % 1 > 0.95;
-    const closed = blink || mood === "force";
-    const earAngle = { happy: -0.3, victory: -0.38, worried: 0.38, sad: 0.5, force: -0.12 }[mood] ?? sin(time * 1.7) * 0.07;
+    const closed = blink || mood === "force" || mood === "sleep";
+    const earAngle = ({ happy: -0.3, victory: -0.38, worried: 0.38, sad: 0.5, force: -0.12 }[mood] ?? sin(time * 1.7) * 0.07) + ears;
     const skin = "#8fb573";
 
     for (const side of [-1, 1]) {
@@ -482,7 +483,7 @@
 
   // The origin is the center of the floating pram.
   function baby(ctx, mood = "idle", time = 0, options = {}) {
-    const { pram = true, power = 0 } = options;
+    const { pram = true, power = 0, ears = 0 } = options;
     const cheer = mood === "victory" || mood === "happy";
     const hop = cheer ? -abs(sin(time * 8)) * 4 : 0;
 
@@ -518,7 +519,7 @@
 
     ctx.translate(0, -16);
     ctx.rotate(sin(time * 1.3) * 0.05);
-    babyFace(ctx, mood, time);
+    babyFace(ctx, mood, time, ears);
     ctx.restore();
 
     if (!pram) return;

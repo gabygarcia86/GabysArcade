@@ -1,6 +1,6 @@
 # Mando's Quest
 
-A 2D platform action-adventure in HTML5 Canvas and vanilla JavaScript. A Mandalorian bounty hunter rescues Baby G and crosses ten worlds to stop Moff Gideon from using the Star Map Core.
+A 2D platform action-adventure in HTML5 Canvas and vanilla JavaScript. A Mandalorian bounty hunter rescues Baby G and crosses ten worlds to stop Moff Gideon from using the Star Map Core. Between the worlds are three side-scrolling space battles, for 13 levels in all.
 
 It has no build step, dependencies, or image and audio assets apart from the icons. Characters, worlds, effects and music are generated in code.
 
@@ -30,6 +30,8 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 
 ## Controls
 
+### On the ground
+
 | Action | Keyboard | Touch |
 | --- | --- | --- |
 | Move | A / D or Left / Right | Arrow buttons, or slide between them |
@@ -40,7 +42,18 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 | Force Push | K | Force |
 | Change weapon | L | Weapon |
 | Dodge | Shift, or double-tap a direction | Double-tap an arrow |
-| Drop through a ledge | S or Down | Walk off the edge |
+| Drop through a ledge | S or Down | Drop |
+| Pause | Escape | Pause button |
+
+### In space
+
+| Action | Keyboard | Touch |
+| --- | --- | --- |
+| Fly | WASD or arrow keys | Stick |
+| Fire | J or Space (hold) | Fire (hold) |
+| Seeker rockets | K | Rockets |
+| Install the highlighted upgrade | L | Upgrade |
+| Shield | Shift | Shield |
 | Pause | Escape | Pause button |
 
 On phones and tablets, starting, restarting or retrying a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there. **Options > Toggle fullscreen** works on any browser that supports it.
@@ -52,23 +65,48 @@ On phones and tablets, starting, restarting or retrying a level switches to full
 | 1 | The Hidden Child | Arvala-7 | | Baby G, Force Push |
 | 2 | The Mudhorn Valley | Arvala-7 | Mudhorn | Vibroblade, health, stronger push |
 | 3 | The Nevarro Underworld | Nevarro | | Whistling Birds, faster blaster, stronger push, colors |
-| 4 | The Reptavian Nest | Nevarro Wilderness | Reptavians | Pulse Rifle, health, armor |
-| 5 | The Sands of Tatooine | Tatooine | | Jetpack, Heavy Blaster, wider push |
-| 6 | The Mythosaur Awakens | Mandalore | Krayt Dragon | Flamethrower, fuel, push range |
-| 7 | The Living Legend | Mandalore | Mythosaur | Wrist Rockets, thrusters, heavy objects |
-| 8 | The Imperial Fortress | Frozen Fortress | Imperial Guardian (mini-boss) | Disruptor Rifle, plating, damage |
-| 9 | The Star Map Core | Imperial Command Ship | | Twin blaster, Force Burst |
-| 10 | The Darksaber | Star Map Citadel | Moff Gideon | Final Arsenal |
+| 4 | **Escape from Nevarro** | Space battle | Warden Gunship | Spread Shot, ship health, collectible |
+| 5 | The Reptavian Nest | Nevarro Wilderness | Reptavians | Pulse Rifle, health, armor |
+| 6 | The Sands of Tatooine | Tatooine | | Jetpack, Heavy Blaster, wider push |
+| 7 | The Mythosaur Awakens | Mandalore | Krayt Dragon | Flamethrower, fuel, push range |
+| 8 | **Mandalore Orbit** | Space battle | Orbital Bastion | Laser Cannon, improved shield, ship speed |
+| 9 | The Living Legend | Mandalore | Mythosaur | Wrist Rockets, thrusters, heavy objects |
+| 10 | The Imperial Fortress | Frozen Fortress | Imperial Guardian (mini-boss) | Disruptor Rifle, plating, damage |
+| 11 | The Star Map Core | Imperial Command Ship | | Twin blaster, Force Burst |
+| 12 | **Assault on Gideon's Fleet** | Space battle | Gideon's Command Ship | Vanguard loadout, ship health, collectible |
+| 13 | The Darksaber | Star Map Citadel | Moff Gideon | Final Arsenal |
 
-There are five major bosses, in Levels 2, 4, 6, 7 and 10. The Imperial Guardian is a mini-boss.
+On the ground there are five major bosses, in Levels 2, 5, 7, 9 and 13, and the Imperial Guardian is a mini-boss. Each space battle has a mini-boss along the way and a three-phase boss at the end.
 
-Every level hides three Bounty Pucks. Some need upgrades from later levels, so they're meant for replays. Clearing all ten levels and finding all 30 pucks unlocks the Darksaber and its nine blade colors.
+Each of the ten ground levels hides three Bounty Pucks. Some need upgrades from later levels, so they're meant for replays. Clearing all ten worlds and finding all 30 pucks unlocks the Darksaber and its nine blade colors.
+
+## Space battles
+
+The screen scrolls by itself. Shoot down the waves, dodge what you can't shoot, and collect capsules. They come from ships with a gold glow, from big targets, and now and then from anything else.
+
+Each capsule moves the highlight one place along the upgrade bar. Install the highlighted upgrade, or keep collecting to reach a later one.
+
+| Upgrade | Effect | Levels | Available |
+| --- | --- | --- | --- |
+| Speed Up | Faster flight | 3 | Always |
+| Twin Blaster | Two bolts, then three | 2 | Always |
+| Spread Shot | Angled bolts | 2 | After Level 4 |
+| Rear Shot | Fires backward, for ships that circle behind | 2 | Always |
+| Missile Launcher | Missiles that drop and seek targets on the surface | 2 | Always |
+| Energy Shield | Absorbs damage until it's used up | 1 | Always. Stronger after Level 8 |
+| Laser Cannon | A piercing beam | 2 | After Level 8 |
+
+The Shield button is separate: two short deflector charges that recharge over time.
+
+Losing a life costs upgrades by difficulty. Story keeps them all, Standard keeps the first half installed, and Veteran keeps none.
 
 ## Scoring
 
 - A level scores points for defeated enemies, bosses and objectives, plus completion, time and remaining-life bonuses.
 - Difficulty multiplies the level score: Story 75%, Standard 100%, Veteran 125%. It's fixed when the level starts.
-- The campaign score is the best score from each level, plus 1,500 for each Bounty Puck. A game over also counts that run's points if they beat the level's best.
+- The campaign score is the best score from each of the 13 levels, plus 1,500 for each Bounty Puck. A game over also counts that run's points if they beat the level's best.
+
+The online leaderboard still counts the ten worlds (0 to 10), so the Supabase table didn't need changing when the space battles were added. The game holds a submitted score to that table's limit.
 
 If you change scoring in `js/progressionManager.js`, update the limit in `leaderboard.sql` to match. `create table if not exists` won't change a table that already exists, so alter the `score_possible` constraint in Supabase as well.
 
@@ -87,7 +125,22 @@ mandos_quest/
     ├── gameStateManager.js Menus, story flow, pause and results
     ├── world.js            One attempt at a level, and the rules joining every system
     ├── gameData.js         ★ Weapons, armor, colors, upgrades and tuning
-    ├── levels/             ★ The ten levels: layout, enemies, pucks and story
+    ├── levels/             ★ level01-10: the worlds. space01-03: the space battles
+    ├── space/              The space battles, separate from the platforming
+    │   ├── spaceData.js             ★ Ship, upgrades, enemies and tuning
+    │   ├── spaceLevelManager.js     One attempt at a space battle
+    │   ├── spaceWaveManager.js      The wave commands and timeline
+    │   ├── spacePlayer.js           The gunship
+    │   ├── spaceWeaponManager.js    Guns and the upgrade bar
+    │   ├── spaceProjectile.js       Pooled projectiles
+    │   ├── spaceEnemy.js            Pooled enemies and their flight paths
+    │   ├── spaceObstacle.js         Pooled hazards and structures
+    │   ├── spaceBoss.js             The three space bosses
+    │   ├── spacePowerUp.js          Pooled capsules and repair kits
+    │   ├── spaceCollisionManager.js Space collisions
+    │   ├── spaceBackground.js       Parallax backdrops
+    │   ├── spaceParticleSystem.js   Pooled effects without gravity
+    │   └── spaceUIManager.js        The space HUD
     ├── levelBuilder.js     The commands available to level files
     ├── levelManager.js     Platforms, hazards, switches, triggers and encounters
     ├── player.js           The Mandalorian
@@ -111,7 +164,9 @@ mandos_quest/
     ├── inputManager.js     Keyboard and multi-touch
     ├── leaderboard.js      Supabase requests
     ├── hud.js              In-game display
+    ├── notices.js          Popup placement on touch and small screens
     ├── cinematics.js       Story scenes
+    ├── menuAntics.js       Main menu easter eggs: click Mando or Baby G
     ├── screens.js          Menu markup
     ├── uiManager.js        Menu behavior
     ├── utils.js            Shared helpers
@@ -122,7 +177,9 @@ The scripts are plain files on `window.MQ`, not modules, so the game also runs f
 
 ## Editing a level
 
-Levels are written with the commands in `js/levelBuilder.js`:
+The ten ground levels keep their own numbers, 1 to 10, in their file names and `id`. `GROUND_STAGES` and `SPACE_STAGES` at the top of `js/gameData.js` place them and the space battles in the 13-level campaign. Everywhere else, including `after` in `gameData.js`, a level number means its place among the 13.
+
+Ground levels are written with the commands in `js/levelBuilder.js`:
 
 ```js
 b.ground(0, 900, 800);                    // left, right, surface height
@@ -131,11 +188,21 @@ b.foe("stormtrooper", 400, 800);          // type, middle, feet
 b.puck(1000, 640);
 ```
 
-A jump climbs about 150px and crosses about 250px. Keep exactly three pucks in each level, and make sure each objective's `done` id is produced by something in that level.
+A jump climbs about 150px and crosses about 250px. Keep exactly three pucks in each ground level, and make sure each objective's `done` id is produced by something in that level.
+
+Space battles are a timeline in each `space` file's `script(b)`, written with the commands in `js/space/spaceWaveManager.js`:
+
+```js
+b.wave("fighter", "vee", { n: 5, y: 360, capsule: true });
+b.wait(4);                                        // seconds until what follows
+b.surface("bottom", 10, 80, { style: "station", turrets: [0.3, 0.7] });
+b.opening(300, 220);                              // middle, size of the gap
+b.boss();                                         // always last
+```
 
 ## Saved progress
 
-Progress saves automatically in this browser under `mandosQuest.save.v1`. **Options > Reset all progress** erases it after a confirmation and keeps the settings.
+Progress saves automatically in this browser under `mandosQuest.save.v2`. A save from the ten-level game (`mandosQuest.save.v1`) is converted the first time and left in place as a backup. It keeps its unlocks and open levels, and the space battles start unplayed. **Reset all progress**, in the Story Mode menu and in Options, erases it after a confirmation and keeps the settings. The Story Mode menu appears once there's a cleared level or a collected puck.
 
 ## Publishing
 
@@ -143,11 +210,8 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 ## TODO
 
-- Fix character walking backwards animation
-- Fix mobile controls to move down to drop through ledge
-- Fix text popups appearing over the character making it unable to see what your doing
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- Add ship levels?
-- On main menu, easter egg clicking on baby G does different animations 
-- On main menu, easter egg clicking on Mando makes him fart and do other animations
+- fix spawn location of laser blast from  main character
+- Make flame thrower shoot farther 
+- Add pickups to gain additional points through out all the levels

@@ -1,9 +1,10 @@
 /* Keyboard and multi-touch input, merged into one set of actions. */
 (function (MQ) {
-  const ACTIONS = ["left", "right", "down", "jump", "attack", "force", "switch", "dodge"];
+  const ACTIONS = ["left", "right", "up", "down", "jump", "attack", "force", "switch", "dodge"];
   const KEYS = {
     KeyA: "left", ArrowLeft: "left",
     KeyD: "right", ArrowRight: "right",
+    KeyW: "up", ArrowUp: "up",
     KeyS: "down", ArrowDown: "down",
     Space: "jump",
     KeyJ: "attack",
@@ -13,6 +14,7 @@
   };
   const DOUBLE_TAP_MS = 250;
   const VIBRATE_MS = 8;
+  const STICK_DEAD = 0.14;
 
   class InputManager {
     constructor() {
@@ -21,6 +23,8 @@
       this.counts = {};
       this.keys = new Set();
       this.pointers = new Map();
+      this.stick = { x: 0, y: 0 };
+      this.resetStick = () => {};
       this.enabled = false;
       this.usingTouch = window.matchMedia?.("(pointer: coarse)").matches ?? false;
       this.onPause = () => {};
@@ -117,6 +121,7 @@
       this.lastTap.action = "";
       for (const pointer of this.pointers.values()) pointer.element?.classList.remove("is-down");
       this.pointers.clear();
+      this.resetStick();
       for (const action of ACTIONS) {
         this.held[action] = false;
         this.queued[action] = false;
@@ -125,13 +130,13 @@
     }
 
     /*
-     * Binds the on-screen buttons. Movement pointers can slide between left and right
-     * without lifting, and near misses still land on the closest movement button.
+     * Binds a set of on-screen buttons. On a movement pad, pointers can slide between left and
+     * right without lifting, and near misses still land on the closest movement button.
      */
     bindTouch(root) {
       const pad = root.querySelector("[data-move-pad]");
-      const left = pad.querySelector('[data-action="left"]');
-      const right = pad.querySelector('[data-action="right"]');
+      const left = pad?.querySelector('[data-action="left"]');
+      const right = pad?.querySelector('[data-action="right"]');
 
       const moveTarget = (event) => {
         const rect = pad.getBoundingClientRect();
@@ -150,7 +155,7 @@
       };
 
       root.addEventListener("pointerdown", (event) => {
-        const inPad = pad.contains(event.target);
+        const inPad = !!pad?.contains(event.target);
         const element = inPad ? moveTarget(event) : event.target.closest("[data-action]");
         if (!element || !this.enabled) return;
         event.preventDefault();
@@ -181,6 +186,70 @@
       root.addEventListener("pointercancel", end);
       root.addEventListener("lostpointercapture", end);
       root.addEventListener("contextmenu", (event) => event.preventDefault());
+    }
+
+    // The analog stick. It measures from the middle of its base, and takes one finger.
+    bindStick(zone) {
+      const base = zone.querySelector(".stick-base");
+      const knob = zone.querySelector(".stick-knob");
+      let finger = null;
+      let cx = 0;
+      let cy = 0;
+      let radius = 1;
+
+      const set = (x, y) => {
+        this.stick.x = x;
+        this.stick.y = y;
+      };
+      const move = (event) => {
+        let x = (event.clientX - cx) / radius;
+        let y = (event.clientY - cy) / radius;
+        const length = Math.hypot(x, y);
+        if (length > 1) {
+          x /= length;
+          y /= length;
+        }
+        knob.style.transform = `translate(${x * radius * 0.6}px, ${y * radius * 0.6}px)`;
+        const reach = Math.min(1, length);
+        if (reach < STICK_DEAD) set(0, 0);
+        else {
+          const ease = (reach - STICK_DEAD) / (1 - STICK_DEAD) / reach;
+          set(x * ease, y * ease);
+        }
+      };
+      this.resetStick = () => {
+        finger = null;
+        set(0, 0);
+        knob.style.transform = "";
+      };
+
+      zone.addEventListener("pointerdown", (event) => {
+        if (!this.enabled || finger !== null) return;
+        event.preventDefault();
+        event.stopPropagation();
+        this.setTouch(event.pointerType === "touch");
+        finger = event.pointerId;
+        const rect = base.getBoundingClientRect();
+        cx = rect.left + rect.width / 2;
+        cy = rect.top + rect.height / 2;
+        radius = (rect.width / 2) * 0.8;
+        try {
+          zone.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // The pointer was already released.
+        }
+        move(event);
+      });
+      zone.addEventListener("pointermove", (event) => {
+        if (event.pointerId === finger) move(event);
+      });
+      const end = (event) => {
+        if (event.pointerId === finger) this.resetStick();
+      };
+      zone.addEventListener("pointerup", end);
+      zone.addEventListener("pointercancel", end);
+      zone.addEventListener("lostpointercapture", end);
+      zone.addEventListener("contextmenu", (event) => event.preventDefault());
     }
   }
 
