@@ -41,7 +41,7 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 | Start or confirm   | Enter              | Tap the button                      |
 | Back out of a menu | Esc                | Back button                         |
 
-Menus also work with the arrow keys. The pad appears automatically on touch screens, and Options can force it on or off. The game fits portrait and landscape.
+Menus also work with the arrow keys. The pad appears automatically on touch screens, and Options can force it on or off. The game fits portrait and landscape. In landscape, Options can put the pad on the left or the right (the default). On short screens, the score column takes the other side.
 
 On phones and tablets, Play Game and Restart switch to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there.
 

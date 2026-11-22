@@ -143,6 +143,15 @@ body.compact #hud {
   border-right: 1px solid var(--line);
 }
 
+body.compact.pad-left #hud {
+  right: 0;
+  left: auto;
+  width: calc(118px + var(--safe-r));
+  padding: 6px calc(6px + var(--safe-r)) 6px 6px;
+  border-right: 0;
+  border-left: 1px solid var(--line);
+}
+
 body.compact .stat b { font-size: 15px; }
 body.compact .stat span { font-size: 10px; }
 body.compact .stat.lives canvas { width: 88px; height: 20px; }
@@ -162,6 +171,8 @@ body.compact .hud-buttons { gap: 3px; }
   background: rgba(14, 20, 50, .66);
   touch-action: none;
 }
+
+body.pad-left #pad { left: calc(14px + var(--safe-l)); right: auto; }
 
 body.portrait #pad {
   left: 50%;

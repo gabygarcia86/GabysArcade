@@ -124,6 +124,9 @@
       const portrait = H >= W;
       const compact = !portrait && H < 560;
       const touch = this.ui.touchEnabled;
+      // A left pad mirrors the landscape layout, so the HUD column moves to the right.
+      const padLeft = !portrait && touch && this.save.options.padSide === "left";
+      document.body.classList.toggle("pad-left", padLeft);
       document.body.classList.toggle("portrait", portrait);
       document.body.classList.toggle("compact", compact);
 
@@ -141,14 +144,21 @@
       let top = 6 + parseFloat(safe.paddingTop);
       let bottom = H - 6 - parseFloat(safe.paddingBottom);
       if (compact) {
-        left = hud.right + 6;
-        if (showPad) right = pad.left - 6;
+        if (padLeft) {
+          right = hud.left - 6;
+          if (showPad) left = pad.right + 6;
+        } else {
+          left = hud.right + 6;
+          if (showPad) right = pad.left - 6;
+        }
       } else {
         top = hud.bottom + 8;
         if (showPad && portrait) bottom = pad.top - 6;
         else if (showPad) {
-          right = pad.left - 6;
-          left = W - right;
+          // The board stays centered, with the same room on both sides.
+          const side = (padLeft ? pad.right : W - pad.left) + 6;
+          left = side;
+          right = W - side;
         }
       }
       // The end screens keep the board's place, but not the pad itself.
