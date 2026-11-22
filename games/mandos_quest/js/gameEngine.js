@@ -37,6 +37,7 @@
       });
       this.input.onDeviceChange = () => this.syncControls();
       this.bindEvents();
+      this.bindMenuAntics();
     }
 
     bindEvents() {
@@ -76,6 +77,32 @@
       document.addEventListener("dblclick", (event) => {
         if (event.target.closest("#touch, #space-touch, #stage")) event.preventDefault();
       });
+    }
+
+    /*
+     * The menu's HTML covers the Canvas, so the easter eggs listen on it. They use click,
+     * as pointerdown would also fire when scrolling the menu.
+     */
+    bindMenuAntics() {
+      const ui = document.getElementById("ui");
+      const heroAt = (event) => {
+        const { states } = this;
+        if (states.state !== STATE.MENU || states.ui.current?.name !== "main") return null;
+        if (event.target.closest?.("button, a")) return null;
+        const rect = this.stage.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * MQ.VW;
+        const y = ((event.clientY - rect.top) / rect.height) * MQ.VH;
+        if (x < 0 || x > MQ.VW || y < 0 || y > MQ.VH) return null;
+        return states.antics.hit(x, y);
+      };
+      ui.addEventListener("click", (event) => {
+        const who = heroAt(event);
+        if (who) this.states.antics.poke(who);
+      });
+      ui.addEventListener("pointermove", (event) => {
+        ui.classList.toggle("over-hero", event.pointerType === "mouse" && !!heroAt(event));
+      });
+      ui.addEventListener("pointerleave", () => ui.classList.remove("over-hero"));
     }
 
     syncControls() {

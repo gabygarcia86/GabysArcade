@@ -242,6 +242,15 @@ p {
   overflow: auto;
 }
 
+/* Repeated taps on the easter eggs mustn't zoom. */
+.main-menu {
+  touch-action: manipulation;
+}
+
+#ui.over-hero .main-menu {
+  cursor: pointer;
+}
+
 .arcade-link {
   position: absolute;
   top: calc(14px + var(--safe-t));

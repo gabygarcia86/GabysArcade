@@ -113,6 +113,8 @@ forcePush: "audio/sfx-force-push.wav",
 | Space bosses | `bossIntroWarden`, `bossIntroBastion`, `bossIntroCommand`, `shipBossShot`, `shipBeam` |
 | Space results | `spaceComplete` |
 | Menus | `hover`, `click` |
+| Menu farts | `fart`, `fartSqueak`, `fartBig`, `fartTiny`, `fartNote1` to `fartNote4` (low to high, for the tune), `rumble` |
+| Menu antics | `burp`, `gulp`, `ribbit`, `hiccup`, `sneeze`, `sneezeSmall`, `snore`, `pop`, `bubble`, `bonk`, `spin`, `slideUp`, `slideDown`, `flap`, `beep`, `disco` |
 
 Keep effects short, with no silence at the start. `jetpack` repeats about ten times a second and `flame` about eleven, so give those two very short clips. In space, `shipBlaster` repeats about seven times a second while Fire is held, and needs the same.
 

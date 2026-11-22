@@ -87,6 +87,37 @@
     bossIntroBastion: (a) => { [196, 185, 147, 98].forEach((f, i) => a.t("triangle", f, f, 0.9, 0.22, i * 0.3)); a.n("lowpass", 300, 2000, 1.6, 0.3); },
     bossIntroCommand: (a) => { for (let i = 0; i < 4; i++) a.t("sawtooth", 73, 69, 0.45, 0.22, i * 0.38); [587, 554, 440].forEach((f, i) => a.t("square", f, f, 0.6, 0.06, 0.4 + i * 0.4)); },
     spaceComplete: (a) => { [523, 659, 880, 784, 1047, 1319].forEach((f, i) => a.t("triangle", f, f, i === 5 ? 1.1 : 0.2, 0.19, i * 0.13)); a.n("bandpass", 300, 4000, 1, 0.12); },
+    fart: (a) => { a.toot(125, 62, 0.75, 0.45, 27); a.n("lowpass", 600, 120, 0.6, 0.12); },
+    fartSqueak: (a) => a.toot(260, 640, 0.65, 0.2, 38, 0, 2400),
+    fartBig: (a) => { a.toot(98, 36, 1.5, 0.5, 19); a.toot(150, 58, 0.9, 0.2, 31, 0.15); a.n("lowpass", 900, 70, 1.3, 0.2); },
+    fartTiny: (a) => a.toot(300, 210, 0.22, 0.28, 34, 0, 1600),
+    fartNote1: (a) => a.toot(131, 124, 0.3, 0.42, 30),
+    fartNote2: (a) => a.toot(165, 158, 0.26, 0.4, 33),
+    fartNote3: (a) => a.toot(196, 190, 0.26, 0.4, 36),
+    fartNote4: (a) => a.toot(262, 92, 0.55, 0.45, 28),
+    rumble: (a) => { a.toot(45, 80, 0.95, 0.3, 11, 0, 300); a.n("lowpass", 90, 300, 0.95, 0.2); },
+    burp: (a) => { a.toot(170, 88, 0.7, 0.45, 46, 0, 1100); a.toot(84, 70, 0.4, 0.2, 24, 0.15); },
+    gulp: (a) => { a.t("sine", 420, 130, 0.16, 0.25); a.t("sine", 190, 320, 0.1, 0.15, 0.17); },
+    ribbit: (a) => { a.toot(230, 330, 0.16, 0.2, 60, 0, 1800); a.toot(250, 380, 0.22, 0.2, 60, 0.22, 1800); },
+    hiccup: (a) => { a.t("sine", 520, 1150, 0.09, 0.2); a.t("triangle", 900, 700, 0.05, 0.08, 0.09); },
+    sneeze: (a) => { a.n("bandpass", 3000, 600, 0.35, 0.6); a.t("triangle", 480, 120, 0.22, 0.2); },
+    sneezeSmall: (a) => { a.n("highpass", 4500, 1800, 0.22, 0.35); a.t("sine", 1100, 620, 0.16, 0.15); },
+    snore: (a) => { a.toot(62, 88, 0.5, 0.2, 22, 0, 400); a.t("sine", 900, 600, 0.35, 0.05, 0.55); },
+    pop: (a) => { a.n("highpass", 2500, 1200, 0.06, 0.3); a.t("sine", 700, 1500, 0.06, 0.15); },
+    bubble: (a) => { for (let i = 0; i < 3; i++) a.t("sine", 420 + i * 170, 900 + i * 200, 0.07, 0.12, i * 0.06); },
+    bonk: (a) => { a.t("sine", 190, 55, 0.2, 0.4); a.t("triangle", 820, 640, 0.12, 0.12); a.n("lowpass", 800, 120, 0.15, 0.25); },
+    spin: (a) => { for (let i = 0; i < 12; i++) a.t("triangle", 1200 - i * 55, 900 - i * 40, 0.06, 0.1, i * 0.07 + i * i * 0.003); },
+    slideUp: (a) => a.t("sine", 350, 1300, 0.4, 0.14),
+    slideDown: (a) => a.t("sine", 1400, 220, 0.8, 0.13),
+    flap: (a) => a.n("bandpass", 700, 260, 0.11, 0.25),
+    beep: (a) => a.t("square", 1050, 1050, 0.07, 0.06),
+    disco: (a) => {
+      [110, 110, 220, 110, 131, 131, 262, 147].forEach((f, i) => {
+        a.t("square", f, f, 0.16, 0.07, i * 0.23);
+        a.n("highpass", 7000, 6000, 0.05, 0.12, i * 0.23 + 0.115);
+        if (i % 2 === 0) a.t("sine", 150, 42, 0.18, 0.3, i * 0.23);
+      });
+    },
     hover: (a) => a.t("sine", 660, 700, 0.04, 0.04),
     click: (a) => { a.t("sine", 600, 900, 0.07, 0.11); },
   };
@@ -294,6 +325,46 @@
       this.voice(source, gain);
       source.start(start, Math.random());
       source.stop(start + seconds + 0.02);
+    }
+
+    // A buzz that flutters in pitch and volume: the sound of every fart, burp and snore.
+    toot(from, to, seconds, volume, flutter, delay = 0, brightness = 900) {
+      const { ctx } = this;
+      const start = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const wobble = ctx.createOscillator();
+      const bend = ctx.createGain();
+      const pulse = ctx.createGain();
+      const chop = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(from, start);
+      osc.frequency.exponentialRampToValueAtTime(to, start + seconds);
+      wobble.type = "square";
+      wobble.frequency.setValueAtTime(flutter, start);
+      wobble.frequency.linearRampToValueAtTime(flutter * 0.6, start + seconds);
+      bend.gain.value = from * 0.18;
+      pulse.gain.value = 0.4;
+      chop.gain.value = 0.6;
+      wobble.connect(bend).connect(osc.frequency);
+      wobble.connect(pulse).connect(chop.gain);
+      filter.type = "lowpass";
+      filter.frequency.value = brightness;
+      filter.Q.value = 4;
+      // Held nearly to the end, as envelope() would fade it away too soon.
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(volume * 0.6, start + seconds * 0.8);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + seconds);
+      osc.connect(filter).connect(chop).connect(gain).connect(this.sfxGain);
+      this.voice(osc, gain);
+      const end = start + seconds + 0.02;
+      osc.start(start);
+      osc.stop(end);
+      wobble.start(start);
+      wobble.stop(end);
     }
 
     music(name) {

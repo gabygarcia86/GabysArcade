@@ -27,7 +27,8 @@
       this.spaceUI = new MQ.SpaceUIManager(this.hud);
       this.stage = new MQ.Stage(() => this.customization.look);
       this.cinematic = new MQ.CinematicPlayer(this.stage, audio, input);
-      this.menuScene = new MQ.MenuScene(this.stage);
+      this.antics = new MQ.MenuAntics(() => this.customization.look, audio, () => this.save.settings);
+      this.menuScene = new MQ.MenuScene(this.stage, this.antics);
       this.ui = new MQ.UIManager(uiRoot, this);
       input.onPause = () => this.escape();
     }
@@ -322,7 +323,7 @@
       } else if (this.state === STATE.CINEMATIC) {
         this.cinematic.draw(ctx);
       } else {
-        this.menuScene.draw(ctx, this.time, this.ui.current?.name === "main");
+        this.menuScene.draw(ctx, this.time, this.ui.current?.name === "main", this.hud.scale);
       }
       if (this.fade > 0) {
         ctx.fillStyle = `rgba(0,0,0,${this.fade})`;

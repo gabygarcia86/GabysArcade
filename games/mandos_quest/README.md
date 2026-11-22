@@ -166,6 +166,7 @@ mandos_quest/
     ├── hud.js              In-game display
     ├── notices.js          Popup placement on touch and small screens
     ├── cinematics.js       Story scenes
+    ├── menuAntics.js       Main menu easter eggs: click Mando or Baby G
     ├── screens.js          Menu markup
     ├── uiManager.js        Menu behavior
     ├── utils.js            Shared helpers
@@ -211,8 +212,6 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- On main menu, easter egg clicking on baby G does different animations 
-- On main menu, easter egg clicking on Mando makes him fart and do other animations
 - fix spawn location of laser blast from  main character
 - Make flame thrower shoot farther 
 - Add pickups to gain additional points through out all the levels
