@@ -31,6 +31,7 @@
 
   class GameManager {
     constructor() {
+      this.app = document.getElementById("app");
       this.canvas = document.getElementById("game");
       this.ctx = this.canvas.getContext("2d", { alpha: false });
       this.save = new D.SaveData();
@@ -94,6 +95,11 @@
       window.addEventListener("keydown", unlock);
       window.addEventListener("resize", () => this.resize());
       window.addEventListener("orientationchange", () => this.resize());
+      // Notch insets can change without a resize event, as when going full screen. #safe-corner
+      // catches a half turn, which moves the notch but leaves #app the same size.
+      const safeArea = new ResizeObserver(() => this.resize());
+      safeArea.observe(this.app);
+      safeArea.observe(document.getElementById("safe-corner"));
       window.addEventListener("blur", () => this.autoPause());
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) this.autoPause();
@@ -118,6 +124,9 @@
       const portrait = H >= W;
       const compact = !portrait && H < 560;
       const touch = this.ui.touchEnabled;
+      // A left pad mirrors the landscape layout, so the HUD column moves to the right.
+      const padLeft = !portrait && touch && this.save.options.padSide === "left";
+      document.body.classList.toggle("pad-left", padLeft);
       document.body.classList.toggle("portrait", portrait);
       document.body.classList.toggle("compact", compact);
 
@@ -129,21 +138,31 @@
 
       const hud = this.ui.hud.getBoundingClientRect();
       const pad = this.ui.pad.getBoundingClientRect();
-      let left = 6;
-      let right = W - 6;
-      let top = 6;
-      let bottom = H - 6;
+      const safe = getComputedStyle(this.app);
+      let left = 6 + parseFloat(safe.paddingLeft);
+      let right = W - 6 - parseFloat(safe.paddingRight);
+      let top = 6 + parseFloat(safe.paddingTop);
+      let bottom = H - 6 - parseFloat(safe.paddingBottom);
       if (compact) {
-        left = hud.right + 6;
-        if (showPad) right = pad.left - 6;
+        if (padLeft) {
+          right = hud.left - 6;
+          if (showPad) left = pad.right + 6;
+        } else {
+          left = hud.right + 6;
+          if (showPad) right = pad.left - 6;
+        }
       } else {
         top = hud.bottom + 8;
         if (showPad && portrait) bottom = pad.top - 6;
         else if (showPad) {
-          right = pad.left - 6;
-          left = W - right;
+          // The board stays centered, with the same room on both sides.
+          const side = (padLeft ? pad.right : W - pad.left) + 6;
+          left = side;
+          right = W - side;
         }
       }
+      // The end screens keep the board's place, but not the pad itself.
+      if (this.state === "clear" || this.state === "gameover") this.ui.pad.hidden = true;
 
       const cols = 21;
       const rows = 23;
@@ -172,6 +191,17 @@
       return this.state !== "menu" && this.state !== "galaxy";
     }
 
+    // Browsers only allow this during a tap, so nothing may delay the call.
+    enterFullscreen() {
+      if (!window.matchMedia("(pointer: coarse)").matches) return;
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      const root = document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!request) return; // iPhones only allow fullscreen video.
+      // The prefixed version returns no promise. If refused, the game runs in the normal window.
+      Promise.resolve(request.call(root, { navigationUI: "hide" })).catch(() => {});
+    }
+
     /* ---------- Flow ---------- */
 
     setState(state) {
@@ -180,6 +210,7 @@
     }
 
     newGame() {
+      this.enterFullscreen();
       this.paused = false;
       this.ui.hide();
       this.ui.hideBanner();

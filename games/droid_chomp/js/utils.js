@@ -41,6 +41,7 @@ window.DROID = {};
       musicOn: true,
       difficulty: "normal", // cadet | normal | master
       touch: "auto", // auto | on | off
+      padSide: "right", // left | right, in landscape
     },
   });
 

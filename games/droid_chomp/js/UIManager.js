@@ -514,6 +514,13 @@
       this.game.save.setOption("touch", value);
       this.game.audio.sfx("select");
       this.markChoice("touch", value);
+      document.getElementById("pad-side").hidden = !this.touchEnabled;
+      this.game.resize();
+    },
+    padSide(value) {
+      this.game.save.setOption("padSide", value);
+      this.game.audio.sfx("select");
+      this.markChoice("padSide", value);
       this.game.resize();
     },
     mute() {
@@ -660,6 +667,8 @@
           <p class="muted">Difficulty sets lives, enemy speed and power-up time. It applies from the next new game.</p>
           <div class="option-row"><span>Touch pad</span><div class="chips">
             ${choice("touch", "auto", "Auto")}${choice("touch", "on", "On")}${choice("touch", "off", "Off")}</div></div>
+          <div class="option-row" id="pad-side" ${this.touchEnabled ? "" : "hidden"}><span>Pad side in landscape</span><div class="chips">
+            ${choice("padSide", "left", "Left")}${choice("padSide", "right", "Right")}</div></div>
           <div class="row"><button type="button" class="btn primary" data-primary data-action="back">Back</button></div>
         </div>`;
     },

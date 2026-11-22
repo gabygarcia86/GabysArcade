@@ -41,6 +41,11 @@
       window.addEventListener("resize", resize);
       window.visualViewport?.addEventListener("resize", resize);
       document.addEventListener("fullscreenchange", resize);
+      // Notch insets can change without a resize event, as when going full screen. #safe-corner
+      // catches a half turn, which moves the notch but leaves #app's usable size the same.
+      const safeArea = new ResizeObserver(resize);
+      safeArea.observe(this.app);
+      safeArea.observe(document.getElementById("safe-corner"));
 
       window.addEventListener("blur", () => this.states.pause());
       document.addEventListener("visibilitychange", () => {
@@ -85,9 +90,15 @@
     }
 
     resize() {
-      const width = this.app.clientWidth;
-      const height = this.app.clientHeight;
-      if (!width || !height) return;
+      const screenWidth = this.app.clientWidth;
+      const screenHeight = this.app.clientHeight;
+      if (!screenWidth || !screenHeight) return;
+      // The picture fits inside the safe area, so a notch can't cover it.
+      const safe = getComputedStyle(this.app);
+      const safeLeft = parseFloat(safe.paddingLeft);
+      const safeTop = parseFloat(safe.paddingTop);
+      const width = screenWidth - safeLeft - parseFloat(safe.paddingRight);
+      const height = screenHeight - safeTop - parseFloat(safe.paddingBottom);
 
       const scale = Math.min(width / MQ.VW, height / MQ.VH);
       const cssWidth = MQ.VW * scale;
@@ -95,8 +106,14 @@
       const left = (width - cssWidth) / 2;
       // In portrait the picture moves up, leaving room for the controls below it.
       const spare = height - cssHeight;
-      const top = height > width && this.app.classList.contains("touch-mode") ? Math.min(spare * 0.2, 72) : spare / 2;
-      Object.assign(this.stage.style, { width: `${cssWidth}px`, height: `${cssHeight}px`, left: `${left}px`, top: `${top}px` });
+      const portrait = screenHeight > screenWidth;
+      const top = portrait && this.app.classList.contains("touch-mode") ? Math.min(spare * 0.2, 72) : spare / 2;
+      Object.assign(this.stage.style, {
+        width: `${cssWidth}px`,
+        height: `${cssHeight}px`,
+        left: `${safeLeft + left}px`,
+        top: `${safeTop + top}px`,
+      });
 
       const effects = this.states.save.settings.effects;
       const backing = Math.round(Math.min(cssWidth * (window.devicePixelRatio || 1), MAX_WIDTH[effects]));

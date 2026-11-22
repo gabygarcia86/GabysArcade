@@ -43,6 +43,17 @@ html, body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* As big as the left and top insets, so a resize observer can see them change. */
+#safe-corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: env(safe-area-inset-left, 0px);
+  height: env(safe-area-inset-top, 0px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
 #stage {
   position: relative;
   background: #000;
@@ -272,12 +283,26 @@ html, body {
 .lb-table tr.me td { background: rgba(255, 215, 106, .14); color: var(--ink); }
 .lb-table tr.me .score { color: var(--gold); }
 
-.scroll { overflow-y: auto; max-height: 100%; min-height: 0; width: 100%; max-width: 40em; font-size: .86em; line-height: 1.45; }
+.scroll { overflow-y: auto; max-height: 100%; min-height: 0; width: 100%; max-width: 40em; font-size: max(12px, .86em); line-height: 1.45; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .scroll h3 { color: var(--gold); margin: .7em 0 .15em; font-size: 1em; letter-spacing: .08em; }
 .scroll p { margin: .15em 0; color: var(--ink); }
+.scroll .warning {
+  padding: .45em .8em .55em;
+  border: 1px solid var(--danger);
+  border-radius: .3em;
+  background: rgba(255, 90, 85, .1);
+}
+.scroll .warning h3 { margin-top: 0; color: var(--danger); }
 
 /* ---------- Touch controls ---------- */
-#touch { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+/* The action buttons are drawn on a 1280x720 layout, and --unit is one of its pixels. */
+#touch {
+  --unit: min(.56px, calc(100vh / 720));
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
 #touch[hidden] { display: none; }
 
 .touch-btn {
@@ -296,7 +321,6 @@ html, body {
   backdrop-filter: blur(2px);
 }
 .touch-btn.on { background: rgba(120, 200, 255, .62); color: #032; }
-.touch-btn.small { width: 72px; height: 72px; font-size: 11px; }
 
 #touch-move {
   position: absolute;
@@ -309,21 +333,30 @@ html, body {
 }
 #touch-move .touch-btn { font-size: 26px; }
 
+/* A big JUMP in the corner, with the other three in an arc around it. */
 #touch-actions {
   position: absolute;
-  right: max(14px, env(safe-area-inset-right));
-  bottom: max(14px, env(safe-area-inset-bottom));
-  display: grid;
-  grid-template-columns: 76px 90px 90px;
-  grid-template-rows: 76px 90px;
-  gap: 4px;
-  align-items: center;
-  justify-items: center;
+  right: max(14px, calc(41 * var(--unit)), env(safe-area-inset-right));
+  bottom: max(14px, calc(37 * var(--unit)), env(safe-area-inset-bottom));
+  width: calc(404 * var(--unit));
+  height: calc(399 * var(--unit));
 }
-#touch-actions [data-action=push] { grid-column: 1; grid-row: 2; }
-#touch-actions [data-action=deflect] { grid-column: 2; grid-row: 1; }
-#touch-actions [data-action=attack] { grid-column: 2; grid-row: 2; }
-#touch-actions [data-action=jump] { grid-column: 3; grid-row: 2; }
+#touch-actions .touch-btn {
+  position: absolute;
+  width: calc(153 * var(--unit));
+  height: calc(153 * var(--unit));
+  font-size: max(8px, calc(24 * var(--unit)));
+}
+#touch-actions [data-action=deflect] { right: 0; top: 0; }
+#touch-actions [data-action=push] { left: calc(64 * var(--unit)); top: calc(63 * var(--unit)); }
+#touch-actions [data-action=attack] { left: 0; bottom: 0; }
+#touch-actions [data-action=jump] {
+  right: 0;
+  bottom: 0;
+  width: calc(215 * var(--unit));
+  height: calc(215 * var(--unit));
+  font-size: calc(40 * var(--unit));
+}
 
 #touch-pause {
   position: absolute;
@@ -341,8 +374,13 @@ html, body {
 /* Portrait phones: put the game up top and let the controls sit under it. */
 @media (orientation: portrait) {
   #app { align-items: flex-start; }
-  #touch-move { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 104px); }
-  #touch-pause { top: calc(56.25vw + 10px); }
+  /* Both thumbs share the width: two arrows (153 each) and the buttons (404), plus 48px of gaps and margins. */
+  #touch { --unit: min(.56px, calc((100vw - 48px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 710)); }
+  #touch-move { gap: 10px; }
+  #touch-move .touch-btn { width: min(84px, calc(153 * var(--unit))); height: min(84px, calc(153 * var(--unit))); }
+  #touch-actions { right: max(14px, env(safe-area-inset-right)); }
+  #touch-move, #touch-actions { bottom: max(14px, env(safe-area-inset-bottom)); }
+  #touch-pause { top: calc(env(safe-area-inset-top, 0px) + 56.25vw + 10px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

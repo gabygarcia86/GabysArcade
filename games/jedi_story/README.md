@@ -2,9 +2,13 @@
 
 A 2D side-scrolling lightsaber platformer. Build your own Jedi and cross ten worlds, from a burning Jedi Temple to the Emperor's throne room on Exegol, with a boss fight every second level.
 
-Built with HTML5 Canvas 2D, the Web Audio API and vanilla JavaScript. There are no libraries, no build step and no downloaded assets: every character, planet, effect, sound and music cue is generated in code, apart from the site icons in `icon/` and the music tracks in `assets/audio/` for the menu, opening crawl, boss fights and ending. The menus use the arcade's Oxanium font when it's available.
+Built with HTML5 Canvas 2D, the Web Audio API and vanilla JavaScript. There are no libraries and no build step. Every character, planet, effect, sound and music cue is generated in code, apart from the site icons in `icon/` and the music tracks in `assets/audio/` for the menu, opening crawl, boss fights and ending. The menus use the arcade's Oxanium font when it's available.
 
-This is a free, non-commercial fan project. Star Wars and its names and characters belong to Lucasfilm Ltd. and The Walt Disney Company, and this game isn't affiliated with or endorsed by them. The music is original.
+This is a free, non-commercial fan project. Star Wars and its names and characters belong to Lucasfilm Ltd. and The Walt Disney Company, and this game isn't affiliated with or endorsed by them.
+
+The menu, opening crawl, ending and the Maul, Dooku, Vader and Palpatine boss fights use music from the Star Wars films, and John Williams composed the scores for the nine Skywalker saga films. The Asajj Ventress boss fight uses music from *Star Wars: The Clone Wars*, composed by Kevin Kiner. All of these compositions and recordings belong to their respective rights holders. The level and title card music is original and generated in code.
+
+> **Music copyright warning:** The music from the films and *The Clone Wars* is copyrighted. It isn't covered by any license for this game's code, and crediting it doesn't give permission to copy, host or reuse it. Videos and streams that include it may be muted, blocked, demonetized or given a copyright strike. Before recording or streaming, slide Music all the way to the left in Options.
 
 ## Contents
 
@@ -47,6 +51,8 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 | Skip a story screen          | Esc                   | Tap through it |
 
 Menus also work with the arrow keys, Enter and Esc. Touch controls appear automatically on touch screens, and Options can force them on or off. On a phone the game plays best held sideways.
+
+On phones and tablets, starting, restarting or continuing a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there.
 
 ## How to play
 
@@ -134,7 +140,7 @@ Paths are relative to `games/jedi_story/`, and their capitals must match the fil
 | `sfx`     | See the list in `js/audio-config.js`                                                                                                | Plays once each time       |
 | `ambient` | `temple`, `kashyyyk`, `tatooine`, `mustafar`, `hoth`, `narshaddaa`, `endor`, `deathstar`, `exegol`, `throne`                        | Loops under a level        |
 
-- **Music volume** follows the Music slider in Options, and sounds and ambience follow the Sound effects slider.
+- **Music volume** follows the Music slider in Options, and sounds and ambience follow the Sound effects slider. iPhones ignore the volume of music files, so there the slider can only mute them, at 0.
 - **A file that won't load** is skipped, the generated version plays, and the browser console says which file failed.
 - **To play a track once** instead of looping, write it as `{ file: "assets/audio/song.mp3", loop: false }`. The opening crawl (`crawl`) is set up this way.
 - **To make a quiet track louder**, add a `volume` boost, such as `{ file: "assets/audio/song.mp3", volume: 1.6 }`. The menu music uses 1.6. Browsers cap a file at full volume, so a big boost only helps when the Music slider is below 100%.

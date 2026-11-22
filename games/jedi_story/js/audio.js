@@ -1,7 +1,7 @@
 /*
  * AudioManager: every sound and all the music is synthesized with Web Audio unless
- * js/audio-config.js names a file to use instead. The music is original, an orchestra
- * sketched from detuned strings, brass stabs, a choir pad, harp and timpani.
+ * js/audio-config.js names a file to use instead. The synthesized music is original, an
+ * orchestra sketched from detuned strings, brass stabs, a choir pad, harp and timpani.
  */
 (function (J) {
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
@@ -135,11 +135,17 @@
       return Math.min(1, this.options.music * (this.fileMusicBoost || 1));
     }
 
+    // iPhones ignore a track's volume, so only muting makes Music at 0 silent there.
+    setTrackVolume(track) {
+      track.volume = this.fileMusicVolume();
+      track.muted = this.options.music === 0;
+    }
+
     applyVolumes() {
       if (!this.ctx) return;
       this.sfxBus.gain.value = this.options.sfx;
       this.musicBus.gain.value = this.options.music * 0.7;
-      if (this.fileMusic) this.fileMusic.volume = this.fileMusicVolume();
+      if (this.fileMusic) this.setTrackVolume(this.fileMusic);
       if (this.ambientFile) this.ambientFile.volume = this.options.sfx * 0.6;
     }
 
@@ -572,7 +578,7 @@
         this.fileMusic = track;
         this.fileMusicBoost = options.volume || 1;
         track.loop = options.loop !== false;
-        track.volume = this.fileMusicVolume();
+        this.setTrackVolume(track);
         // Once a play-once track finishes, let it go so a resume doesn't restart it.
         track.addEventListener("ended", () => {
           if (this.fileMusic === track) {

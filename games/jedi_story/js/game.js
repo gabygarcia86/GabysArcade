@@ -83,11 +83,17 @@
       this.waves = null;
       this.tapped = false;
       this.scale = 1;
+      this.scoreRight = W - 66;
 
       this.input.bindTouch(() => this.pause());
       this.canvas.addEventListener("pointerdown", () => { this.tapped = true; });
       window.addEventListener("resize", () => this.resize());
       window.addEventListener("orientationchange", () => this.resize());
+      // Notch insets can change without a resize event, as when going full screen. #safe-corner
+      // catches a half turn, which moves the notch but leaves #app the same size.
+      const safeArea = new ResizeObserver(() => this.resize());
+      safeArea.observe(document.getElementById("app"));
+      safeArea.observe(document.getElementById("safe-corner"));
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
           this.pause();
@@ -130,8 +136,10 @@
 
     resize() {
       const app = document.getElementById("app");
-      const availW = app.clientWidth;
-      const availH = app.clientHeight;
+      // The padding keeps the game clear of notches, so it isn't space the game can use.
+      const pad = getComputedStyle(app);
+      const availW = app.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
+      const availH = app.clientHeight - parseFloat(pad.paddingTop) - parseFloat(pad.paddingBottom);
       const scale = Math.min(availW / W, availH / H);
       const cssW = Math.floor(W * scale);
       const cssH = Math.floor(H * scale);
@@ -143,6 +151,30 @@
       this.canvas.height = Math.round(cssH * dpr);
       this.scale = this.canvas.width / W;
       document.getElementById("ui").style.setProperty("--u", `${cssW / W}px`);
+      this.placeScore();
+    }
+
+    // The pause button is a fixed size, so on small screens it reaches further into the game.
+    // While it's hidden the score stays where it was.
+    placeScore() {
+      if (this.touchRoot.hidden) return;
+      const button = document.getElementById("touch-pause").getBoundingClientRect();
+      const stage = this.stage.getBoundingClientRect();
+      const unit = stage.width / W;
+      const overHud = button.top < stage.top + 60 * unit && button.bottom > stage.top; // The HUD's top 60 units.
+      this.scoreRight = overHud ? Math.min(W - 66, (button.left - stage.left) / unit - 10) : W - 66;
+    }
+
+    // Browsers only allow this just after a tap, so call it as soon as a start button is pressed.
+    enterFullscreen() {
+      if (!this.touchQuery.matches) return;
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      // The whole page, because the touch controls sit outside the stage.
+      const root = document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!request) return; // iPhones only allow fullscreen video.
+      // The prefixed version returns no promise. If refused, the game runs in the normal window.
+      Promise.resolve(request.call(root, { navigationUI: "hide" })).catch(() => {});
     }
 
     applyQuality() {
@@ -152,6 +184,7 @@
 
     updateTouch() {
       this.touchRoot.hidden = !(this.touchActive && this.states.name === "play" && !this.paused);
+      this.placeScore();
     }
 
     // ---------- Jedi ----------
@@ -172,6 +205,7 @@
     // ---------- Campaign flow ----------
 
     beginCampaign() {
+      this.enterFullscreen();
       this.ui.close();
       this.storyMode = true;
       this.save.data.seenOpening = true;
@@ -190,6 +224,7 @@
     }
 
     playLevel(index, story) {
+      this.enterFullscreen();
       this.ui.close();
       this.storyMode = story;
       this.levelIndex = index;
@@ -249,6 +284,7 @@
     }
 
     restartLevel() {
+      this.enterFullscreen();
       this.ui.close();
       this.loadLevel(this.levelIndex);
     }
@@ -633,6 +669,7 @@
     // Game Over's gentler choice: three fresh lives at the last checkpoint.
     continueFromCheckpoint() {
       const { player } = this;
+      this.enterFullscreen();
       this.ui.close();
       this.states.play();
       player.lives = 3;

@@ -43,6 +43,8 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 | Drop through a ledge | S or Down | Walk off the edge |
 | Pause | Escape | Pause button |
 
+On phones and tablets, starting, restarting or retrying a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there. **Options > Toggle fullscreen** works on any browser that supports it.
+
 ## Campaign
 
 | Level | Title | Planet | Boss | Unlocks |
@@ -138,3 +140,14 @@ Progress saves automatically in this browser under `mandosQuest.save.v1`. **Opti
 ## Publishing
 
 The game is Coming Soon while its `<title>` starts with those words. To publish it, remove them from the title in `index.html` and in `data/catalog.js`.
+
+## TODO
+
+- Fix character walking backwards animation
+- Fix mobile controls to move down to drop through ledge
+- Fix text popups appearing over the character making it unable to see what your doing
+- Update with new music
+- Update credits to reflect new music and copyright warning
+- Add ship levels?
+- On main menu, easter egg clicking on baby G does different animations 
+- On main menu, easter egg clicking on Mando makes him fart and do other animations

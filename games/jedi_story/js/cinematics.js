@@ -101,7 +101,7 @@
         }
       }
       ctx.globalAlpha = 1;
-      prompt(ctx, this.game, this.t, "ESC TO SKIP");
+      if (!this.game.touchActive) prompt(ctx, this.game, this.t, "ESC TO SKIP");
       fadeIn(ctx, this.t, 1.2);
     }
   }
@@ -454,12 +454,15 @@
     ctx.fillText(speaker || game.jedi.name, 132, y + 28);
     ctx.fillStyle = "#e6f0ff";
     ctx.font = `500 16px ${J.FONT}`;
-    wrapText(ctx, text.slice(0, Math.floor(t * 52)), W - 200).forEach((l, i) => ctx.fillText(l, 132, y + 52 + i * 22));
+    // At the top it shares the pause button's corner, so it wraps where the score ends.
+    const width = top && game.touchActive ? Math.min(W - 200, game.scoreRight - 132) : W - 200;
+    wrapText(ctx, text.slice(0, Math.floor(t * 52)), width).forEach((l, i) => ctx.fillText(l, 132, y + 52 + i * 22));
   }
 
   // A run of dialogue lines shown over the paused action.
   class DialogueScene {
     // Pass { top: true } to show the box at the top of the screen (boss fights).
+    // With touch controls it always goes there, as they cover the bottom.
     constructor(game, lines, onDone, { top = false } = {}) {
       this.game = game;
       this.lines = lines;
@@ -496,7 +499,8 @@
 
     draw(ctx) {
       const line = this.lines[this.i];
-      if (line) drawDialogue(ctx, this.game, line, this.t, this.top);
+      if (line) drawDialogue(ctx, this.game, line, this.t, this.top || this.game.touchActive);
+      if (this.game.touchActive) return; // No Esc key to point to.
       ctx.globalAlpha = 0.6;
       ctx.fillStyle = "#cfe4ff";
       ctx.font = `600 12px ${J.FONT}`;
