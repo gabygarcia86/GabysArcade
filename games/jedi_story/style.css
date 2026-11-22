@@ -283,9 +283,16 @@ html, body {
 .lb-table tr.me td { background: rgba(255, 215, 106, .14); color: var(--ink); }
 .lb-table tr.me .score { color: var(--gold); }
 
-.scroll { overflow-y: auto; max-height: 100%; min-height: 0; width: 100%; max-width: 40em; font-size: .86em; line-height: 1.45; }
+.scroll { overflow-y: auto; max-height: 100%; min-height: 0; width: 100%; max-width: 40em; font-size: max(12px, .86em); line-height: 1.45; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .scroll h3 { color: var(--gold); margin: .7em 0 .15em; font-size: 1em; letter-spacing: .08em; }
 .scroll p { margin: .15em 0; color: var(--ink); }
+.scroll .warning {
+  padding: .45em .8em .55em;
+  border: 1px solid var(--danger);
+  border-radius: .3em;
+  background: rgba(255, 90, 85, .1);
+}
+.scroll .warning h3 { margin-top: 0; color: var(--danger); }
 
 /* ---------- Touch controls ---------- */
 /* The action buttons are drawn on a 1280x720 layout, and --unit is one of its pixels. */

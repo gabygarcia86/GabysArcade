@@ -138,3 +138,14 @@ Progress saves automatically in this browser under `mandosQuest.save.v1`. **Opti
 ## Publishing
 
 The game is Coming Soon while its `<title>` starts with those words. To publish it, remove them from the title in `index.html` and in `data/catalog.js`.
+
+## TODO
+
+- Fix character walking backwards animation
+- Fix mobile controls to move down to drop through ledge
+- Fix text popups appearing over the character making it unable to see what your doing
+- Update with new music
+- Update credits to reflect new music and copyright warning
+- Add ship levels?
+- On main menu, easter egg clicking on baby G does different animations 
+- On main menu, easter egg clicking on Mando makes him fart and do other animations
