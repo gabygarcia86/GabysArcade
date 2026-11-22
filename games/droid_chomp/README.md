@@ -43,6 +43,8 @@ Then open <http://localhost:8000/>, select the game in the Coming Soon section, 
 
 Menus also work with the arrow keys. The pad appears automatically on touch screens, and Options can force it on or off. The game fits portrait and landscape.
 
+On phones and tablets, Play Game and Restart switch to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there.
+
 Movement is grid-based, and a direction press is buffered for half a second. Press early and your droid takes the next turn that way.
 
 ## How to play

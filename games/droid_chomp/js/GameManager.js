@@ -172,6 +172,17 @@
       return this.state !== "menu" && this.state !== "galaxy";
     }
 
+    // Browsers only allow this during a tap, so nothing may delay the call.
+    enterFullscreen() {
+      if (!window.matchMedia("(pointer: coarse)").matches) return;
+      if (document.fullscreenElement || document.webkitFullscreenElement) return;
+      const root = document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!request) return; // iPhones only allow fullscreen video.
+      // The prefixed version returns no promise. If refused, the game runs in the normal window.
+      Promise.resolve(request.call(root, { navigationUI: "hide" })).catch(() => {});
+    }
+
     /* ---------- Flow ---------- */
 
     setState(state) {
@@ -180,6 +191,7 @@
     }
 
     newGame() {
+      this.enterFullscreen();
       this.paused = false;
       this.ui.hide();
       this.ui.hideBanner();
