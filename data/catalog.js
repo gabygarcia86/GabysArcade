@@ -317,6 +317,29 @@ window.ARCADE_CATALOG = {
       tags: ["holiday", "thanksgiving", "3d", "timed", "leaderboard", "touch"],
       added: "",
     },
+    {
+      folder: "ufo_abduction",
+      title: "Coming Soon - UFO Abduction",
+      description:
+        "Fly a flying saucer, beam up cows and farmers, dodge angry bulls and helicopters, and rescue your stranded alien family.",
+      categories: ["Arcade"],
+      tags: [
+        "ufo",
+        "aliens",
+        "tractor beam",
+        "sci-fi",
+        "retro",
+        "farm",
+        "animals",
+        "timed",
+        "endless",
+        "power-ups",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
   ],
 
   apps: [
