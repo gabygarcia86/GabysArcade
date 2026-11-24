@@ -1,0 +1,15 @@
+{
+  "name": "UFO Abduction",
+  "short_name": "UFO Abduction",
+  "description": "Beam up cows, dodge angry bulls and rescue your stranded alien family.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#120a2a",
+  "theme_color": "#120a2a",
+  "icons": [
+    { "src": "icon/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "icon/icon-256.png", "sizes": "256x256", "type": "image/png" }
+  ]
+}

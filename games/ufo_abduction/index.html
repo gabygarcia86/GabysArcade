@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Coming Soon - UFO Abduction</title>
+    <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#120a2a">
+    <meta name="description"
+      content="UFO Abduction: a silly retro arcade game. Fly a flying saucer, beam up cows, chickens and farmers, dodge angry bulls and police helicopters, and rescue your stranded alien family.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="114x114"
+      href="icon/icon-114.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preload" href="../../assets/fonts/oxanium-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <main id="app">
+      <div id="safe-corner" aria-hidden="true"></div>
+      <div id="stage">
+        <canvas id="game" aria-label="UFO Abduction game view"></canvas>
+        <button id="pause-btn" type="button" aria-label="Pause" hidden><i></i><i></i></button>
+      </div>
+
+      <div id="touch" hidden>
+        <div class="stick-zone" aria-label="Movement joystick">
+          <div class="stick-base"><i class="stick-knob"></i></div>
+        </div>
+        <div class="beam-zone">
+          <div class="beam-btn" aria-label="Tractor beam">
+            <span class="beam-icon" aria-hidden="true"></span>
+            <span class="beam-label">BEAM</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="ui"></div>
+    </main>
+    <noscript>UFO Abduction needs JavaScript to run.</noscript>
+
+    <!-- Plain scripts, not ES modules, so the game also runs from file://. Order matters. -->
+    <script src="js/utils.js"></script>
+    <script src="js/collision.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/particles.js"></script>
+
+    <script src="js/art/draw.js"></script>
+    <script src="js/art/ufoArt.js"></script>
+    <script src="js/art/characterArt.js"></script>
+    <script src="js/art/hazardArt.js"></script>
+    <script src="js/art/scenery.js"></script>
+
+    <script src="js/player.js"></script>
+    <script src="js/tractorBeam.js"></script>
+    <script src="js/targets.js"></script>
+    <script src="js/hazards.js"></script>
+    <script src="js/alienRescue.js"></script>
+    <script src="js/powerups.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

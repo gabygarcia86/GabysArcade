@@ -190,7 +190,7 @@ window.ARCADE_CATALOG = {
     },
     {
       folder: "pumpkin_smash_AR",
-      title: "Coming Soon - Pumpkin Smash — AR Halloween Hunt",
+      title: "Coming Soon - Pumpkin Smash",
       description:
         "A mobile AR Halloween hunt. Explore your surroundings to find and smash five hidden pumpkins.",
       categories: ["Real World", "Holiday", "AR"],
@@ -315,6 +315,29 @@ window.ARCADE_CATALOG = {
         "A 60-second 3D Thanksgiving feast. Land turkey legs on plates, stack multipliers and bounce off the giant roast.",
       categories: ["Arcade", "Holiday"],
       tags: ["holiday", "thanksgiving", "3d", "timed", "leaderboard", "touch"],
+      added: "",
+    },
+    {
+      folder: "ufo_abduction",
+      title: "Coming Soon - UFO Abduction",
+      description:
+        "Fly a flying saucer, beam up cows and farmers, dodge angry bulls and helicopters, and rescue your stranded alien family.",
+      categories: ["Arcade"],
+      tags: [
+        "ufo",
+        "aliens",
+        "tractor beam",
+        "sci-fi",
+        "retro",
+        "farm",
+        "animals",
+        "timed",
+        "endless",
+        "power-ups",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
       added: "",
     },
   ],
