@@ -83,11 +83,12 @@
   function comingSoonCard(game) {
     return `
       <article class="card card-locked">
-        ${art({ ...game, title: "Coming Soon" }, "game icon")}
+        ${art(game, "game icon")}
         <div class="card-body">
           <h3 class="card-title">
             <button class="card-link" type="button" data-unlock="${escapeHtml(game.id)}">
-              <span class="sr-only">Coming Soon game (PIN required)</span>
+              ${escapeHtml(game.title)}
+              <span class="sr-only">, Coming Soon (PIN required)</span>
             </button>
           </h3>
           <div class="card-meta">

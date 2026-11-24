@@ -171,7 +171,7 @@ Put the files in `apps/pixel_painter/`, with `index.html` and `icon/icon-256.png
 
 ## Coming Soon games
 
-A game is Coming Soon whenever the `<title>` in its `index.html` starts with `Coming Soon`. Capitals don't matter. Coming Soon cards show only the icon and a Coming Soon tag, with no name or description. Both appear automatically once the game is published, without the `Coming Soon` words.
+A game is Coming Soon whenever the `<title>` in its `index.html` starts with `Coming Soon`. Capitals don't matter. Coming Soon cards show the icon, the game's name (the title without the `Coming Soon` words) and a Coming Soon tag, but no description. The description appears automatically once the game is published.
 
 ### Add a Coming Soon game
 

@@ -190,7 +190,7 @@ window.ARCADE_CATALOG = {
     },
     {
       folder: "pumpkin_smash_AR",
-      title: "Coming Soon - Pumpkin Smash — AR Halloween Hunt",
+      title: "Coming Soon - Pumpkin Smash",
       description:
         "A mobile AR Halloween hunt. Explore your surroundings to find and smash five hidden pumpkins.",
       categories: ["Real World", "Holiday", "AR"],
