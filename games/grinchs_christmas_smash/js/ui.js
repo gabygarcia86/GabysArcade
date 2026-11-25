@@ -236,6 +236,7 @@
         {
           cls: "clear title",
           label: "Main menu",
+          after: (el) => this.bindGrinchPoke(el),
           actions: {
             play: () => {
               this.fs.auto();
@@ -258,6 +259,25 @@
           },
         },
       );
+    }
+
+    // The title screen covers the canvas, so clicks on the Grinch land on its backdrop.
+    // Only the open backdrop counts, not the menu panel or the corner buttons.
+    bindGrinchPoke(el) {
+      const onGrinch = (e) => {
+        if (e.target !== el) return false;
+        const r = this.game.canvas.getBoundingClientRect();
+        return this.game.grinchAt(e.clientX - r.left, e.clientY - r.top);
+      };
+      el.addEventListener("pointerdown", (e) => {
+        if (!onGrinch(e)) return;
+        e.preventDefault();
+        this.audio.ensure();
+        this.game.pokeGrinch();
+      });
+      el.addEventListener("pointermove", (e) => {
+        el.style.cursor = onGrinch(e) ? "pointer" : "";
+      });
     }
 
     // ---------------------------------------------------------------- How to play

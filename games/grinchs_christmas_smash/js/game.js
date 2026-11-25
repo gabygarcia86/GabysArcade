@@ -17,6 +17,8 @@
   const LAUNCH_MIN = 380;
   const LAUNCH_RANGE = 1300;
   const MAX_PULL = 108; // how far the pouch stretches (world units)
+  const FART_GREENS = ["rgba(160, 205, 70, 0.8)", "rgba(125, 175, 45, 0.75)", "rgba(195, 225, 100, 0.75)"];
+  const SNEEZE_WHITES = ["rgba(255, 255, 255, 0.9)", "rgba(220, 240, 255, 0.85)", "rgba(200, 230, 250, 0.8)"];
 
   // ---------------------------------------------------------------- Snowball types
 
@@ -126,6 +128,8 @@
       this.theme = ["day", "dusk", "night", "aurora"][Math.floor(Math.random() * 4)];
       this.grinch.reset();
       this.grinch.anim = "hold";
+      this.grinch.rest = "hold";
+      this.grinch.onSilly = (ev) => this.sillyEvent(ev);
       this.menuQuipT = 1.2;
       this.particles.clear();
       this.hud.reset();
@@ -135,6 +139,70 @@
       this.state = "menu";
       this.setupMenuScene();
       this.audio.music("menu");
+    }
+
+    // ---------------------------------------------------------------- Title-screen Grinch
+
+    // Is the CSS-pixel point (x, y) on the Grinch (or his snowball) on the title screen?
+    grinchAt(x, y) {
+      if (this.state !== "menu") return false;
+      const w = this.screenToWorld(x, y);
+      const g = this.grinch;
+      return w.x > g.x - 90 && w.x < g.x + 160 && w.y > g.y - 340 && w.y < g.y + 12;
+    }
+
+    // Clicked on the title screen: he does something silly (and smelly).
+    pokeGrinch() {
+      const g = this.grinch;
+      if (this.state !== "menu") return;
+      // Let each bit get going before another click can cut it off.
+      if (g.isSilly && g.at < 0.6) return;
+      g.silly();
+      this.menuQuipT = Math.max(this.menuQuipT, 5);
+    }
+
+    // A cloud of puffs blown out of part of the Grinch ("butt" or "nose").
+    sillyCloud(part, power, colors, speed, gravity) {
+      const at = Art.grinchPoint(this.grinch.look(null), this.time, part);
+      const n = Math.round(3 + power * 7);
+      for (let i = 0; i < n; i++) {
+        const s = G.rand(speed * 0.25, speed) * power;
+        this.particles.add({
+          x: at.x + G.rand(-8, 8),
+          y: at.y + G.rand(-8, 8),
+          vx: at.dx * s + G.rand(-50, 50),
+          vy: at.dy * s + G.rand(-90, 40),
+          rot: 0,
+          vr: 0,
+          life: G.rand(1, 1.9),
+          size: G.rand(12, 26) * (0.6 + power * 0.4),
+          color: G.pick(colors),
+          shape: "puff",
+          g: gravity,
+          drag: 2.4,
+        });
+      }
+      return at;
+    }
+
+    sillyEvent(ev) {
+      const g = this.grinch;
+      if (ev.fart || ev.puff) {
+        const power = ev.fart || ev.puff;
+        const b = this.sillyCloud("butt", power, FART_GREENS, 240, -40);
+        if (ev.fart) this.audio.play(ev.sound || "fart", ev.fart);
+        if (ev.text) this.particles.text(b.x + b.dx * 40, b.y - 30, ev.text, { color: "#b8ef5a", size: ev.fart ? 26 + ev.fart * 8 : 24, life: 1.3 });
+      } else if (ev.sneeze) {
+        const n = this.sillyCloud("nose", ev.sneeze, SNEEZE_WHITES, 520, 120);
+        this.particles.burst("snow", n.x + n.dx * 30, n.y, { power: 0.6, count: 8 });
+        if (ev.text) this.particles.text(n.x + n.dx * 60, n.y - 40, ev.text, { color: "#ffffff", size: 44, life: 1.3 });
+      } else if (ev.text) {
+        this.particles.text(g.x + 40 + G.rand(-30, 30), g.y - 300, ev.text, { color: ev.color || "#b8ef5a", size: 30, life: 1.3 });
+      }
+      if (ev.sound && !ev.fart) this.audio.play(ev.sound, ev.power || 1);
+      if (ev.say) g.say(Array.isArray(ev.say) ? G.pick(ev.say) : ev.say, ev.dur || 2);
+      if (ev.snow) this.particles.burst("snow", g.x, g.y - 4, { power: 0.7, count: 10 });
+      if (ev.shake) this.shake(ev.shake);
     }
 
     // ---------------------------------------------------------------- Runs
@@ -792,6 +860,8 @@
       this.grinch.update(dt, false);
       this.particles.update(dt);
       this.hud.update(dt, 0);
+      this.shakeAmt = Math.max(0, this.shakeAmt - dt * 40);
+      if (this.grinch.isSilly) this.menuQuipT = Math.max(this.menuQuipT, 2.5);
       this.menuQuipT -= dt;
       if (this.menuQuipT <= 0) {
         this.menuQuipT = 4.6;
