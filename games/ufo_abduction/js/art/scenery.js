@@ -593,6 +593,7 @@
       sky: ["#4fb8ff", "#9fe0ff", "#fff1c9"],
       sun: { x: 0.78, y: 104, r: 46, color: "#fff2a0" },
       clouds: "#ffffff",
+      night: { sky: ["#0b1640", "#22346e", "#4a5a96"], clouds: "#3e4a80" },
       far: { kind: "hills", colors: ["#8fd47a", "#6fbf62"], base: 470, amp: [40, 110] },
       mid: { kind: "trees", color: "#4f9e4f" },
       ground: ["#86d65e", "#5ab442"],
@@ -609,6 +610,7 @@
       sky: ["#6aa8ff", "#b5d7ff", "#ffe2f1"],
       sun: { x: 0.2, y: 120, r: 42, color: "#fff7c2" },
       clouds: "#ffffff",
+      night: { sky: ["#0e1238", "#2a2f6a", "#5a4f8a"], clouds: "#454878" },
       far: { kind: "hills", colors: ["#9cc8a0", "#7fb487"], base: 470, amp: [20, 60], tower: true },
       mid: { kind: "roofs", color: "#8aa6c8" },
       ground: ["#7ccf6a", "#5aaf4e"],
@@ -627,6 +629,7 @@
       sky: ["#ff9a4a", "#ffc97a", "#fff0c4"],
       sun: { x: 0.5, y: 96, r: 58, color: "#fff4c0" },
       clouds: null,
+      night: { sky: ["#140f3a", "#3a2a6a", "#7a4f7a"], clouds: null },
       far: { kind: "mesas", colors: ["#e08a52", "#c56b3b"], base: 472 },
       mid: { kind: "spires", color: "#d9925a" },
       ground: ["#f2cf8a", "#deb06a"],
@@ -641,21 +644,21 @@
     },
     city: {
       name: "Big City",
-      sky: ["#2b1f5c", "#8a4fa8", "#ff9aa8"],
-      sun: { x: 0.85, y: 130, r: 38, color: "#ffd6a8" },
-      clouds: "#f0c6e0",
-      stars: true,
-      far: { kind: "skyline", colors: ["#4a3a7a", "#3a2c66"], base: 480 },
-      mid: { kind: "towers", color: "#5c4a8c" },
+      sky: ["#4f9cf0", "#a6cff7", "#ffe6d2"],
+      sun: { x: 0.85, y: 110, r: 40, color: "#fff4c0" },
+      clouds: "#ffffff",
+      night: { sky: ["#070a24", "#1c1f52", "#46307a"], clouds: "#3a3468" },
+      far: { kind: "skyline", colors: ["#8796c4", "#7383b4"], base: 480 },
+      mid: { kind: "towers", color: "#6f7fae" },
       ground: ["#9aa0b5", "#6e7488"],
       detail: "road",
       lamps: true,
       props: [
         ["building", 140, { h: 250, color: "#7f8cff", seed: 1, tank: true }], ["busStop", 360], ["building", 580, { h: 290, color: "#ff8fa8", seed: 4, antenna: true }],
-        ["hotdog", 790], ["lamp", 900, { lit: true }], ["crane", 1120], ["building", 1420, { h: 230, color: "#5fd0ff", seed: 2 }], ["billboard", 1660],
-        ["building", 1900, { h: 300, color: "#c08cff", seed: 3, antenna: true }], ["lamp", 2100, { lit: true }], ["busStop", 2240],
+        ["hotdog", 790], ["lamp", 900], ["crane", 1120], ["building", 1420, { h: 230, color: "#5fd0ff", seed: 2 }], ["billboard", 1660],
+        ["building", 1900, { h: 300, color: "#c08cff", seed: 3, antenna: true }], ["lamp", 2100], ["busStop", 2240],
         ["building", 2480, { h: 260, color: "#ffc46b", seed: 5, tank: true }], ["hotdog", 2700], ["billboard", 2920],
-        ["building", 3180, { h: 280, color: "#8dff9a", seed: 6, antenna: true }], ["lamp", 3400, { lit: true }], ["building", 3660, { h: 240, color: "#ff8fa8", seed: 7 }],
+        ["building", 3180, { h: 280, color: "#8dff9a", seed: 6, antenna: true }], ["lamp", 3400], ["building", 3660, { h: 240, color: "#ff8fa8", seed: 7 }],
       ],
       ground_spots: [1000, 2600],
     },
@@ -664,6 +667,7 @@
       sky: ["#2fc6ff", "#8fe8ff", "#e8fff6"],
       sun: { x: 0.3, y: 100, r: 50, color: "#fff8b0" },
       clouds: "#ffffff",
+      night: { sky: ["#06183e", "#12407a", "#2f7aa8"], clouds: "#36507e" },
       far: { kind: "sea", colors: ["#3fa8d8", "#2b8fc4"], base: 480 },
       mid: { kind: "islands", color: "#3e9a7a" },
       ground: ["#ffe7a8", "#f2cf80"],
@@ -678,17 +682,194 @@
     },
   };
 
+  // ---------------------------------------------------------------- Night
+
+  // Night copies of the environments share everything with the day version except the sky.
+  // The scenery is darkened with a tint, then the lights below are drawn on top of it.
+  const NIGHT_TINT = "#5c66a6";
+  const nightEnvs = {};
+  function nightEnv(key) {
+    if (!nightEnvs[key]) {
+      const day = ENVIRONMENTS[key];
+      nightEnvs[key] = {
+        ...day,
+        ...day.night,
+        name: `${day.name} at Night`,
+        isNight: true,
+        stars: true,
+        sun: { ...day.sun, r: Math.round(day.sun.r * 0.75), color: "#f6f2d8" },
+      };
+    }
+    return nightEnvs[key];
+  }
+
+  // Soft round glows, drawn once to small canvases and scaled when used.
+  const glowSprites = {};
+  function glowSprite(rgb) {
+    if (!glowSprites[rgb]) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const g = c.getContext("2d");
+      const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, `rgba(${rgb}, 1)`);
+      grad.addColorStop(0.35, `rgba(${rgb}, 0.45)`);
+      grad.addColorStop(1, `rgba(${rgb}, 0)`);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 128, 128);
+      glowSprites[rgb] = c;
+    }
+    return glowSprites[rgb];
+  }
+  const WARM = "255, 214, 120";
+  const FIRE = "255, 150, 50";
+  const RED = "255, 60, 60";
+
+  function glow(ctx, x, y, r, rgb, alpha) {
+    const prevOp = ctx.globalCompositeOperation;
+    const prevA = ctx.globalAlpha;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(glowSprite(rgb), x - r, y - r, r * 2, r * 2);
+    ctx.globalCompositeOperation = prevOp;
+    ctx.globalAlpha = prevA;
+  }
+
+  // A lit window: bright glass inside the existing outline, with optional frame bars.
+  function litWindow(ctx, x, y, w, h, bars) {
+    ctx.fillStyle = "#ffe58a";
+    ctx.fillRect(x + 1.5, y + 1.5, w - 3, h - 3);
+    if (bars) {
+      D.line(ctx, x + w / 2, y, x + w / 2, y + h, OUT, 2);
+      if (bars === 2) D.line(ctx, x, y + h / 2, x + w, y + h / 2, OUT, 2);
+    }
+    glow(ctx, x + w / 2, y + h / 2, Math.max(w, h) * 1.4, WARM, 0.45);
+  }
+
+  // What lights up at night, keyed by prop. Drawn after the darkening tint.
+  const LIGHTS = {
+    lamp(ctx, x, b) {
+      ctx.fillStyle = "rgba(255, 236, 150, 0.2)";
+      ctx.beginPath();
+      ctx.moveTo(x + 18, b - 140);
+      ctx.lineTo(x + 34, b - 140);
+      ctx.lineTo(x + 70, b);
+      ctx.lineTo(x - 18, b);
+      ctx.fill();
+      D.ell(ctx, x + 26, b - 142, 8, 3.5, "#fff6b0", 0);
+      glow(ctx, x + 26, b - 142, 44, WARM, 0.9);
+      glow(ctx, x + 26, b - 4, 70, WARM, 0.35);
+    },
+    torch(ctx, x, b, t) {
+      const f = Math.sin(t * 18) * 3;
+      D.poly(ctx, [x - 7, b - 82, x + f, b - 108, x + 7, b - 82], "#ffb02e", 0);
+      D.poly(ctx, [x - 3, b - 82, x + f * 0.5, b - 98, x + 3, b - 82], "#fff36b", 0);
+      glow(ctx, x, b - 94, 58 + Math.sin(t * 11) * 4, FIRE, 0.75);
+    },
+    lighthouse(ctx, x, b, t) {
+      ctx.fillStyle = "#fff36b";
+      ctx.fillRect(x - 16.5, b - 252.5, 33, 29);
+      const dir = Math.cos(t * 1.5);
+      ctx.fillStyle = "rgba(255, 245, 160, 0.3)";
+      ctx.beginPath();
+      ctx.moveTo(x, b - 238);
+      ctx.lineTo(x + dir * 420, b - 286);
+      ctx.lineTo(x + dir * 420, b - 190);
+      ctx.closePath();
+      ctx.fill();
+      glow(ctx, x, b - 238, 80, WARM, 0.85);
+    },
+    barn(ctx, x, b) {
+      litWindow(ctx, x - 13, b - 135, 26, 22, 0);
+    },
+    farmhouse(ctx, x, b) {
+      for (const wx of [-58, 42]) litWindow(ctx, x + wx, b - 82, 30, 28, 1);
+      glow(ctx, x, b - 30, 40, WARM, 0.3);
+    },
+    house(ctx, x, b) {
+      for (const wx of [-70, 38]) litWindow(ctx, x + wx, b - 92, 32, 30, 2);
+      D.circ(ctx, x, b - 140, 10.5, "#ffe58a", 0);
+      glow(ctx, x, b - 140, 26, WARM, 0.4);
+    },
+    saloon(ctx, x, b) {
+      for (const wx of [-78, 46]) litWindow(ctx, x + wx, b - 140, 32, 30, 0);
+      glow(ctx, x, b - 40, 56, WARM, 0.45);
+    },
+    gasStation(ctx, x, b) {
+      litWindow(ctx, x + 56, b - 60, 24, 60, 0);
+      glow(ctx, x - 45, b - 121, 90, WARM, 0.35);
+      glow(ctx, x - 45, b - 70, 110, WARM, 0.2);
+    },
+    building(ctx, x, b, t, o) {
+      const h = o.h;
+      ctx.fillStyle = "#ffe58a";
+      for (let r = 0; r * 34 + 30 < h - 60; r++) {
+        for (let cIdx = 0; cIdx < 4; cIdx++) {
+          if ((r * 7 + cIdx * 3 + o.seed) % 5 === 2 || (r * 5 + cIdx + o.seed) % 4 === 0) continue;
+          ctx.fillRect(x - 72 + cIdx * 40, b - h + 22 + r * 34, 24, 20);
+        }
+      }
+      glow(ctx, x, b - 30, 70, WARM, 0.3);
+      if (o.antenna && Math.sin(t * 4) > 0) glow(ctx, x + 50, b - h - 62, 22, RED, 0.9);
+    },
+    resort(ctx, x, b) {
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 4; c++) {
+          if ((r * 4 + c) % 3 === 1) continue;
+          litWindow(ctx, x - 88 + c * 48, b - 156 + r * 46, 30, 26, 0);
+        }
+      }
+    },
+    hut(ctx, x, b) {
+      ctx.fillStyle = "#ffb04a";
+      ctx.fillRect(x - 14, b - 48, 28, 47);
+      glow(ctx, x, b - 26, 60, FIRE, 0.5);
+    },
+    billboard(ctx, x, b) {
+      glow(ctx, x, b - 150, 120, WARM, 0.35);
+    },
+    busStop(ctx, x, b) {
+      glow(ctx, x, b - 70, 70, WARM, 0.35);
+    },
+    crane(ctx, x, b, t) {
+      if (Math.sin(t * 5) > 0) glow(ctx, x, b - 340, 24, RED, 0.9);
+    },
+  };
+
+  // Darkens everything below the upper sky, so the moon and stars stay bright.
+  const tints = new WeakMap();
+  function nightTint(ctx) {
+    let g = tints.get(ctx);
+    if (!g) {
+      g = ctx.createLinearGradient(0, 0, 0, U.VH);
+      g.addColorStop(0, "#ffffff");
+      g.addColorStop(150 / U.VH, "#ffffff");
+      g.addColorStop(300 / U.VH, NIGHT_TINT);
+      g.addColorStop(1, NIGHT_TINT);
+      tints.set(ctx, g);
+    }
+    return g;
+  }
+
+  function drawMoon(ctx, x, y, r, t) {
+    glow(ctx, x, y, r * 3.2, "200, 215, 255", 0.35 + Math.sin(t * 0.8) * 0.03);
+    D.circ(ctx, x, y, r, "#f6f2d8", 0);
+    D.circ(ctx, x - r * 0.35, y - r * 0.2, r * 0.22, "#ddd8b8", 0);
+    D.circ(ctx, x + r * 0.3, y + r * 0.3, r * 0.15, "#ddd8b8", 0);
+    D.circ(ctx, x + r * 0.25, y - r * 0.4, r * 0.1, "#ddd8b8", 0);
+  }
+
   // ---------------------------------------------------------------- Scene
 
-  function build(key) {
-    const env = ENVIRONMENTS[key];
+  function build(key, night) {
+    const env = night ? nightEnv(key) : ENVIRONMENTS[key];
     const rnd = U.seeded(key.length * 977 + key.charCodeAt(0) * 31);
-    const scene = { key, env, props: [], perches: [], decor: [], clouds: [], farPts: [], midItems: [], tumbleweeds: [], birds: [] };
+    const scene = { key, env, night: !!night, props: [], lights: [], perches: [], decor: [], clouds: [], farPts: [], midItems: [], tumbleweeds: [], birds: [] };
 
     for (const [k, x, opts] of env.props) {
       const def = PROPS[k];
       const prop = { def, k, x, base: U.PROP_BASE, opts: opts || null };
       scene.props.push(prop);
+      if (night && LIGHTS[k]) scene.lights.push(prop);
       if (def.perch) {
         const dy = k === "building" ? -opts.h - 8 : def.perch[1];
         scene.perches.push({ x: x + def.perch[0], y: U.PROP_BASE + dy, prop: k, ground: false });
@@ -789,24 +970,29 @@
     ctx.fillRect(0, 0, VW, U.HORIZON + 10);
 
     if (env.stars) {
-      for (let i = 0; i < 40; i++) {
+      const count = env.isNight ? 70 : 40;
+      for (let i = 0; i < count; i++) {
         const sx = ((i * 197.3 - camX * 0.03) % (VW + 20) + VW + 20) % (VW + 20);
-        const sy = (i * 53.7) % 220;
+        const sy = (i * 53.7) % 260;
         ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + i));
         ctx.fillStyle = "#fff";
-        ctx.fillRect(sx, sy, 2, 2);
+        ctx.fillRect(sx, sy, i % 7 === 0 ? 3 : 2, i % 7 === 0 ? 3 : 2);
       }
       ctx.globalAlpha = 1;
     }
 
-    // Sun.
+    // Sun, or the moon at night.
     const sun = env.sun;
     const sx = sun.x * VW - camX * 0.03;
-    ctx.fillStyle = "rgba(255, 250, 200, 0.25)";
-    ctx.beginPath();
-    ctx.arc(sx, sun.y, sun.r * 1.7 + Math.sin(t) * 3, 0, U.TAU);
-    ctx.fill();
-    D.circ(ctx, sx, sun.y, sun.r, sun.color, 0);
+    if (env.isNight) {
+      drawMoon(ctx, sx, sun.y, sun.r, t);
+    } else {
+      ctx.fillStyle = "rgba(255, 250, 200, 0.25)";
+      ctx.beginPath();
+      ctx.arc(sx, sun.y, sun.r * 1.7 + Math.sin(t) * 3, 0, U.TAU);
+      ctx.fill();
+      D.circ(ctx, sx, sun.y, sun.r, sun.color, 0);
+    }
 
     // Clouds.
     if (env.clouds) {
@@ -818,10 +1004,10 @@
       }
     }
 
-    // Background birds.
+    // Background birds (they've gone to roost at night).
     ctx.strokeStyle = "rgba(40, 30, 70, 0.55)";
     ctx.lineWidth = 2;
-    for (const b of scene.birds) {
+    for (const b of env.isNight ? [] : scene.birds) {
       const x = b.x - camX * 0.1;
       if (x < -20 || x > VW + 20) continue;
       const f = Math.sin(t * 8 + b.p) * 4;
@@ -864,6 +1050,21 @@
       ctx.restore();
     }
     ctx.restore();
+
+    if (env.isNight) {
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = nightTint(ctx);
+      ctx.fillRect(0, 0, VW, U.VH);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.save();
+      ctx.translate(-camX, 0);
+      for (const p of scene.lights) {
+        const w = p.def.w || 200;
+        if (p.x + w < camX - 200 || p.x - w > camX + VW + 200) continue;
+        LIGHTS[p.k](ctx, p.x, p.base, t, p.opts);
+      }
+      ctx.restore();
+    }
   }
 
   function drawCloud(ctx, x, y, s, color) {

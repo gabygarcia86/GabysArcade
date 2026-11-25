@@ -37,14 +37,14 @@
       targetCap: 16,
       targetEvery: 1.35,
       hazards: [
-        { type: "policeCar", first: 7, every: 20, cap: 1 },
-        { type: "resident", first: 12, every: 16, cap: 2 },
-        { type: "helicopter", first: 26, every: 28, cap: 1 },
+        { type: "policeCar", first: 12, every: 26, cap: 1 },
+        { type: "resident", first: 18, every: 22, cap: 1 },
+        { type: "helicopter", first: 38, every: 36, cap: 1 },
       ],
       statics: [],
       rescues: 2,
-      powerEvery: 12,
-      diff: { targetSpeed: 1.06, hazardRate: 1.05, hazardSpeed: 1.04 },
+      powerEvery: 10,
+      diff: { targetSpeed: 1, hazardRate: 0.85, hazardSpeed: 0.9 },
       tip: "Police helicopters fire stun shots. Keep moving and dodge!",
     },
     {
@@ -55,16 +55,16 @@
       targetCap: 17,
       targetEvery: 1.25,
       hazards: [
-        { type: "jeep", first: 8, every: 20, cap: 1 },
-        { type: "bull", first: 12, every: 20, cap: 1 },
-        { type: "dustDevil", first: 18, every: 22, cap: 1 },
-        { type: "eagle", first: 24, every: 20, cap: 2 },
-        { type: "giantFarmer", first: 34, every: 40, cap: 1 },
+        { type: "jeep", first: 12, every: 26, cap: 1 },
+        { type: "bull", first: 18, every: 26, cap: 1 },
+        { type: "dustDevil", first: 26, every: 30, cap: 1 },
+        { type: "eagle", first: 32, every: 26, cap: 1 },
+        { type: "giantFarmer", first: 50, every: 55, cap: 1 },
       ],
       statics: [],
       rescues: 2,
-      powerEvery: 11,
-      diff: { targetSpeed: 1.12, hazardRate: 1.1, hazardSpeed: 1.08 },
+      powerEvery: 10,
+      diff: { targetSpeed: 1.03, hazardRate: 0.9, hazardSpeed: 0.92 },
       tip: "Eagles flash a warning before they swoop. Dust storms knock you around!",
     },
     {
@@ -75,14 +75,14 @@
       targetCap: 18,
       targetEvery: 1.15,
       hazards: [
-        { type: "helicopter", first: 9, every: 24, cap: 1 },
-        { type: "tank", first: 14, every: 24, cap: 1 },
-        { type: "rocket", first: 22, every: 26, cap: 1 },
+        { type: "helicopter", first: 14, every: 30, cap: 1 },
+        { type: "tank", first: 22, every: 30, cap: 1 },
+        { type: "rocket", first: 34, every: 34, cap: 1 },
       ],
       statics: [{ type: "power", x: 1280 }, { type: "power", x: 2620 }],
       rescues: 3,
-      powerEvery: 11,
-      diff: { targetSpeed: 1.18, hazardRate: 1.15, hazardSpeed: 1.12 },
+      powerEvery: 9,
+      diff: { targetSpeed: 1.06, hazardRate: 0.95, hazardSpeed: 0.95 },
       tip: "Rockets follow you for a while. Lead them away, then turn hard!",
     },
     {
@@ -107,9 +107,10 @@
 
   const ZONE_TIME = 60;
 
-  // Endless mode: the environments loop, and everything gets a little tougher each zone.
-  function endlessStage(zone) {
-    const base = LEVELS[zone % LEVELS.length];
+  // Endless mode: zones visit the environments in a random order (see Game.nextEndlessLevel),
+  // and everything gets a little tougher each zone.
+  function endlessStage(zone, levelIndex) {
+    const base = LEVELS[levelIndex];
     const lap = Math.floor(zone / LEVELS.length);
     const ramp = 1 + zone * 0.07;
     const hazards = base.hazards.map((h) => ({

@@ -231,6 +231,8 @@
       const right = g.VW - Math.max(50, g.rightInset || 66);
       const size = compact ? 28 : 34;
       const flashing = this.healthFlash > 0 && Math.floor(t * 12) % 2 === 0;
+      // The icons take the colors chosen on the Customize UFO screen.
+      const look = U.Art.resolveUFO(this.game.storage.data.ufo);
       for (let i = 0; i < p.maxHealth; i++) {
         const x = right - (p.maxHealth - 1 - i) * (size + 6) - size / 2;
         const y = 30;
@@ -240,8 +242,8 @@
         const s = size / 44;
         ctx.scale(s, s);
         if (full && !(flashing && i === p.health)) {
-          D.ell(ctx, 0, -6, 12, 11, "rgba(150,235,255,0.8)", 2.5);
-          D.ell(ctx, 0, 2, 22, 7, flashing ? "#ff5f6b" : "#d6cff7", 2.5);
+          D.ell(ctx, 0, -6, 12, 11, look.dome.swatch, 2.5);
+          D.ell(ctx, 0, 2, 22, 7, flashing ? "#ff5f6b" : look.hull.g[1], 2.5);
           D.circ(ctx, -10, 3, 2, "#ff5fb4", 0);
           D.circ(ctx, 0, 4, 2, "#8dff5a", 0);
           D.circ(ctx, 10, 3, 2, "#ffd23f", 0);
