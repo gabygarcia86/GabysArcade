@@ -31,6 +31,18 @@ Scores are submitted from the Game Over screen, which then shows the top 10 with
 - **Classic Arcade:** five levels (Country Farm, Suburbia, Desert Town, Big City, Tropical Island), 60 seconds for the first, then 10 seconds longer each level (100 seconds for the last), three hull points. A repair crew patches one hull point between levels.
 - **Endless Abduction:** no clock. The world changes every 60 seconds and gets tougher each zone. Zones visit all five places, each by day or night at random, in a shuffled order, and every place comes up once before any of them repeats. Play until the saucer goes down.
 
+## Customize UFO
+
+**Customize UFO** on the main menu changes how your saucer looks. Every ship is the same size and flies the same, so the choice is only for looks. The preview animates as you choose, and **Surprise Me!** picks a random look.
+
+- **Ship:** Classic Saucer, Mothership, Diamond, Ring Runner, Bubble Pod, Retro Bell, Space Jelly, Star Cruiser, Teacup or Burger Bomber.
+- **Colors:** hull (10 colors), trim (9) and dome glass (6).
+- **Lights:** the rim light pattern (Rainbow, Chase, Steady, Twinkle, Siren, Disco or Off) and the color that Chase, Steady and Twinkle use.
+- **Accessories:** Antenna, Nothing, Party Hat, Crown, Propeller, Cowboy Hat, Big Bow, Flower, Flag, Radar Dish, Horns or Halo.
+- **Driver:** Zib, Blorp, Trix, Grey, Gloop, Fuzz, Mew or Robo.
+
+The look is saved with your settings and kept by **Reset progress**.
+
 ## Controls
 
 | Action | Keyboard | Touch |
@@ -73,6 +85,6 @@ Phones and tablets switch to full screen on the first tap, and again on the next
 | `js/input.js` | Keyboard, joystick and beam button |
 | `js/particles.js` | Pooled particles and floating text |
 | `js/collision.js`, `js/utils.js` | Helpers |
-| `js/art/` | Drawing code for the saucer, characters, hazards and scenery |
+| `js/art/` | Drawing code for the saucer, characters, hazards and scenery. `ufoArt.js` also lists every Customize UFO option |
 
 Progress is saved in the browser under `ufoAbduction.save`. Damaged or missing data is replaced with defaults. **Settings > Reset progress** clears high scores and the album but keeps settings.

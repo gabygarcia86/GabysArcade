@@ -490,6 +490,10 @@ input {
   background: linear-gradient(180deg, #dcc6ff, #a77bff);
 }
 
+.btn.mint {
+  background: linear-gradient(180deg, #c4fff0, #5cf2c8);
+}
+
 .btn.orange {
   background: linear-gradient(180deg, #ffcf9e, #ff8a3d);
 }
@@ -1039,6 +1043,132 @@ input[type="range"] {
   color: var(--gold);
 }
 
+/* Customize UFO */
+.customize .ufo-stage {
+  width: min(400px, 100%);
+  margin: 4px auto 8px;
+  border-radius: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(ellipse at 50% 62%, rgba(140, 110, 255, 0.4), rgba(0, 0, 0, 0.2) 72%);
+}
+
+.ufo-preview {
+  display: block;
+  width: 100%;
+  height: 190px;
+}
+
+.ufo-name {
+  padding: 0 10px 10px;
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.customize .tabs {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.customize .tabs button {
+  padding: 4px 14px;
+}
+
+.cust-body {
+  min-height: 220px;
+  text-align: left;
+}
+
+.cust-body h3 {
+  margin: 10px 0 6px;
+}
+
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.opt-card {
+  padding: 4px 4px 8px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.opt-card canvas {
+  display: block;
+  width: 96px;
+  height: 80px;
+  margin: 0 auto 2px;
+  pointer-events: none;
+}
+
+.opt-card b {
+  display: block;
+}
+
+.opt-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.opt-card[aria-pressed="true"] {
+  border-color: var(--lime);
+  background: rgba(141, 255, 90, 0.16);
+  box-shadow: inset 0 0 0 2px var(--lime);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 8px;
+}
+
+.swatch {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--sw);
+  box-shadow: 0 3px 0 #0b0620;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed="true"] {
+  outline: 3px solid var(--lime);
+  outline-offset: 3px;
+}
+
+.swatch[aria-pressed="true"]::after {
+  content: "\2713";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 20px;
+  text-shadow: 0 0 3px #000, 0 0 6px #000;
+}
+
+.opt-card:focus-visible,
+.swatch:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.panel p.cust-note {
+  font-size: 13px;
+}
+
 /* Confirm dialog */
 .confirm {
   width: min(420px, 100%);
@@ -1087,6 +1217,10 @@ input[type="range"] {
 
   .btn.primary {
     min-height: 48px;
+  }
+
+  .ufo-preview {
+    height: 140px;
   }
 }
 

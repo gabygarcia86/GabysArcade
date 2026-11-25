@@ -113,6 +113,7 @@
         <p class="tagline">Beam 'em up. Dodge the bulls. Bring the family home.</p>
         <div class="menu">
           <button class="btn primary" data-action="start">&#9654; Start Game</button>
+          <button class="btn mint" data-action="customize">Customize UFO</button>
           <div class="menu-row">
             <button class="btn gold" data-action="leaderboard">Leaderboard</button>
             <button class="btn pink" data-action="album">Family Album</button>
@@ -131,6 +132,7 @@
           label: "Title",
           actions: {
             start: () => this.showModes(),
+            customize: () => this.showCustomize(() => this.showTitle()),
             leaderboard: () => this.showLeaderboard("classic", () => this.showTitle()),
             album: () => this.showAlbum(() => this.showTitle()),
             howto: () => this.showHowTo(() => this.showTitle()),
@@ -352,6 +354,165 @@
       this.input.placeStickHome();
       this.input.updateBeamButton();
       this.relayout();
+    }
+
+    // ---------------------------------------------------------------- Customize UFO
+
+    showCustomize(back, tab = "ship") {
+      const parts = U.UFO_PARTS;
+      const style = this.storage.data.ufo;
+      const tabs = [
+        ["ship", "Ship"],
+        ["colors", "Colors"],
+        ["lights", "Lights"],
+        ["extras", "Accessories"],
+        ["driver", "Driver"],
+      ];
+      let current = tab;
+      let cheerUntil = 0;
+
+      // An unknown saved value shows the default as chosen, since that's what gets drawn.
+      const chosen = (key) => (parts[key].some((p) => p.id === style[key]) ? style[key] : U.UFO_DEFAULT[key]);
+      const pressed = (key, id) => String(chosen(key) === id);
+      const card = (key, p) =>
+        `<button type="button" class="opt-card" data-action="pick" data-key="${key}" data-value="${p.id}" aria-pressed="${pressed(key, p.id)}">
+          <canvas data-preview="${key}" data-value="${p.id}" width="192" height="160" aria-hidden="true"></canvas>
+          <b>${esc(p.name)}</b>
+        </button>`;
+      const swatches = (key, label, bg) =>
+        `<h3>${label}</h3>
+        <div class="swatches" role="group" aria-label="${esc(label)}">
+          ${parts[key].map((p) => `<button type="button" class="swatch" data-action="pick" data-key="${key}" data-value="${p.id}" aria-pressed="${pressed(key, p.id)}" aria-label="${esc(p.name)}" title="${esc(p.name)}" style="--sw: ${bg(p)}"></button>`).join("")}
+        </div>`;
+      const bodies = {
+        ship: () => `<div class="opt-grid">${parts.ship.map((p) => card("ship", p)).join("")}</div>`,
+        colors: () =>
+          swatches("hull", "Hull", (p) => `linear-gradient(180deg, ${p.g[0]}, ${p.g[1]} 45%, ${p.g[2]})`) +
+          swatches("trim", "Trim", (p) => p.c) +
+          swatches("dome", "Dome glass", (p) => p.swatch),
+        lights: () =>
+          `<h3>Pattern</h3>
+          <div class="seg" role="group" aria-label="Light pattern">
+            ${parts.lights.map((p) => `<button type="button" data-action="pick" data-key="lights" data-value="${p.id}" aria-pressed="${pressed("lights", p.id)}">${esc(p.name)}</button>`).join("")}
+          </div>
+          ${swatches("lightColor", "Light color", (p) => p.c)}
+          <p class="cust-note">Rainbow, Siren and Disco pick their own colors.</p>`,
+        extras: () => `<div class="opt-grid">${parts.accessory.map((p) => card("accessory", p)).join("")}</div>`,
+        driver: () => `<div class="opt-grid">${parts.driver.map((p) => card("driver", p)).join("")}</div>`,
+      };
+
+      let root = null;
+      const caption = () => {
+        const S = U.Art.resolveUFO(style);
+        root.querySelector(".ufo-name").textContent = `${S.ship.name}, piloted by ${S.driver.name}`;
+      };
+      const paintCards = () => {
+        root.querySelectorAll("canvas[data-preview]").forEach((c) => {
+          const ctx = c.getContext("2d");
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, c.width, c.height);
+          ctx.setTransform(2, 0, 0, 2, 0, 0);
+          const key = c.dataset.preview;
+          const value = c.dataset.value;
+          if (key === "driver") {
+            U.Art.drawDriver(ctx, 48, 62, 1.9, value, { t: 1.3, mood: "happy" });
+          } else {
+            const s = { ...style, [key]: value };
+            U.Art.drawUFO(ctx, 48, key === "accessory" ? 54 : 48, { t: 1.3, look: 0.2, scale: key === "accessory" ? 0.6 : 0.62, style: s });
+          }
+        });
+      };
+      const renderBody = () => {
+        root.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === current)));
+        root.querySelector(".cust-body").innerHTML = bodies[current]();
+        paintCards();
+        caption();
+      };
+      const changed = () => {
+        this.storage.saveSoon();
+        cheerUntil = performance.now() + 1100;
+        caption();
+      };
+
+      this.show(
+        "customize",
+        `<div class="panel wide customize">
+          <h2>Customize UFO</h2>
+          <div class="ufo-stage">
+            <canvas class="ufo-preview" aria-hidden="true"></canvas>
+            <div class="ufo-name" aria-live="polite"></div>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Customize">
+            ${tabs.map(([id, label]) => `<button type="button" role="tab" data-action="tab" data-tab="${id}" aria-selected="${id === current}">${label}</button>`).join("")}
+          </div>
+          <div class="cust-body"></div>
+          <div class="btn-row">
+            <button class="btn gold" data-action="random">Surprise Me!</button>
+            <button class="btn primary" data-action="back">Done</button>
+          </div>
+          <div class="btn-row"><button class="btn ghost small" data-action="reset">Back to the classic look</button></div>
+        </div>`,
+        {
+          label: "Customize UFO",
+          back,
+          actions: {
+            tab: (el) => {
+              current = el.dataset.tab;
+              renderBody();
+            },
+            pick: (el) => {
+              style[el.dataset.key] = el.dataset.value;
+              root.querySelectorAll(`[data-action="pick"][data-key="${el.dataset.key}"]`).forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
+              paintCards();
+              changed();
+            },
+            random: () => {
+              for (const key of Object.keys(parts)) style[key] = U.pick(parts[key]).id;
+              // Keep the lights on for a surprise; "Off" can still be chosen by hand.
+              if (style.lights === "off") style.lights = "rainbow";
+              renderBody();
+              changed();
+            },
+            reset: () => {
+              Object.assign(style, U.UFO_DEFAULT);
+              renderBody();
+              changed();
+            },
+          },
+          after: (el) => {
+            root = el;
+            renderBody();
+            const canvas = el.querySelector(".ufo-preview");
+            const ctx = canvas.getContext("2d");
+            // The big preview animates until the screen closes.
+            const frame = (now) => {
+              if (!canvas.isConnected) return;
+              const dpr = Math.min(2, window.devicePixelRatio || 1);
+              const w = canvas.clientWidth;
+              const h = canvas.clientHeight;
+              if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+                canvas.width = Math.round(w * dpr);
+                canvas.height = Math.round(h * dpr);
+              }
+              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              ctx.clearRect(0, 0, w, h);
+              const t = now / 1000;
+              const s = Math.min(1.55, w / 190);
+              U.Draw.shadow(ctx, w / 2, h - 14, 46 * s, 0.25);
+              U.Art.drawUFO(ctx, w / 2, h * 0.62 + Math.sin(t * 2) * 4, {
+                t,
+                tilt: Math.sin(t * 1.3) * 0.06,
+                look: Math.sin(t * 0.7),
+                beam: t % 5 > 3.6,
+                cheer: now < cheerUntil,
+                scale: s,
+              });
+              requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+          },
+        },
+      );
     }
 
     // ---------------------------------------------------------------- Pause

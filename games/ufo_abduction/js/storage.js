@@ -10,6 +10,17 @@
   const VERSION = 1;
   const HIGH_SCORES_KEPT = 5;
   const FAMILY_IDS = ["mom", "dad", "baby", "grandma", "grandpa", "bestie", "cousin"];
+  // The saucer's look, chosen on the Customize UFO screen. The parts are listed in art/ufoArt.js.
+  const UFO_DEFAULT = {
+    ship: "classic",
+    hull: "lavender",
+    trim: "pink",
+    dome: "clear",
+    lights: "rainbow",
+    lightColor: "pink",
+    accessory: "antenna",
+    driver: "zib",
+  };
 
   function defaults() {
     return {
@@ -25,6 +36,7 @@
         leftHanded: false,
         shake: true,
       },
+      ufo: { ...UFO_DEFAULT },
       high: { classic: [], endless: [] },
       album: {}, // id -> number of times rescued
       reunions: 0,
@@ -68,6 +80,12 @@
       leftHanded: bool(s.leftHanded, false),
       shake: bool(s.shake, true),
     };
+    // Unknown part names are kept as they are; the art falls back to the default for them.
+    const ufo = raw.ufo || {};
+    for (const key of Object.keys(UFO_DEFAULT)) {
+      const v = ufo[key];
+      if (typeof v === "string" && v.length > 0 && v.length < 32) base.ufo[key] = v;
+    }
     const high = raw.high || {};
     base.high = { classic: cleanScores(high.classic), endless: cleanScores(high.endless) };
     const album = raw.album || {};
@@ -149,11 +167,14 @@
 
     resetProgress() {
       const settings = this.data.settings;
+      const ufo = this.data.ufo;
       this.data = defaults();
       this.data.settings = settings;
+      this.data.ufo = ufo;
       this.save();
     },
   };
 
   U.FAMILY_IDS = FAMILY_IDS;
+  U.UFO_DEFAULT = UFO_DEFAULT;
 })(window.UFO);

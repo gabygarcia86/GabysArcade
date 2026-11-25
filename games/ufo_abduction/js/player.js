@@ -275,7 +275,7 @@
       ctx.fill();
       ctx.lineWidth = 3;
       ctx.stroke();
-      U.Draw.circ(ctx, 0, 2, 9, "#8dff5a", 2.5);
+      U.Draw.circ(ctx, 0, 2, 9, U.Art.driverSkin(), 2.5);
       U.Draw.eye(ctx, -3, 1, 2.5, 0, 0, "dizzy", t);
       U.Draw.eye(ctx, 3, 1, 2.5, 0, 0, "dizzy", t);
       ctx.restore();
