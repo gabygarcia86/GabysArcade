@@ -100,6 +100,27 @@ window.ARCADE_CATALOG = {
       added: "",
     },
     {
+      folder: "grinchs_christmas_smash",
+      title: "Coming Soon - Grinch's Christmas Smash!",
+      description:
+        "Fling snowballs at towers of presents, ornaments, snowmen and Christmas trees, and trigger chain reactions to smash Christmas to bits.",
+      categories: ["Arcade", "Holiday"],
+      tags: [
+        "holiday",
+        "christmas",
+        "grinch",
+        "physics",
+        "slingshot",
+        "destruction",
+        "snowballs",
+        "combos",
+        "leaderboard",
+        "mouse",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "jedi_story",
       title: "Coming Soon - Jedi Story",
       description:
