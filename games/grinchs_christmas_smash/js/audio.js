@@ -351,6 +351,80 @@
         case "swing":
           this.noise(t, 0.18, { freq: 900, sweep: 300, q: 1, vol: 0.1 });
           break;
+        // The title-screen Grinch's silly noises. A flappy low buzz plus a breathy rumble.
+        case "fart":
+        case "fartLong": {
+          const len = name === "fartLong" ? 1.3 : 0.3 + p * 0.35;
+          const f = G.rand(62, 85) / (0.8 + p * 0.2);
+          const end = name === "fartLong" ? f * 2.2 : f * 0.6;
+          this.tone(f, t, len, { vol: v(0.4), type: "sawtooth", filter: "lowpass", cutoff: 520, q: 4, slide: end, vibrato: f * 0.35, vibratoRate: G.rand(22, 34), attack: 0.02 });
+          this.tone(f * 0.5, t, len, { vol: v(0.3), type: "square", filter: "lowpass", cutoff: 260, slide: end * 0.5, vibrato: f * 0.2, vibratoRate: 28, attack: 0.02 });
+          this.noise(t, len * 0.9, { filter: "lowpass", freq: 380, vol: v(0.18), attack: 0.02 });
+          break;
+        }
+        case "toot": {
+          // A short squeaky one; `power` sets the pitch so a run of them plays a tune.
+          const f = 160 * p;
+          this.tone(f, t, 0.16, { vol: 0.26, type: "square", filter: "bandpass", cutoff: f * 3, q: 2, slide: f * 0.85, vibrato: f * 0.15, vibratoRate: 40, attack: 0.01 });
+          break;
+        }
+        case "thump":
+          this.tone(110, t, 0.18, { vol: v(0.4), type: "sine", slide: 55 });
+          this.noise(t, 0.06, { filter: "lowpass", freq: 300, vol: v(0.15) });
+          break;
+        case "boing":
+          this.tone(220, t, 0.35, { vol: 0.22, type: "sine", slide: 660, vibrato: 30, vibratoRate: 18 });
+          break;
+        case "slide":
+          this.tone(1400, t, 0.6, { vol: 0.16, type: "sine", slide: 300 });
+          break;
+        case "inflate":
+          this.tone(160 * p, t, 0.28, { vol: 0.14, type: "triangle", slide: 260 * p, attack: 0.05 });
+          break;
+        case "sniff":
+          for (let i = 0; i < 2; i++) this.noise(t + i * 0.13, 0.09, { filter: "highpass", freq: 2500, vol: 0.12, attack: 0.02 });
+          break;
+        case "achoo":
+          this.noise(t, 0.45, { filter: "bandpass", freq: 2600, sweep: 900, q: 0.8, vol: 0.35, attack: 0.01 });
+          this.voice(t + 0.05, [[280, 0.28]], "uh", 0.24);
+          break;
+        case "hic":
+          this.tone(380 * p, t, 0.09, { vol: 0.22, type: "sawtooth", filter: "bandpass", cutoff: 1200, q: 3, slide: 620 * p });
+          this.noise(t, 0.05, { freq: 2000, vol: 0.08 });
+          break;
+        case "bawk":
+          this.voice(t, [[560, 0.07], [720, 0.16]], "ah", 0.22);
+          break;
+        case "sing": {
+          // Wobbly and not quite in tune, on purpose.
+          const f = 220 * p;
+          const len = p > 1.4 ? 0.9 : 0.5;
+          for (const formant of [800, 1200]) {
+            this.tone(f, t, len, { vol: 0.13, type: "sawtooth", filter: "bandpass", cutoff: formant, q: 4, slide: f * G.rand(0.94, 1.06), vibrato: f * 0.04, vibratoRate: 6, attack: 0.05 });
+          }
+          break;
+        }
+        case "squeak":
+          this.tone(900, t, 0.25, { vol: 0.2, type: "square", filter: "bandpass", cutoff: 1800, q: 3, slide: 1500, vibrato: 60, vibratoRate: 30 });
+          break;
+        case "crack":
+          this.noise(t, 0.04, { filter: "highpass", freq: 3000, vol: 0.35 });
+          this.noise(t + 0.05, 0.03, { filter: "highpass", freq: 2500, vol: 0.25 });
+          break;
+        case "scratch":
+          for (let i = 0; i < 3; i++) this.noise(t + i * 0.06, 0.04, { filter: "bandpass", freq: 3500, q: 2, vol: 0.1 });
+          break;
+        case "twinkle":
+          [84, 88, 91, 96].forEach((n, i) => this.tone(midi(n), t + i * 0.07, 0.4, { vol: 0.1, type: "sine" }));
+          break;
+        case "kiss":
+          this.tone(1200, t, 0.06, { vol: 0.2, type: "sine", slide: 2400 });
+          this.noise(t, 0.04, { filter: "highpass", freq: 4000, vol: 0.15 });
+          break;
+        case "bonk":
+          this.tone(520, t, 0.15, { vol: 0.3, type: "square", filter: "lowpass", cutoff: 1500, slide: 260 });
+          this.tone(160, t, 0.2, { vol: 0.3, type: "sine", slide: 80 });
+          break;
         default:
           break;
       }

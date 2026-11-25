@@ -86,7 +86,19 @@
     ];
     for (let i = 0; i < 2; i++) {
       const [ex, ey, er] = eyes[i];
-      if (expr === "laugh" || expr === "joy") {
+      if (expr === "strain" || expr === "gross" || expr === "sneeze") {
+        // Squeezed shut: > <
+        const d = i === 0 ? 1 : -1;
+        ctx.strokeStyle = "#1d2a12";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(ex - er * 0.8 * d, ey - er * 0.6);
+        ctx.lineTo(ex + er * 0.6 * d, ey);
+        ctx.lineTo(ex - er * 0.8 * d, ey + er * 0.6);
+        ctx.stroke();
+        continue;
+      }
+      if (expr === "laugh" || expr === "joy" || expr === "tongue" || expr === "relief" || expr === "sing") {
         ctx.strokeStyle = "#1d2a12";
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -108,7 +120,7 @@
         ctx.stroke();
         continue;
       }
-      const big = expr === "shock" ? 1.4 : 1;
+      const big = expr === "shock" ? 1.4 : expr === "puff" ? 1.25 : 1;
       const squint = expr === "squint" && i === 0;
       Art.ellipse(ctx, ex, ey, er * big, er * 0.82 * big, "#fff36b");
       ctx.strokeStyle = "#2c5a12";
@@ -127,10 +139,10 @@
         if (squint) continue;
       }
       const pr = expr === "shock" ? er * 0.3 : er * 0.42;
-      const look = expr === "sad" ? 2 : expr === "mad" ? 0 : 1.5;
+      const look = expr === "shifty" ? Math.sin(time * 6) * er * 0.5 : expr === "sad" ? 2 : expr === "mad" ? 0 : 1.5;
       Art.circle(ctx, ex + look, ey + (expr === "sad" ? 2 : 0.5), pr, "#c0182c");
       Art.circle(ctx, ex + look, ey + (expr === "sad" ? 2 : 0.5), pr * 0.5, "#1d1010");
-      if (expr === "sad" || expr === "sly") {
+      if (expr === "sad" || expr === "sly" || expr === "shifty") {
         // Heavy lids.
         ctx.fillStyle = FUR;
         ctx.fillRect(ex - er - 1, ey - er - 1, er * 2 + 2, er * (expr === "sad" ? 0.9 : 0.7));
@@ -140,12 +152,12 @@
     ctx.strokeStyle = FUR_DARK;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    if (expr === "mad" || expr === "squint") {
+    if (expr === "mad" || expr === "squint" || expr === "strain" || expr === "gross") {
       ctx.moveTo(-1, -17);
       ctx.lineTo(13, -11);
       ctx.moveTo(18, -11);
       ctx.lineTo(31, -18);
-    } else if (expr === "shock") {
+    } else if (expr === "shock" || expr === "puff" || expr === "sneeze" || expr === "sing") {
       ctx.moveTo(-1, -22);
       ctx.lineTo(12, -24);
       ctx.moveTo(18, -24);
@@ -155,7 +167,7 @@
       ctx.lineTo(12, -17);
       ctx.moveTo(19, -17);
       ctx.lineTo(31, -11);
-    } else if (expr !== "joy" && expr !== "laugh") {
+    } else if (expr !== "joy" && expr !== "laugh" && expr !== "tongue" && expr !== "relief") {
       ctx.moveTo(-2, -14);
       ctx.lineTo(12, -17);
       ctx.moveTo(18, -19);
@@ -179,9 +191,35 @@
       ctx.fill();
       ctx.fillStyle = "#fffbe0";
       ctx.fillRect(2, 8, 28, 3);
-    } else if (expr === "shock") {
+    } else if (expr === "tongue") {
+      // Blowing a raspberry.
+      ctx.fillStyle = "#3a1010";
+      ctx.beginPath();
+      ctx.moveTo(0, 8);
+      ctx.quadraticCurveTo(15, 24, 32, 7);
+      ctx.closePath();
+      ctx.fill();
+      const wag = Math.sin(time * 22) * 1.5;
+      Art.ellipse(ctx, 17 + wag, 19, 7, 10, "#ff6b8a");
+      ctx.strokeStyle = "#c23a5a";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(17 + wag, 14);
+      ctx.lineTo(17 + wag, 24);
+      ctx.stroke();
+    } else if (expr === "puff") {
+      // Cheeks full of air.
+      Art.circle(ctx, -8, 9, 10, FUR_LIGHT);
+      Art.circle(ctx, 33, 11, 9, FUR_LIGHT);
+      Art.ellipse(ctx, 16, 14, 4, 3, "#3a1010");
+    } else if (expr === "sing") {
+      // Belting it out.
+      Art.ellipse(ctx, 17, 15, 8, 11, "#3a1010");
+      Art.ellipse(ctx, 17, 21, 5, 4, "#ff7a8a");
+    } else if (expr === "shock" || expr === "sneeze") {
       Art.ellipse(ctx, 18, 14, 6, 8, "#3a1010");
-    } else if (expr === "mad") {
+    } else if (expr === "mad" || expr === "strain") {
       ctx.fillStyle = "#fffbe0";
       Art.roundRect(ctx, 4, 8, 26, 9, 3);
       ctx.fill();
@@ -197,7 +235,7 @@
       ctx.moveTo(4, 17);
       ctx.quadraticCurveTo(17, 7, 30, 16);
       ctx.stroke();
-    } else if (expr === "dizzy") {
+    } else if (expr === "dizzy" || expr === "gross") {
       ctx.beginPath();
       for (let i = 0; i <= 8; i++) ctx.lineTo(4 + i * 3.4, 13 + Math.sin(i * 1.6 + time * 10) * 2);
       ctx.stroke();
@@ -217,6 +255,699 @@
       }
     }
   }
+
+  // ---------------------------------------------------------------- Silly bits
+
+  // The title-screen bits played when the Grinch is clicked. Each one adjusts the default
+  // pose `p` at `at` seconds in. The timed sounds, farts and speech for each live in
+  // G.SILLY (player.js). Extra pose fields: sx/sy scale him about his feet (a negative sx
+  // turns him round), dx slides him sideways, spin turns him about his middle, hatRot
+  // spins the hat.
+  const seg = (at, a, b) => G.clamp((at - a) / (b - a), 0, 1);
+  const bump = (k) => Math.sin(k * Math.PI);
+  const ARMS_UP = (p) => {
+    p.back = { x: -44, y: -212 };
+    p.front = { x: 50, y: -218 };
+    p.backOpen = true;
+    p.frontOpen = true;
+  };
+  const LAUGH = (p, at) => {
+    p.shake = Math.sin(at * 40) * 2;
+    p.lean = -0.18 + Math.sin(at * 10) * 0.05;
+    p.headTilt = -0.25;
+    p.back = { x: 0, y: -84 };
+    p.front = { x: 22, y: -80 };
+    p.expr = "laugh";
+    p.hipY = -86 + Math.abs(Math.sin(at * 10)) * 4;
+  };
+
+  const SILLY = {
+    // Fart-powered rocket jump.
+    rocket(p, at) {
+      if (at < 0.5) {
+        const k = seg(at, 0, 0.5);
+        p.hipY = -86 + k * 18;
+        p.sy = 1 - k * 0.1;
+        p.sx = 1 + k * 0.06;
+        p.lean = 0.12;
+        p.expr = "strain";
+        p.fist = true;
+        p.back = { x: -4, y: -96 };
+        p.front = { x: 24, y: -92 };
+        p.shake = Math.sin(at * 60) * k * 2;
+      } else if (at < 1.9) {
+        const up = seg(at, 0.5, 1.3);
+        const down = seg(at, 1.3, 1.9);
+        p.jump = at < 1.3 ? -280 * (1 - (1 - up) * (1 - up)) : -280 * (1 - down * down);
+        p.expr = at < 0.9 ? "shock" : "joy";
+        ARMS_UP(p);
+        const kick = Math.sin(at * 24);
+        p.footL = { x: -12 + kick * 6, y: -14 };
+        p.footR = { x: 14 - kick * 6, y: -8 };
+        p.hatPop = 10 + Math.sin(at * 20) * 4;
+        p.lean = Math.sin(at * 9) * 0.08;
+      } else {
+        const s = bump(seg(at, 1.9, 2.25));
+        p.sy = 1 - s * 0.2;
+        p.sx = 1 + s * 0.14;
+        p.expr = at < 2.25 ? "shock" : "grin";
+        p.back = { x: -36, y: -120 };
+        p.front = { x: 48, y: -124 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      }
+    },
+
+    // Lifts a leg, lets one go, then wafts it at Christmas.
+    waft(p, at) {
+      p.back = { x: -30, y: -90 };
+      p.front = { x: 40, y: -100 };
+      if (at < 0.35) {
+        const k = seg(at, 0, 0.3);
+        p.footL = { x: -10 - k * 14, y: -k * 26 };
+        p.lean = -0.12 * k;
+        p.expr = "sly";
+      } else if (at < 1.0) {
+        p.footL = { x: -24, y: -26 };
+        p.lean = -0.12;
+        p.headTilt = -0.15;
+        p.expr = "relief";
+      } else if (at < 2.2) {
+        const w = Math.sin(at * 16);
+        p.expr = "grin";
+        p.lean = 0.1;
+        p.back = { x: -14, y: -66 };
+        p.front = { x: 64 + w * 16, y: -140 + w * 10 };
+        p.frontOpen = true;
+        p.footR = { x: 18, y: 0 };
+      } else {
+        LAUGH(p, at);
+      }
+    },
+
+    // Turns round, bends over and toots a tune.
+    trumpet(p, at) {
+      if (at < 0.25) p.sx = Math.cos(seg(at, 0, 0.25) * Math.PI);
+      else if (at < 2.9) p.sx = -1;
+      else p.sx = -Math.cos(seg(at, 2.9, 3.2) * Math.PI);
+      let hit = 0;
+      for (const t of [0.5, 0.8, 1.1, 1.25, 1.4, 1.9, 2.4]) if (at > t) hit = Math.max(hit, Math.exp(-(at - t) * 14));
+      const bend = seg(at, 0.1, 0.4) * (1 - seg(at, 2.8, 3.1));
+      p.lean = bend * 0.55 + hit * 0.12;
+      p.hipY = -86 + bend * 6 - hit * 6;
+      p.headTilt = -bend * 0.5;
+      p.back = { x: G.lerp(-20, 6, bend), y: G.lerp(-78, -50, bend) };
+      p.front = { x: G.lerp(34, 26, bend), y: G.lerp(-72, -48, bend) };
+      p.footL = { x: -16, y: 0 };
+      p.footR = { x: 20, y: 0 };
+      p.expr = at > 2.4 && at < 2.7 ? "shock" : "tongue";
+      if (at > 2.4) p.hatPop = bump(seg(at, 2.4, 2.8)) * 26;
+    },
+
+    // A fart that spins him like a top.
+    spin(p, at, time) {
+      if (at < 0.3) {
+        p.expr = "strain";
+        p.sy = 1 - seg(at, 0, 0.3) * 0.08;
+        p.fist = true;
+      } else if (at < 2.0) {
+        const k = seg(at, 0.3, 2.0);
+        p.spin = G.easeOutCubic(k) * Math.PI * 8;
+        p.jump = -bump(k) * 60;
+        p.expr = "shock";
+        p.back = { x: -60, y: -140 };
+        p.front = { x: 66, y: -140 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.footL = { x: -6, y: 0 };
+        p.footR = { x: 8, y: 0 };
+      } else {
+        const k = seg(at, 2.0, 2.8);
+        p.expr = "dizzy";
+        p.stars = true;
+        p.lean = Math.sin(time * 8) * 0.2 * (1 - k * 0.5);
+        p.headTilt = Math.sin(time * 8 + 1) * 0.2;
+        p.back = { x: -20, y: -60 };
+        p.front = { x: 30, y: -56 };
+      }
+    },
+
+    // Strains so hard his hat blasts off.
+    hatpop(p, at) {
+      if (at < 0.6) {
+        const k = seg(at, 0, 0.6);
+        p.expr = "strain";
+        p.fist = true;
+        p.hipY = -86 + k * 10;
+        p.sy = 1 - k * 0.08;
+        p.shake = Math.sin(at * 70) * (1 + k * 2);
+        p.steam = k > 0.4;
+        p.back = { x: -4, y: -100 };
+        p.front = { x: 26, y: -96 };
+        return;
+      }
+      const k = seg(at, 0.6, 2.0);
+      p.hatPop = 4 * k * (1 - k) * 380;
+      p.hatRot = k * Math.PI * 6;
+      if (at < 2.0) {
+        p.expr = "shock";
+        p.jump = -bump(seg(at, 0.6, 0.9)) * 20;
+        p.back = { x: -30, y: -200 };
+        p.front = { x: 40, y: -210 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      } else {
+        p.expr = "grin";
+        p.sy = 1 - bump(seg(at, 2.0, 2.2)) * 0.1;
+        p.back = { x: -10, y: -214 };
+        p.front = { x: 30, y: -220 };
+      }
+    },
+
+    // A sneaky one, a shifty look round, then blames someone else.
+    blame(p, at, time) {
+      if (at < 0.3) {
+        p.expr = "sly";
+      } else if (at < 0.8) {
+        p.expr = "shock";
+        p.jump = -bump(seg(at, 0.3, 0.5)) * 12;
+        p.back = { x: -26, y: -60 };
+        p.front = { x: 30, y: -58 };
+      } else if (at < 1.6) {
+        p.expr = "shifty";
+        p.headTilt = Math.sin(time * 6) * 0.12;
+        p.back = { x: -20, y: -70 };
+        p.front = { x: 28, y: -70 };
+      } else {
+        const k = seg(at, 1.6, 1.8);
+        p.expr = "grin";
+        p.lean = -0.08;
+        p.front = { x: G.lerp(30, 110, k), y: G.lerp(-70, -160, k) };
+        p.back = { x: -14, y: -66 };
+        p.fist = true;
+        p.footR.x = 24;
+        if (at > 2.4) p.shake = Math.sin(at * 40) * 1.5;
+      }
+    },
+
+    // Drums his belly, then a ba-dum-pfft.
+    drum(p, at) {
+      if (at < 1.75) {
+        const s = Math.sin((at * Math.PI) / 0.18);
+        p.back = { x: 12, y: -110 - Math.max(0, s) * 28 };
+        p.front = { x: 34, y: -104 - Math.max(0, -s) * 28 };
+        p.fist = true;
+        p.expr = "joy";
+        p.hipY = -86 + Math.abs(s) * 3;
+        p.headTilt = s * 0.08;
+      } else if (at < 1.9) {
+        p.lean = -0.1;
+        p.expr = "sly";
+        p.back = { x: -30, y: -150 };
+        p.front = { x: 40, y: -154 };
+      } else {
+        p.footL = { x: -24, y: -30 * bump(seg(at, 1.9, 2.4)) };
+        p.back = { x: -60, y: -160 };
+        p.front = { x: 70, y: -166 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.expr = "tongue";
+        p.lean = -0.1;
+      }
+    },
+
+    // Smells his own fart and faints.
+    faint(p, at, time) {
+      if (at < 0.3) {
+        p.expr = "sly";
+      } else if (at < 0.9) {
+        p.expr = at < 0.5 ? "relief" : "shock";
+        p.lean = 0.15;
+        p.headTilt = -0.1 + Math.sin(at * 30) * 0.04;
+      } else if (at < 1.8) {
+        p.expr = "gross";
+        p.front = { x: 44, y: -172 };
+        p.back = { x: -40 + Math.sin(at * 24) * 14, y: -200 + Math.cos(at * 24) * 10 };
+        p.backOpen = true;
+        p.sweat = true;
+        p.shake = Math.sin(at * 30);
+      } else {
+        const k = seg(at, 1.8, 2.1);
+        const up = seg(at, 2.95, 3.4);
+        p.fall = -1.45 * G.easeOutBack(k) * (1 - up);
+        p.expr = "dizzy";
+        p.stars = at > 1.9 && at < 3.1;
+        p.back = { x: -10, y: -84 };
+        p.front = { x: 18, y: -80 };
+        if (up === 0) {
+          const twitch = Math.sin(time * 30) * 3;
+          p.footL = { x: -10, y: -30 + twitch };
+          p.footR = { x: 14, y: -36 - twitch };
+        }
+      }
+    },
+
+    // Puffs up like a balloon and zips around letting it out.
+    balloon(p, at) {
+      if (at < 1.2) {
+        const k = seg(at, 0, 1.2);
+        p.sx = p.sy = 1 + k * 0.35;
+        p.jump = -k * k * 40;
+        p.expr = "puff";
+        p.back = { x: -56, y: -118 };
+        p.front = { x: 64, y: -118 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.shake = Math.sin(at * 50) * k * 2;
+      } else if (at < 2.4) {
+        const k = seg(at, 1.2, 2.4);
+        p.sx = p.sy = 1 + 0.35 * (1 - k);
+        p.dx = Math.sin(k * Math.PI * 3) * 90;
+        p.jump = -40 - bump(k) * 170;
+        p.spin = k * Math.PI * 6;
+        p.expr = "shock";
+        const f = Math.sin(at * 30);
+        p.back = { x: -50, y: -150 + f * 30 };
+        p.front = { x: 60, y: -150 - f * 30 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      } else {
+        const k = seg(at, 2.4, 2.6);
+        p.jump = -40 * (1 - k * k);
+        const s = bump(seg(at, 2.6, 2.85));
+        p.sy = 1 - s * 0.2;
+        p.sx = 1 + s * 0.12;
+        p.expr = at < 2.6 ? "shock" : "dizzy";
+        p.stars = at > 2.6;
+        p.back = { x: -24, y: -60 };
+        p.front = { x: 30, y: -58 };
+      }
+    },
+
+    // Moonwalks backwards, tooting with every step.
+    moonwalk(p, at) {
+      if (at < 2.4) {
+        p.dx = -seg(at, 0.2, 2.4) * 90;
+        const step = Math.sin((at * Math.PI) / 0.3);
+        p.footL = { x: -10 + step * 12, y: step > 0 ? -step * 6 : 0 };
+        p.footR = { x: 14 - step * 12, y: step < 0 ? step * 6 : 0 };
+        p.lean = -0.08;
+        p.front = { x: 52, y: -222 };
+        p.back = { x: -14, y: -66 };
+        p.fist = true;
+        p.headTilt = Math.sin(at * 10) * 0.08;
+        p.expr = "tongue";
+      } else {
+        const k = seg(at, 2.7, 3.2);
+        p.sx = Math.cos(seg(at, 2.4, 2.7) * Math.PI * 2);
+        p.dx = -90 * (1 - G.easeOutCubic(k));
+        p.expr = "joy";
+        p.back = { x: -50, y: -170 };
+        p.front = { x: 60, y: -176 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.footL = { x: -14, y: at > 2.7 ? -bump(k) * 24 : 0 };
+      }
+    },
+
+    // ---- The ones that aren't about farts.
+
+    // Ah... ah... ACHOO! Blown backwards by his own sneeze.
+    sneeze(p, at, time) {
+      if (at < 1.3) {
+        const k = seg(at, 0, 1.3);
+        let hitch = 0;
+        for (const t of [0.15, 0.6, 1.0]) if (at > t) hitch = Math.max(hitch, bump(seg(at, t, t + 0.25)));
+        p.headTilt = -k * 0.45 - hitch * 0.12;
+        p.lean = -k * 0.18;
+        p.expr = k < 0.3 ? "shock" : "sneeze";
+        p.back = { x: -30, y: -96 };
+        p.front = { x: G.lerp(34, 48, k), y: G.lerp(-72, -150, k) };
+        p.frontOpen = true;
+      } else if (at < 1.7) {
+        const k = seg(at, 1.3, 1.45);
+        p.headTilt = G.lerp(-0.45, 0.45, k);
+        p.lean = G.lerp(-0.18, 0.3, k);
+        p.dx = -30 * seg(at, 1.3, 1.5);
+        p.expr = "sneeze";
+        p.hatPop = bump(seg(at, 1.3, 1.8)) * 70;
+        p.hatRot = -seg(at, 1.3, 1.8) * Math.PI * 2;
+        p.back = { x: -60, y: -150 };
+        p.front = { x: -10, y: -160 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      } else {
+        p.dx = -30 * (1 - seg(at, 2.4, 2.9));
+        p.expr = "relief";
+        p.headTilt = 0.1;
+        p.front = { x: 46, y: -168 + Math.sin(time * 20) * 6 };
+        p.back = { x: -20, y: -80 };
+      }
+    },
+
+    // Juggles three snowballs... until one lands on his head.
+    juggle(p, at) {
+      const L = { x: -6, y: -104 };
+      const R = { x: 48, y: -104 };
+      const T = 0.9;
+      const along = (u) => {
+        u = ((u % 1) + 1) % 1;
+        if (u < 0.72) {
+          const k = u / 0.72;
+          return { x: G.lerp(R.x, L.x, k), y: R.y - 4 * k * (1 - k) * 130 };
+        }
+        const k = (u - 0.72) / 0.28;
+        return { x: G.lerp(L.x, R.x, k), y: L.y + bump(k) * 10 };
+      };
+      p.back = { x: L.x, y: L.y + 8 };
+      p.front = { x: R.x, y: R.y + 8 };
+      if (at < 2.0) {
+        p.balls = [0, 1, 2].map((i) => along(at / T + i / 3));
+        const w = Math.sin((at / T) * Math.PI * 2) * 6;
+        p.back.y += w;
+        p.front.y -= w;
+        p.headTilt = -0.2 + Math.sin(at * 7) * 0.06;
+        p.expr = at < 1.0 ? "grin" : "tongue";
+        return;
+      }
+      p.balls = [
+        { x: L.x, y: L.y - 10 },
+        { x: R.x, y: R.y - 10 },
+      ];
+      if (at < 2.5) {
+        const k = seg(at, 2.0, 2.5);
+        p.balls.push({ x: G.lerp(R.x, 10, k), y: G.lerp(-110, -238, k) - 4 * k * (1 - k) * 330 });
+        p.headTilt = -0.3;
+        p.expr = k > 0.6 ? "shock" : "grin";
+      } else {
+        const k = seg(at, 2.5, 3.0);
+        p.balls.push({ x: G.lerp(10, 140, k), y: G.lerp(-238, -12, k) - 4 * k * (1 - k) * 90 });
+        p.expr = "dizzy";
+        p.stars = true;
+        p.sy = 1 - bump(seg(at, 2.5, 2.65)) * 0.12;
+      }
+    },
+
+    // Slips on the ice, lands flat, and pretends it was on purpose.
+    slip(p, at, time) {
+      if (at < 0.3) {
+        const k = seg(at, 0, 0.3);
+        p.dx = k * 20;
+        p.footR = { x: 14 + k * 14, y: -bump(k) * 10 };
+      } else if (at < 0.8) {
+        const k = seg(at, 0.3, 0.8);
+        p.dx = 20;
+        p.jump = -bump(k) * 50;
+        p.fall = -1.5 * G.easeOutCubic(k);
+        p.footL = { x: 20 + k * 10, y: -30 * k };
+        p.footR = { x: 34 + k * 10, y: -40 * k };
+        const a = at * 20;
+        p.back = { x: -20 + Math.cos(a) * 40, y: -150 + Math.sin(a) * 40 };
+        p.front = { x: 30 - Math.cos(a) * 40, y: -150 - Math.sin(a) * 40 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.expr = "shock";
+        p.hatPop = k * 20;
+      } else if (at < 1.9) {
+        p.dx = 20;
+        p.fall = -1.5;
+        p.sy = 1 - bump(seg(at, 0.8, 0.95)) * 0.1;
+        p.expr = "dizzy";
+        p.stars = true;
+        const twitch = Math.sin(time * 26) * 3;
+        p.footL = { x: -10, y: -30 + twitch };
+        p.footR = { x: 14, y: -36 - twitch };
+        p.back = { x: -10, y: -84 };
+        p.front = { x: 18, y: -80 };
+      } else if (at < 2.4) {
+        p.dx = 20;
+        p.fall = -1.5 * (1 - G.easeOutCubic(seg(at, 1.9, 2.4)));
+        p.expr = "sad";
+      } else {
+        p.dx = 20 * (1 - seg(at, 2.6, 3.2));
+        p.back = { x: 10 + Math.sin(time * 25) * 10, y: -96 };
+        p.front = { x: 34, y: -64 };
+        p.expr = "sly";
+        p.headTilt = -0.1;
+      }
+    },
+
+    // Chicken dance. Ends up laying an egg.
+    chicken(p, at) {
+      if (at < 2.2) {
+        const f = Math.sin(at * 22);
+        p.back = { x: -6, y: -128 + f * 8 };
+        p.front = { x: 24, y: -126 - f * 8 };
+        p.fist = true;
+        const peck = Math.max(0, Math.sin(at * 9));
+        p.headTilt = peck * 0.35;
+        p.dx = peck * 6;
+        const step = Math.sin(at * 6);
+        p.footL = { x: -10, y: step > 0 ? -step * 22 : 0 };
+        p.footR = { x: 14, y: step < 0 ? step * 22 : 0 };
+        p.lean = 0.12;
+        p.expr = "shock";
+      } else if (at < 2.8) {
+        const k = seg(at, 2.2, 2.5);
+        p.hipY = -86 + k * 22;
+        p.sy = 1 - k * 0.08;
+        p.expr = at < 2.55 ? "strain" : "shock";
+        const f = Math.sin(at * 10);
+        p.back = { x: -6, y: -128 + f * 6 };
+        p.front = { x: 24, y: -126 - f * 6 };
+        p.fist = true;
+        p.egg = at > 2.55;
+      } else {
+        p.egg = true;
+        p.expr = "shock";
+        p.jump = -bump(seg(at, 2.8, 3.1)) * 30;
+        p.back = { x: -46, y: -150 };
+        p.front = { x: 52, y: -152 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      }
+    },
+
+    // Hiccups, holds his breath, then one giant hiccup.
+    hiccup(p, at) {
+      p.back = { x: -20, y: -90 };
+      p.front = { x: 28, y: -100 };
+      if (at < 1.85) {
+        let h = 0;
+        for (const t of [0.3, 0.9, 1.5]) if (at > t && at < t + 0.35) h = bump(seg(at, t, t + 0.35));
+        p.jump = -h * 22;
+        p.hatPop = h * 14;
+        p.sy = 1 + h * 0.05;
+        p.expr = h > 0.1 ? "shock" : "sly";
+        if (at > 0.6) p.front = { x: 46, y: -160 };
+      } else if (at < 2.6) {
+        const k = seg(at, 1.85, 2.6);
+        p.expr = "puff";
+        p.sx = p.sy = 1 + k * 0.08;
+        p.shake = Math.sin(at * 50) * k * 2;
+        p.front = { x: 46, y: -160 };
+        p.back = { x: -10, y: -140 };
+      } else {
+        const k = seg(at, 2.6, 3.1);
+        p.jump = -bump(k) * 90;
+        p.hatPop = bump(k) * 40;
+        p.expr = "shock";
+        ARMS_UP(p);
+      }
+    },
+
+    // Shows off his muscles, then throws his back out.
+    flex(p, at, time) {
+      if (at < 1.0) {
+        const k = seg(at, 0, 0.25);
+        p.back = { x: G.lerp(-20, -50, k), y: G.lerp(-78, -196, k) };
+        p.front = { x: G.lerp(34, 70, k), y: G.lerp(-72, -200, k) };
+        p.fist = true;
+        p.flex = k;
+        p.sx = 1 + k * 0.06;
+        p.expr = at > 0.3 ? "strain" : "grin";
+        if (at > 0.3) p.shake = Math.sin(time * 50) * 0.8;
+      } else if (at < 1.8) {
+        p.front = { x: 70, y: -200 };
+        p.back = { x: -14, y: -66 };
+        p.fist = true;
+        p.flex = 1;
+        p.sx = 1.06;
+        p.headTilt = 0.25;
+        p.expr = "relief";
+      } else if (at < 2.0) {
+        p.back = { x: 6, y: -96 };
+        p.front = { x: 30, y: -94 };
+        p.fist = true;
+        p.flex = 1;
+        p.lean = 0.15;
+        p.sx = 1.1;
+        p.expr = "strain";
+        p.shake = Math.sin(time * 50) * 1.5;
+      } else {
+        const k = seg(at, 2.0, 2.15);
+        p.lean = 0.55 * k;
+        p.hipY = -80;
+        p.back = { x: -40, y: -120 };
+        p.front = { x: 40, y: -40 };
+        p.expr = at < 2.4 ? "shock" : "sad";
+        p.sweat = true;
+        p.shake = Math.sin(time * 40);
+      }
+    },
+
+    // Pirouettes, leaps, wobbles, and takes a bow.
+    ballet(p, at) {
+      p.footL = { x: -6, y: -6 };
+      p.footR = { x: 10, y: -6 };
+      p.expr = "relief";
+      if (at < 1.6) {
+        p.back = { x: -14, y: -226 };
+        p.front = { x: 30, y: -230 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.sx = Math.cos(G.easeOutCubic(seg(at, 0.3, 1.6)) * Math.PI * 6);
+        p.footL = { x: -30, y: -40 };
+        p.jump = -6;
+      } else if (at < 1.9) {
+        p.hipY = -74;
+        p.footL = { x: -14, y: 0 };
+        p.footR = { x: 16, y: 0 };
+        p.back = { x: -50, y: -150 };
+        p.front = { x: 60, y: -150 };
+        p.backOpen = true;
+        p.frontOpen = true;
+      } else if (at < 2.5) {
+        const k = seg(at, 1.9, 2.5);
+        p.dx = k * 70;
+        p.jump = -bump(k) * 90;
+        p.footL = { x: -56, y: -40 };
+        p.footR = { x: 62, y: -36 };
+        p.back = { x: -60, y: -200 };
+        p.front = { x: 70, y: -200 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.lean = 0.1;
+        p.expr = "joy";
+      } else if (at < 2.9) {
+        const k = seg(at, 2.5, 2.9);
+        p.dx = 70;
+        p.lean = Math.sin(at * 25) * 0.15 * (1 - k);
+        p.footR = { x: 14, y: 0 };
+        p.footL = { x: -30, y: -30 };
+        const a = at * 18;
+        p.back = { x: -40 + Math.cos(a) * 20, y: -160 + Math.sin(a) * 20 };
+        p.front = { x: 50 - Math.cos(a) * 20, y: -160 - Math.sin(a) * 20 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.expr = "shock";
+      } else {
+        p.dx = 70 * (1 - seg(at, 2.9, 3.6));
+        p.lean = 0.45 * bump(seg(at, 2.9, 3.6));
+        p.back = { x: -50, y: -110 };
+        p.front = { x: 60, y: -60 };
+        p.frontOpen = true;
+      }
+    },
+
+    // Sings a carol, very badly, until his voice cracks.
+    sing(p, at, time) {
+      if (at < 2.4) {
+        p.front = { x: 14, y: -130 };
+        p.frontOpen = true;
+        p.back = { x: -60 + Math.sin(at * 2) * 6, y: -176 };
+        p.backOpen = true;
+        p.headTilt = -0.3 + Math.sin(at * 3) * 0.05;
+        p.lean = -0.12;
+        p.hipY = -86 + Math.sin(at * 4) * 2;
+        p.shake = Math.sin(time * 40) * 0.8;
+        p.expr = "sing";
+      } else if (at < 2.9) {
+        p.expr = "shock";
+        p.front = { x: 28, y: -160 };
+        p.jump = -bump(seg(at, 2.4, 2.6)) * 10;
+        p.hatPop = bump(seg(at, 2.4, 2.7)) * 12;
+      } else {
+        p.lean = 0.2 * bump(seg(at, 2.9, 3.3));
+        p.front = { x: 46, y: -165 };
+        p.fist = true;
+        p.expr = "sad";
+      }
+    },
+
+    // Fleas! Scratches his head, his back, then thumps his leg like a dog.
+    itch(p, at, time) {
+      const j = Math.sin(time * 45);
+      if (at < 1.0) {
+        p.front = { x: 24 + j * 6, y: -226 };
+        p.back = { x: -20, y: -80 };
+        p.headTilt = 0.15;
+        p.shake = j * 0.8;
+        p.expr = "squint";
+      } else if (at < 1.9) {
+        p.back = { x: -36 + j * 6, y: -130 + j * 6 };
+        p.front = { x: -10, y: -60 };
+        p.lean = -0.15 + j * 0.02;
+        p.dx = Math.sin(at * 20) * 4;
+        p.expr = "gross";
+      } else if (at < 2.7) {
+        p.footR = { x: 20, y: -Math.max(0, Math.sin(at * 40)) * 30 };
+        p.back = { x: 20, y: -110 + j * 8 };
+        p.headTilt = -0.2;
+        p.expr = "tongue";
+      } else {
+        p.expr = "relief";
+        p.lean = -0.05;
+      }
+    },
+
+    // Karate chops, a kick, a spin kick, and a wobbly crane pose.
+    karate(p, at, time) {
+      p.fist = true;
+      p.footL = { x: -30, y: 0 };
+      p.footR = { x: 30, y: 0 };
+      p.hipY = -78;
+      p.expr = "mad";
+      p.back = { x: -10, y: -120 };
+      p.front = { x: 40, y: -130 };
+      if (at >= 0.3 && at < 0.8) {
+        const k = seg(at, 0.3, 0.42);
+        p.front = { x: G.lerp(40, 96, k), y: G.lerp(-170, -110, k) };
+        p.frontOpen = true;
+        p.fist = false;
+        p.lean = 0.15 * k;
+      } else if (at >= 0.8 && at < 1.3) {
+        const k = seg(at, 0.8, 0.95);
+        p.footR = { x: G.lerp(30, 86, k), y: G.lerp(0, -110, k) };
+        p.lean = -0.3 * k;
+        p.back = { x: -50, y: -150 };
+      } else if (at >= 1.3 && at < 1.7) {
+        const k = seg(at, 1.3, 1.42);
+        p.back = { x: G.lerp(-10, 90, k), y: G.lerp(-120, -150, k) };
+        p.backOpen = true;
+        p.fist = false;
+        p.lean = 0.1 * k;
+      } else if (at >= 1.7 && at < 2.4) {
+        const k = seg(at, 1.7, 2.4);
+        p.sx = Math.cos(k * Math.PI * 2);
+        p.jump = -bump(k) * 70;
+        p.footR = { x: 80, y: -90 };
+        p.footL = { x: -10, y: -20 };
+      } else if (at >= 2.4) {
+        p.footL = { x: -4, y: -56 };
+        p.footR = { x: 14, y: 0 };
+        p.hipY = -86;
+        p.back = { x: -56, y: -210 };
+        p.front = { x: 66, y: -214 };
+        p.backOpen = true;
+        p.frontOpen = true;
+        p.fist = false;
+        p.lean = Math.sin(time * 7) * 0.12;
+        p.expr = "squint";
+      }
+    },
+  };
+  G.SILLY_ANIMS = Object.keys(SILLY);
 
   // ---------------------------------------------------------------- Pose
 
@@ -242,7 +973,16 @@
       steam: false,
       sweat: false,
       stars: false,
+      sx: 1,
+      sy: 1,
+      dx: 0,
+      spin: 0,
+      hatRot: 0,
     };
+    if (SILLY[g.anim]) {
+      SILLY[g.anim](p, at, time);
+      return p;
+    }
     // Rubbing hands sneakily now and then.
     if (g.anim === "idle") {
       const cycle = time % 7;
@@ -368,13 +1108,30 @@
     ctx.save();
     ctx.translate(g.x, g.y);
     ctx.scale(S, S);
-    ctx.translate(p.shake, p.jump);
+    // On the title screen his giant snowball waits on the ground while he's being silly.
+    if (g.rest === "hold" && SILLY[g.anim]) Art.drawSnowball(ctx, 104, -40, 40, "normal", 0, time, true, 1);
+    if (p.egg) {
+      Art.ellipse(ctx, -62, -14, 11, 14, "#fffaf0");
+      Art.ellipse(ctx, -65, -19, 3, 5, "rgba(255,255,255,0.9)");
+      ctx.strokeStyle = "#d8cbb0";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(-62, -14, 11, 14, 0, 0, TAU);
+      ctx.stroke();
+    }
+    if (p.sx !== 1 || p.sy !== 1) ctx.scale(p.sx, p.sy);
+    ctx.translate(p.shake + p.dx, p.jump);
     if (p.fall) ctx.rotate(p.fall);
     // Shadow.
     ctx.save();
     ctx.rotate(-p.fall);
     Art.ellipse(ctx, 0, 2 - p.jump, 46, 7, "rgba(40, 60, 100, 0.25)");
     ctx.restore();
+    if (p.spin) {
+      ctx.translate(0, -110);
+      ctx.rotate(p.spin);
+      ctx.translate(0, 110);
+    }
 
     const hipY = p.hipY;
     const hip = { x: 0, y: hipY };
@@ -390,6 +1147,7 @@
     Art.ellipse(ctx, kL.bx + 6, kL.by + 4, 15, 6, FUR_DARK);
     const aB = joint(sh.x - 8, sh.y, p.back.x, p.back.y, 44, 44, 1);
     limb(ctx, sh.x - 8, sh.y, aB.jx, aB.jy, aB.bx, aB.by, 9, FUR_DARK);
+    if (p.flex) bicep(ctx, sh.x - 8, sh.y, aB, p.flex, FUR_DARK);
     glove(ctx, aB.bx, aB.by, 12, p.backOpen, p.fist);
 
     // Body: furry belly, red coat with white trim and a belt.
@@ -464,6 +1222,11 @@
     // Santa hat flopping back, with a pompom.
     ctx.save();
     ctx.translate(0, -p.hatPop);
+    if (p.hatRot) {
+      ctx.translate(-12, -44);
+      ctx.rotate(p.hatRot);
+      ctx.translate(12, 44);
+    }
     const flop = Math.sin(time * 3) * 0.08 + (p.jump ? 0.25 : 0);
     ctx.fillStyle = COAT;
     ctx.beginPath();
@@ -518,8 +1281,63 @@
     // Front arm on top.
     const aF = joint(sh.x + 10, sh.y + 2, p.front.x, p.front.y, 44, 44, 1);
     limb(ctx, sh.x + 10, sh.y + 2, aF.jx, aF.jy, aF.bx, aF.by, 9.5, FUR);
+    if (p.flex) bicep(ctx, sh.x + 10, sh.y + 2, aF, p.flex, FUR);
     glove(ctx, aF.bx, aF.by, 13, p.frontOpen, p.fist);
+    if (p.balls) for (const b of p.balls) Art.drawSnowball(ctx, b.x, b.y, 13, "normal", 0, time, false, 1);
     ctx.restore();
+  };
+
+  // A bulging muscle on the upper arm, between shoulder (sx, sy) and elbow.
+  function bicep(ctx, sx, sy, a, k, color) {
+    const mx = G.lerp(sx, a.jx, 0.55);
+    const my = G.lerp(sy, a.jy, 0.55) - 4;
+    Art.circle(ctx, mx, my, 4 + k * 8, color);
+    Art.circle(ctx, mx - 2, my - 3, 1 + k * 2.5, "rgba(255,255,255,0.35)");
+  }
+
+  // Where a part of the Grinch is in the world right now, and which way it points (dx, dy).
+  // part: "butt" (for fart clouds) or "nose" (for sneezes). Mirrors drawGrinch's transforms.
+  Art.grinchPoint = (g, time, part) => {
+    const S = g.scale || 1.22;
+    g.pouchLX = g.pouchLX || 60;
+    g.pouchLY = g.pouchLY || -110;
+    const p = pose(g, time);
+    const c = Math.cos(p.lean);
+    const s = Math.sin(p.lean);
+    let x;
+    let y;
+    let dirX;
+    let dirY;
+    if (part === "nose") {
+      const hr = p.lean * 0.6 + p.headTilt;
+      const hc = Math.cos(hr);
+      const hs = Math.sin(hr);
+      x = s * 66 + 4 + 36 * hc - hs;
+      y = p.hipY - c * 66 - 26 + 36 * hs + hc;
+      dirX = hc;
+      dirY = hs;
+    } else {
+      x = -34 * c + 6 * s;
+      y = p.hipY - 34 * s - 6 * c;
+      dirX = -c;
+      dirY = -s;
+    }
+    const rot = (a, cx, cy) => {
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      const rx = x - cx;
+      const ry = y - cy;
+      x = cx + rx * ca - ry * sa;
+      y = cy + rx * sa + ry * ca;
+      const ddx = dirX * ca - dirY * sa;
+      dirY = dirX * sa + dirY * ca;
+      dirX = ddx;
+    };
+    if (p.spin) rot(p.spin, 0, -110);
+    if (p.fall) rot(p.fall, 0, 0);
+    x = (x + p.shake + p.dx) * p.sx;
+    y = (y + p.jump) * p.sy;
+    return { x: g.x + x * S, y: g.y + y * S, dx: dirX * Math.sign(p.sx || 1), dy: dirY };
   };
 
   // ---------------------------------------------------------------- Launcher
