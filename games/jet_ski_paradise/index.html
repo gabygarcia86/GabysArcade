@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Coming Soon - Jet Ski Paradise</title>
+    <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0b5f7a">
+    <meta name="description"
+      content="Jet Ski Paradise: a 3D jet ski racing and freestyle stunt game. Ride the waves, race AI rivals, land huge tricks and customize your rider and jet ski.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="114x114"
+      href="icon/icon-114.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preload" href="../../assets/fonts/oxanium-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/menus.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <!-- Three.js loads from a pinned CDN build, so the game needs internet access. -->
+    <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+    }
+  }
+  </script>
+    <script>
+    // If the module graph (including the CDN import) fails, explain instead of showing a blank screen.
+    window.showBootError = function (message) {
+      var box = document.getElementById('boot-error');
+      var load = document.getElementById('loading');
+      if (load) load.classList.add('hidden');
+      if (!box) return;
+      if (message) box.querySelector('p').textContent = message;
+      box.classList.remove('hidden');
+    };
+  </script>
+    <script type="module" src="js/main.js"
+      onerror="showBootError('The game scripts could not be loaded. Jet Ski Paradise loads Three.js from cdn.jsdelivr.net, so it needs an internet connection, and it must be served over http(s) rather than opened as a file.')"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div id="canvas-host" aria-label="Jet Ski Paradise game view"></div>
+
+      <!-- ===================== TOUCH CONTROLS ===================== -->
+      <div id="touch" class="hidden">
+        <div class="t-left">
+          <button type="button" class="t-btn t-steer" data-key="left" aria-label="Steer left">&#9664;</button>
+          <button type="button" class="t-btn t-steer" data-key="right" aria-label="Steer right">&#9654;</button>
+        </div>
+        <div class="t-tricks">
+          <button type="button" class="t-btn t-trick" data-key="backflip">BACK<br>FLIP</button>
+          <button type="button" class="t-btn t-trick" data-key="frontflip">FRONT<br>FLIP</button>
+          <button type="button" class="t-btn t-trick" data-key="rollLeft">&#8634;<br>ROLL</button>
+          <button type="button" class="t-btn t-trick" data-key="rollRight">ROLL<br>&#8635;</button>
+          <button type="button" class="t-btn t-trick" data-key="spin">360<br>SPIN</button>
+          <button type="button" class="t-btn t-trick" data-key="superman">SUPER<br>MAN</button>
+          <button type="button" class="t-btn t-trick" data-key="noHander">NO<br>HAND</button>
+          <button type="button" class="t-btn t-trick" data-key="oneHander">ONE<br>HAND</button>
+        </div>
+        <div class="t-right">
+          <button type="button" class="t-btn t-boost" data-key="boost">BOOST</button>
+          <button type="button" class="t-btn t-jump" data-key="jump">JUMP<small>hold in air = PRO</small></button>
+          <button type="button" class="t-btn t-brake" data-key="brake">BRAKE</button>
+          <button type="button" class="t-btn t-gas" data-key="accel">GAS</button>
+        </div>
+      </div>
+
+      <!-- ===================== RACE / STUNT HUD ===================== -->
+      <div id="hud" class="hidden" aria-live="off">
+        <div class="hud-tl">
+          <div class="hud-card race-only" id="hud-pos-card">
+            <span class="hud-pos" id="hud-pos">1<sup>st</sup></span>
+            <span class="hud-pos-of" id="hud-pos-of">/ 6</span>
+          </div>
+          <div class="hud-card stunt-only">
+            <span class="hud-label">Score</span>
+            <span class="hud-big" id="hud-score">0</span>
+            <span class="hud-small">Best <b id="hud-hiscore">0</b></span>
+          </div>
+          <div class="hud-card lap-card race-only tt-only">
+            <span class="hud-label" id="hud-lap">Lap 1/3</span>
+            <span class="hud-mid" id="hud-time">0:00.00</span>
+            <span class="hud-small" id="hud-best">Best lap --</span>
+            <span class="hud-small" id="hud-cp">Checkpoint 0/8</span>
+          </div>
+          <div class="hud-card stunt-only timer-card" id="hud-timer-card">
+            <span class="hud-label">Time</span>
+            <span class="hud-mid" id="hud-timer">2:00</span>
+          </div>
+          <div class="hud-card free-only">
+            <span class="hud-label" id="hud-env-name">Free Ride</span>
+            <span class="hud-small" id="hud-shells">Golden shells 0/5</span>
+            <span class="hud-small" id="hud-free-score">Trick points 0</span>
+          </div>
+          <div class="hud-card challenge-card hidden" id="hud-challenge">
+            <span class="hud-label">Challenge</span>
+            <span class="hud-small" id="hud-challenge-text"></span>
+          </div>
+        </div>
+
+        <div class="hud-top-center">
+          <div id="hud-cp-arrow" class="cp-arrow hidden" aria-hidden="true"></div>
+          <div id="hud-trick" class="hud-trick"></div>
+          <div id="hud-combo" class="hud-combo"></div>
+        </div>
+
+        <div class="hud-tr">
+          <canvas id="minimap" width="180" height="180" aria-label="Mini-map"></canvas>
+        </div>
+
+        <div class="hud-br">
+          <div class="speedo">
+            <canvas id="speedo-canvas" width="200" height="200"></canvas>
+            <div class="speedo-read"><b id="hud-speed">0</b><span>MPH</span></div>
+          </div>
+          <div class="boost-wrap">
+            <span class="hud-label">Boost</span>
+            <div class="boost-bar"><i id="hud-boost"></i></div>
+          </div>
+        </div>
+
+        <div id="hud-messages" class="hud-messages"></div>
+        <div id="hud-countdown" class="countdown hidden"></div>
+        <div id="hud-fps" class="hud-fps hidden">60 fps</div>
+        <button id="pause-btn" class="pause-btn" type="button" aria-label="Pause"><i></i><i></i></button>
+      </div>
+
+      <div id="screens"></div>
+      <div id="toasts" aria-live="polite"></div>
+
+      <div id="rotate-msg" class="hidden" role="alert">
+        <div class="rotate-card">
+          <div class="rotate-phone" aria-hidden="true"></div>
+          <h2>Turn your device sideways</h2>
+          <p>Jet Ski Paradise plays best in landscape.</p>
+        </div>
+      </div>
+
+      <div id="loading">
+        <div class="load-logo">JET SKI<br><span>PARADISE</span></div>
+        <div class="load-bar"><i id="load-fill"></i></div>
+        <p id="load-text">Filling the ocean...</p>
+      </div>
+
+      <div id="boot-error" class="hidden" role="alert">
+        <h2>Jet Ski Paradise couldn't start</h2>
+        <p>Something went wrong while loading.</p>
+        <a href="../../index.html">Back to Gaby's Arcade</a>
+      </div>
+    </div>
+    <noscript>Jet Ski Paradise needs JavaScript to run.</noscript>
+  </body>
+</html>
