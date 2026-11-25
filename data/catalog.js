@@ -79,6 +79,27 @@ window.ARCADE_CATALOG = {
       added: "2026-10-30",
     },
     {
+      folder: "grinchs_christmas_heist",
+      title: "Coming Soon - Grinch's Christmas Heist",
+      description:
+        "Sneak around Whoville stealing presents, dodge the Whos and their dogs, and reach your getaway before time runs out.",
+      categories: ["Arcade", "Holiday"],
+      tags: [
+        "holiday",
+        "christmas",
+        "grinch",
+        "stealth",
+        "top-down",
+        "presents",
+        "timed",
+        "power-ups",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "jedi_story",
       title: "Coming Soon - Jedi Story",
       description:
