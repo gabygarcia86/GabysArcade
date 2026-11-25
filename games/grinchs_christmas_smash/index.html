@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Coming Soon - Grinch's Christmas Smash!</title>
+    <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#14204a">
+    <meta name="description"
+      content="Grinch's Christmas Smash: a silly physics arcade game. Fling snowballs at towers of presents, ornaments, snowmen and Christmas trees, trigger chain reactions and smash Christmas to bits.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="114x114"
+      href="icon/icon-114.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preload" href="../../assets/fonts/oxanium-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="game" aria-label="Grinch's Christmas Smash game view"></canvas>
+
+      <div id="ammo" class="ammo" hidden aria-label="Snowballs"></div>
+      <button id="finish-btn" class="btn primary finish" type="button" hidden>&#10004; Finish Level</button>
+      <button id="pause-btn" type="button" aria-label="Pause" hidden><i></i><i></i></button>
+      <div id="safe-probe" aria-hidden="true"></div>
+      <div id="rotate-hint" class="rotate-hint" hidden>&#8635; Turn your device sideways for a bigger view</div>
+
+      <div id="ui"></div>
+    </main>
+    <noscript>Grinch's Christmas Smash needs JavaScript to run.</noscript>
+
+    <!-- Plain scripts, not ES modules, so the game also runs from file://. Order matters. -->
+    <script src="js/utils.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/objects.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/art/draw.js"></script>
+    <script src="js/art/decor.js"></script>
+    <script src="js/art/scenery.js"></script>
+    <script src="js/art/grinch.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

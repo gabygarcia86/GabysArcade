@@ -79,6 +79,48 @@ window.ARCADE_CATALOG = {
       added: "2026-10-30",
     },
     {
+      folder: "grinchs_christmas_heist",
+      title: "Coming Soon - Grinch's Christmas Heist",
+      description:
+        "Sneak around Whoville stealing presents, dodge the Whos and their dogs, and reach your getaway before time runs out.",
+      categories: ["Arcade", "Holiday"],
+      tags: [
+        "holiday",
+        "christmas",
+        "grinch",
+        "stealth",
+        "top-down",
+        "presents",
+        "timed",
+        "power-ups",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
+    {
+      folder: "grinchs_christmas_smash",
+      title: "Coming Soon - Grinch's Christmas Smash!",
+      description:
+        "Fling snowballs at towers of presents, ornaments, snowmen and Christmas trees, and trigger chain reactions to smash Christmas to bits.",
+      categories: ["Arcade", "Holiday"],
+      tags: [
+        "holiday",
+        "christmas",
+        "grinch",
+        "physics",
+        "slingshot",
+        "destruction",
+        "snowballs",
+        "combos",
+        "leaderboard",
+        "mouse",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "jedi_story",
       title: "Coming Soon - Jedi Story",
       description:
