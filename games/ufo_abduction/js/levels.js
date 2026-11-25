@@ -107,9 +107,10 @@
 
   const ZONE_TIME = 60;
 
-  // Endless mode: the environments loop, and everything gets a little tougher each zone.
-  function endlessStage(zone) {
-    const base = LEVELS[zone % LEVELS.length];
+  // Endless mode: zones visit the environments in a random order (see Game.nextEndlessLevel),
+  // and everything gets a little tougher each zone.
+  function endlessStage(zone, levelIndex) {
+    const base = LEVELS[levelIndex];
     const lap = Math.floor(zone / LEVELS.length);
     const ramp = 1 + zone * 0.07;
     const hazards = base.hazards.map((h) => ({

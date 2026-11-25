@@ -79,6 +79,8 @@
       this.rescue.startRun(mode === "endless");
       this.levelIndex = 0;
       this.zone = 0;
+      this.endlessBag = [];
+      this.endlessLast = -1;
       this.playSeconds = 0;
       this.reunion = null;
       this.reunionPending = 0;
@@ -88,7 +90,7 @@
     }
 
     startLevel() {
-      const def = this.mode === "classic" ? U.LEVELS[this.levelIndex] : U.endlessStage(this.zone);
+      const def = this.mode === "classic" ? U.LEVELS[this.levelIndex] : U.endlessStage(this.zone, this.nextEndlessLevel());
       this.loadStage(def);
       this.player.placeForStage(U.clamp(this.player.x || 640, 400, U.WORLD_W - 400));
       this.camX = U.clamp(this.player.x - this.VW / 2, 0, U.WORLD_W - this.VW);
@@ -621,13 +623,29 @@
       }
     }
 
+    // Endless plays every level once, in a shuffled order, before any of them comes back,
+    // and never the same level twice in a row.
+    nextEndlessLevel() {
+      if (!this.endlessBag.length) {
+        const bag = U.LEVELS.map((_, i) => i);
+        for (let i = bag.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [bag[i], bag[j]] = [bag[j], bag[i]];
+        }
+        if (bag[0] === this.endlessLast) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+        this.endlessBag = bag;
+      }
+      this.endlessLast = this.endlessBag.shift();
+      return this.endlessLast;
+    }
+
     nextZone() {
       if (this.scoring.stageDamage === 0) {
         this.scoring.addBonus(U.BONUS.noDamage);
         this.hud.banner("ZONE CLEAR WITH NO DAMAGE!", { color: "#8dff5a", sub: "+2,500 BONUS", time: 2.2 });
       }
       this.zone++;
-      const def = U.endlessStage(this.zone);
+      const def = U.endlessStage(this.zone, this.nextEndlessLevel());
       const keepX = this.player.x;
       this.loadStage(def);
       this.player.x = keepX;

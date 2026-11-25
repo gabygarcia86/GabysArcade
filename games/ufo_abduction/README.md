@@ -29,7 +29,7 @@ Scores are submitted from the Game Over screen, which then shows the top 10 with
 ## Modes
 
 - **Classic Arcade:** five levels (Country Farm, Suburbia, Desert Town, Big City, Tropical Island), 60 seconds for the first, then 10 seconds longer each level (100 seconds for the last), three hull points. A repair crew patches one hull point between levels.
-- **Endless Abduction:** no clock. The world changes every 60 seconds and gets tougher each zone. Play until the saucer goes down.
+- **Endless Abduction:** no clock. The world changes every 60 seconds and gets tougher each zone. Zones visit all five places, each by day or night at random, in a shuffled order, and every place comes up once before any of them repeats. Play until the saucer goes down.
 
 ## Controls
 
