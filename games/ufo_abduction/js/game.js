@@ -105,8 +105,9 @@
 
     loadStage(def) {
       this.stage = def;
-      this.env = U.ENVIRONMENTS[def.env];
-      this.scene = U.Scenery.build(def.env);
+      // Each time a level loads, it's daytime or nighttime at random.
+      this.scene = U.Scenery.build(def.env, Math.random() < 0.5);
+      this.env = this.scene.env;
       this.diff = def.diff;
       this.targets = [];
       this.hazards = [];
