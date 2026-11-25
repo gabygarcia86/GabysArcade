@@ -1,0 +1,118 @@
+/* Jet Ski Paradise: touch controls and small-screen layouts. */
+#touch { position: absolute; inset: 0; z-index: 15; pointer-events: none; }
+.t-btn {
+  pointer-events: auto;
+  touch-action: none;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  background: rgba(6, 36, 56, 0.35);
+  color: #fff;
+  font-family: var(--head);
+  font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  transition: background 0.08s, transform 0.08s;
+}
+.t-btn.on { background: rgba(46, 242, 255, 0.45); transform: scale(0.94); }
+.t-left {
+  position: absolute;
+  left: calc(14px + var(--safe-l));
+  bottom: calc(18px + var(--safe-b));
+  display: flex;
+  gap: 14px;
+}
+.t-steer { width: 92px; height: 92px; font-size: 38px; }
+#touch.tilt .t-left { display: none; }
+.t-right {
+  position: absolute;
+  right: calc(14px + var(--safe-r));
+  bottom: calc(16px + var(--safe-b));
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 10px;
+  align-items: end;
+  justify-items: center;
+}
+.t-gas { width: 96px; height: 96px; font-size: 20px; background: rgba(20, 199, 120, 0.4); }
+.t-brake { width: 70px; height: 70px; font-size: 13px; background: rgba(255, 77, 46, 0.35); }
+.t-boost { width: 70px; height: 70px; font-size: 13px; background: rgba(255, 63, 164, 0.4); }
+.t-jump { width: 82px; height: 82px; font-size: 15px; background: rgba(255, 210, 63, 0.35); }
+.t-jump small { font-size: 8px; font-weight: 600; margin-top: 3px; opacity: 0.85; }
+.t-tricks {
+  position: absolute;
+  right: calc(12px + var(--safe-r));
+  bottom: calc(206px + var(--safe-b));
+  display: grid;
+  grid-template-columns: repeat(4, 56px);
+  gap: 6px;
+}
+.t-trick { width: 56px; height: 42px; border-radius: 12px; font-size: 10.5px; background: rgba(6, 36, 56, 0.4); }
+
+/* With touch controls on screen, the speedometer moves to the bottom centre. */
+#touch:not(.hidden) ~ #hud .hud-br { right: auto; left: 50%; bottom: calc(4px + var(--safe-b)); transform: translateX(-50%) scale(0.6); transform-origin: bottom center; }
+#touch:not(.hidden) ~ #hud .hud-tr #minimap { width: 120px; height: 120px; }
+#touch:not(.hidden) ~ #hud .pause-btn { margin-left: 0; left: auto; right: calc(140px + var(--safe-r)); transform: none; }
+
+@media (max-height: 520px) {
+  .hud-pos { font-size: 38px; }
+  .hud-big { font-size: 26px; }
+  .hud-mid { font-size: 18px; }
+  .hud-card { padding: 6px 10px; border-radius: 10px; }
+  .hud-small { font-size: 11px; }
+  .hud-tl { gap: 5px; }
+  .countdown { font-size: 96px; }
+  .hud-msg.big { font-size: 30px; }
+  .combo-points { font-size: 28px; }
+  .combo-mult { font-size: 24px; }
+  .hud-trick { font-size: 22px; }
+  .t-steer { width: 78px; height: 78px; }
+  .t-gas { width: 82px; height: 82px; }
+  .t-jump { width: 70px; height: 70px; }
+  .t-brake, .t-boost { width: 60px; height: 60px; }
+  .t-tricks { grid-template-columns: repeat(4, 50px); bottom: calc(176px + var(--safe-b)); }
+  .t-trick { width: 50px; height: 36px; font-size: 9.5px; }
+  .t-right { gap: 8px; }
+  .hud-tr #minimap { width: 110px; height: 110px; }
+  .logo { font-size: 40px; }
+  .logo.small { font-size: 34px; }
+  .main-nav { gap: 6px; margin-top: 6px; grid-template-columns: repeat(3, minmax(130px, 1fr)); width: min(640px, 94vw); }
+  .menu-wrap { gap: 6px; }
+  .tagline { margin-top: 4px; }
+  .main-nav .btn { padding: 8px 14px; font-size: 15px; }
+  .main-nav .btn.big { font-size: 20px; padding: 10px 20px; }
+  .panel-head { padding: 8px 12px; }
+  .panel-head h2 { font-size: 20px; }
+  .panel-body { padding: 10px 12px; }
+  .btn.big { font-size: 20px; padding: 10px 24px; }
+}
+
+@media (max-width: 760px) {
+  .showroom-screen { justify-content: stretch; align-items: flex-end; }
+  .side-panel { width: 100%; height: 58%; border-left: none; border-top: 1px solid var(--line); border-radius: 20px 20px 0 0; padding-left: var(--safe-l); }
+  .main-nav { grid-template-columns: 1fr 1fr; }
+  .splash, .menu-wrap { padding-left: 0; }
+  .screen-menu, .screen-splash { justify-content: center; }
+  .ski-list { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .showroom-screen { justify-content: flex-end; align-items: stretch; }
+  .side-panel { width: 55%; height: 100%; border-radius: 0; border-left: 1px solid var(--line); border-top: none; }
+}
+
+@media (max-width: 480px) {
+  .panel { border-radius: 16px; }
+  .btn { font-size: 16px; padding: 10px 16px; }
+  .board { font-size: 12.5px; }
+  .board td, .board th { padding: 5px 4px; }
+  .big-score { font-size: 46px; }
+}

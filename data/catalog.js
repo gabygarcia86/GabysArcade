@@ -140,6 +140,30 @@ window.ARCADE_CATALOG = {
       added: "",
     },
     {
+      folder: "jet_ski_paradise",
+      title: "Coming Soon - Jet Ski Paradise",
+      description:
+        "Race AI rivals across six tropical locations, launch off waves and land huge combos in a 3D jet ski game with real wave physics.",
+      categories: ["Racing", "Sports"],
+      tags: [
+        "3d",
+        "jet ski",
+        "water",
+        "ocean",
+        "waves",
+        "tropical",
+        "stunts",
+        "tricks",
+        "championship",
+        "time trial",
+        "customization",
+        "leaderboard",
+        "keyboard",
+        "touch",
+      ],
+      added: "",
+    },
+    {
       folder: "latke_toss",
       title: "Coming Soon - Latke Toss",
       description:
