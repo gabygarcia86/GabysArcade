@@ -25,6 +25,7 @@
       this.story = new XM.StoryPlayer();
       this.hud = new XM.HUD();
       this.menus = new XM.Menus(this);
+      this.antics = new XM.MenuAntics();
       this.world = null;
       this.state = "splash";
       this.t = 0;
@@ -142,6 +143,7 @@
 
     toMenu() {
       this.world = null;
+      this.antics.reset();
       this.state = "menu";
       this.setPlaying(false);
       this.storyControls.hidden = true;
@@ -362,6 +364,18 @@
       XM.Audio.music("defeat");
     }
 
+    // Clicks and hovers on the menu's hero lineup, in page coordinates.
+    menuPoint(clientX, clientY) {
+      const r = this.canvas.getBoundingClientRect();
+      return this.antics.hit(((clientX - r.left) / r.width) * XM.VIEW.w, ((clientY - r.top) / r.height) * XM.VIEW.h);
+    }
+
+    menuClick(clientX, clientY) {
+      if (this.state !== "menu") return;
+      const slot = this.menuPoint(clientX, clientY);
+      if (slot) this.antics.trigger(slot);
+    }
+
     // ---------- credits ----------
     playCredits(fromFinale, after) {
       this.state = "credits";
@@ -418,6 +432,10 @@
           this.story.update(dt);
           if (I.pressed("attack") || I.pressed("interact")) this.story.advance();
           break;
+        case "menu":
+          this.antics.update(dt);
+          XM.FX.update(dt);
+          break;
         case "credits":
           this.creditsT += dt;
           if (this.creditsT > XM.STORY.CREDITS.length * 1.6 + 8) this.skipCredits();
@@ -468,13 +486,12 @@
       XM.BG.draw(ctx, bg, this.t * 40, 0, this.t, vh);
       ctx.fillStyle = "rgba(8,4,20,0.45)";
       ctx.fillRect(0, 0, vw, vh);
-      // The team, lined up on the right.
-      const ids = ["professorx", "storm", "cyclops", "wolverine", "jean", "gambit"];
-      ids.forEach((id, i) => {
-        const x = vw * 0.56 + i * Math.min(80, vw * 0.07);
-        if (!XM.Save.char(id).unlocked && this.state !== "splash") return;
-        XM.CharArt.draw(ctx, id, XM.Outfits.current(id), { state: "idle", t: this.t + i }, x, vh - 40 - (i % 2) * 18, -1, 1.7);
-      });
+      // The team, lined up on the right. Click them for silly antics (menuAntics.js).
+      ctx.save();
+      ctx.translate(XM.FX.shakeX, XM.FX.shakeY);
+      this.antics.draw(ctx, this.state === "splash");
+      XM.FX.draw(ctx, { x: 0 });
+      ctx.restore();
       ctx.fillStyle = A.halftone(ctx, "rgba(255,255,255,0.04)");
       ctx.fillRect(0, 0, vw, vh);
     }

@@ -17,6 +17,7 @@ Everything is drawn in code with HTML5 Canvas (heroes, outfits, enemies, bosses,
 - **Scoring** with 1–3 stars, an online top-10 leaderboard, 18 achievements, and a database of heroes, villains, enemies and concept art.
 - Keyboard (rebindable), gamepad and touch controls (joystick and buttons you can move and resize).
 - Autosave in the browser, plus settings for volume, quality, screen shake and full screen.
+- **Main menu easter eggs**: click or tap any X-Man in the menu lineup for one of 10 silly antics per hero (60 in all), including pranks on teammates.
 
 ## Play locally
 
@@ -120,6 +121,7 @@ xmen_rise_of_the_mutants/
     ├── game.js              The level in play: arenas, bosses, objectives, scoring
     ├── ui.js                In-game HUD and toasts
     ├── menus.js             Every menu screen
+    ├── menuAntics.js        Silly antics when you click heroes on the main menu
     └── main.js              App flow and the main loop
 ```
 

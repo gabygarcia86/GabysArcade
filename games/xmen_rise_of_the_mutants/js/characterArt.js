@@ -307,6 +307,8 @@
         }
         break;
     }
+    // Custom poses (the main menu's antics) adjust the result.
+    if (an.pose) an.pose(p, an);
     return p;
   }
 

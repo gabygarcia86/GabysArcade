@@ -463,6 +463,113 @@
       a.sweep(t, 80, 160, 0.5, "sawtooth", 0.15);
       a.sweep(t, 160, 320, 0.5, "square", 0.05);
     },
+    // ---- Comedy sounds for the main menu's antics ----
+    fart: (a, t, o) => {
+      // A wobbling low buzz: every one comes out a little different.
+      const c = a.ctx;
+      const len = o.len || 0.5 + Math.random() * 0.5;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const f = c.createBiquadFilter();
+      osc.type = "sawtooth";
+      f.type = "lowpass";
+      f.frequency.value = 520;
+      let ft = t;
+      osc.frequency.setValueAtTime(95 + Math.random() * 40, t);
+      while (ft < t + len) {
+        ft += 0.03 + Math.random() * 0.05;
+        osc.frequency.linearRampToValueAtTime(55 + Math.random() * 90, Math.min(ft, t + len));
+      }
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.35, t + 0.03);
+      g.gain.setValueAtTime(0.3, t + len * 0.7);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+      osc.connect(f);
+      f.connect(g);
+      g.connect(a.sfxGain);
+      osc.start(t);
+      osc.stop(t + len + 0.05);
+      a.noise2(t, len * 0.8, 0.12, "lowpass", 300);
+    },
+    burp: (a, t) => {
+      const c = a.ctx;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const f = c.createBiquadFilter();
+      osc.type = "sawtooth";
+      f.type = "bandpass";
+      f.frequency.value = 600;
+      f.Q.value = 2;
+      osc.frequency.setValueAtTime(110, t);
+      for (let i = 1; i < 12; i++) osc.frequency.linearRampToValueAtTime(80 + Math.random() * 60, t + i * 0.06);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.5, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+      osc.connect(f);
+      f.connect(g);
+      g.connect(a.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.8);
+    },
+    boing: (a, t) => {
+      const c = a.ctx;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(180, t);
+      for (let i = 1; i <= 10; i++) osc.frequency.linearRampToValueAtTime(i % 2 ? 420 - i * 15 : 200, t + i * 0.04);
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      osc.connect(g);
+      g.connect(a.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.5);
+    },
+    slide: (a, t) => a.sweep(t, 300, 1500, 0.45, "sine", 0.18),
+    slideDown: (a, t) => a.sweep(t, 1500, 250, 0.55, "sine", 0.18),
+    squeak: (a, t) => a.sweep(t, 1400, 2200, 0.12, "square", 0.06),
+    honk: (a, t) => {
+      a.sweep(t, 420, 400, 0.25, "sawtooth", 0.14);
+      a.sweep(t, 520, 500, 0.25, "square", 0.06);
+    },
+    rimshot: (a, t) => {
+      a.noise2(t, 0.08, 0.3, "bandpass", 1800);
+      a.sweep(t, 160, 70, 0.12, "sine", 0.35);
+      a.noise2(t + 0.18, 0.06, 0.25, "bandpass", 1800);
+      a.noise2(t + 0.36, 0.5, 0.18, "highpass", 6000);
+    },
+    snore: (a, t) => {
+      a.noise2(t, 0.7, 0.25, "lowpass", 260);
+      a.sweep(t, 70, 90, 0.7, "sawtooth", 0.08);
+      a.sweep(t + 0.75, 900, 1300, 0.35, "sine", 0.05);
+    },
+    pop: (a, t) => a.sweep(t, 900, 300, 0.06, "square", 0.1),
+    ding: (a, t) => {
+      a.sweep(t, 1760, 1760, 0.7, "sine", 0.14);
+      a.sweep(t, 2640, 2640, 0.5, "sine", 0.05);
+    },
+    sneeze: (a, t) => {
+      a.sweep(t, 300, 900, 0.5, "triangle", 0.06);
+      a.noise2(t + 0.55, 0.3, 0.45, "highpass", 1500);
+    },
+    note: (a, t) => {
+      const n = [0, 3, 5, 7, 10, 12][Math.floor(Math.random() * 6)];
+      a.sweep(t, NOTE(64 + n), NOTE(64 + n), 0.22, "square", 0.06);
+    },
+    scratch: (a, t) => {
+      a.noise2(t, 0.12, 0.3, "bandpass", 1200);
+      a.sweep(t, 600, 200, 0.12, "sawtooth", 0.08);
+      a.sweep(t + 0.13, 200, 700, 0.12, "sawtooth", 0.08);
+    },
+    tada: (a, t) => {
+      a.sweep(t, NOTE(72), NOTE(72), 0.12, "square", 0.08);
+      [0, 4, 7, 12].forEach((n) => a.sweep(t + 0.14, NOTE(72 + n), NOTE(72 + n), 0.7, "square", 0.05));
+    },
+    zip: (a, t) => a.sweep(t, 200, 2000, 0.15, "sawtooth", 0.08),
+    splat: (a, t) => {
+      a.noise2(t, 0.2, 0.4, "lowpass", 700);
+      a.sweep(t, 220, 60, 0.15, "sine", 0.3);
+    },
   };
 
   XM.Audio = Audio;

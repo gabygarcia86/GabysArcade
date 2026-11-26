@@ -47,9 +47,16 @@
       this.t = 0;
       this.root.addEventListener("click", (e) => {
         const el = e.target.closest("[data-act]");
+        if (!el && this.current === "main" && !e.target.closest("a, button, input")) return this.app.menuClick(e.clientX, e.clientY);
         if (!el || el.disabled) return;
         e.preventDefault();
         this.act(el.dataset.act, el.dataset, el);
+      });
+      // A pointer cursor over the heroes on the main menu.
+      this.root.addEventListener("pointermove", (e) => {
+        if (this.current !== "main" || e.pointerType === "touch") return;
+        const over = !e.target.closest("a, button, input") && this.app.menuPoint(e.clientX, e.clientY);
+        this.root.style.cursor = over ? "pointer" : "";
       });
       this.root.addEventListener("input", (e) => {
         const el = e.target;
