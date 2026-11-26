@@ -272,7 +272,7 @@
         p.act("attack", "slash", 0.2);
         XM.Audio.sfx("slash");
         slashFx(w, p, "#e8eef6", c === 2 ? 1.3 : 1, c === 1);
-        w.later(0.05, () => w.combat.melee(front(p, 44, 48), dmgB(p, c), { kb: c === 2 ? 240 : 90, dir: p.facing, color: "#dfe4ea" }));
+        w.later(0.05, () => w.combat.melee(front(p, 54, 48), dmgB(p, c), { kb: c === 2 ? 240 : 90, dir: p.facing, color: "#dfe4ea" }));
       },
       special(p, w) {
         p.act("special", "slash", 0.45);
@@ -512,7 +512,7 @@
         p.act("attack", c === 2 ? "heavy" : "slash", 0.3);
         XM.Audio.sfx(c === 2 ? "punch" : "slash");
         slashFx(w, p, "#9fb8ff", 1.3, c === 1);
-        w.later(0.1, () => w.combat.melee(front(p, 52, 52), dmgB(p, c) * 1.05, { kb: c === 2 ? 320 : 180, dir: p.facing, heavy: c === 2, color: "#9fb8ff" }));
+        w.later(0.1, () => w.combat.melee(front(p, 62, 52), dmgB(p, c) * 1.05, { kb: c === 2 ? 320 : 180, dir: p.facing, heavy: c === 2, color: "#9fb8ff" }));
       },
       special(p, w) {
         p.act("special", "heavy", 0.75);
@@ -562,8 +562,12 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "throw", 0.22);
         XM.Audio.sfx("card");
-        const h = hand(p, up);
-        w.later(0.06, () => w.combat.shoot({ kind: "card", x: h.x, y: h.y, ...aim(p, up, 820), r: 6, dmg: dmgB(p, c) * 0.75, life: 0.7, explode: c === 2 ? 46 : 30, color: "#ff4fb3" }));
+        w.later(0.06, () => {
+          // Angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 820, h.x, h.y, 6, 820 * 0.7);
+          w.combat.shoot({ kind: "card", x: h.x, y: h.y, ...v, r: 6, dmg: dmgB(p, c) * 0.75, life: 0.7, explode: c === 2 ? 46 : 30, color: "#ff4fb3" });
+        });
       },
       special(p, w, up) {
         p.act("special", "throw", 0.4);
@@ -602,7 +606,7 @@
         if (e && Math.abs(e.y + e.h - (p.y + p.h)) < 90 && !e.prop) blinkTo(w, p, e);
         XM.Audio.sfx("slash");
         slashFx(w, p, "#e4e8ff", c === 2 ? 1.25 : 1.1, c === 1);
-        w.later(0.05, () => w.combat.melee(front(p, 54, 54), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
+        w.later(0.05, () => w.combat.melee(front(p, 64, 54), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
       },
       special(p, w) {
         p.act("special", "slash", 0.62);
@@ -665,7 +669,7 @@
         p.act("attack", "punch", 0.34);
         XM.Audio.sfx("punch");
         w.later(0.12, () => {
-          const n = w.combat.melee(front(p, 46, 40), dmgB(p, c) * 1.05, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
+          const n = w.combat.melee(front(p, 56, 40), dmgB(p, c) * 1.05, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
           if (n) XM.FX.shake(c === 2 ? 4 : 2, 0.12);
         });
       },
@@ -708,11 +712,12 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.22);
         XM.Audio.sfx("ice");
-        const h = hand(p, up);
         w.later(0.05, () => {
-          w.combat.shoot({ kind: "ice", x: h.x, y: h.y, ...aim(p, up, 780), r: 6, dmg: dmgB(p, c), life: 0.65, slow: 1.5, color: "#bff0ff", kb: 110 });
+          // Angles down at short enemies on the ground (the finisher's spread follows it).
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 780, h.x, h.y, 6, 780 * 0.65);
+          w.combat.shoot({ kind: "ice", x: h.x, y: h.y, ...v, r: 6, dmg: dmgB(p, c), life: 0.65, slow: 1.5, color: "#bff0ff", kb: 110 });
           if (c === 2) {
-            const v = aim(p, up, 780);
             w.combat.shoot({ kind: "ice", x: h.x, y: h.y - 8, vx: v.vx, vy: v.vy - 90, r: 6, dmg: dmgB(p, c) * 0.6, life: 0.65, slow: 1.5, color: "#bff0ff" });
             w.combat.shoot({ kind: "ice", x: h.x, y: h.y + 8, vx: v.vx, vy: v.vy + 90, r: 6, dmg: dmgB(p, c) * 0.6, life: 0.65, slow: 1.5, color: "#bff0ff" });
           }
@@ -747,7 +752,7 @@
         p.act("attack", "slash", 0.2);
         XM.Audio.sfx("slash");
         slashFx(w, p, "#ff4fe0", c === 2 ? 1.4 : 1.1, c === 1);
-        w.later(0.04, () => w.combat.melee(front(p, 50, 46), dmgB(p, c), { kb: c === 2 ? 220 : 80, dir: p.facing, stun: c === 2 ? 0.3 : 0, color: "#ff4fe0" }));
+        w.later(0.04, () => w.combat.melee(front(p, 60, 46), dmgB(p, c), { kb: c === 2 ? 220 : 80, dir: p.facing, stun: c === 2 ? 0.3 : 0, color: "#ff4fe0" }));
       },
       special(p, w, up) {
         p.act("special", "throw", 0.35);
@@ -804,9 +809,13 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.22);
         XM.Audio.sfx("firework");
-        const h = hand(p, up);
         const col = ["#ff5ad9", "#ffe14a", "#5ad9ff"][c];
-        w.later(0.05, () => w.combat.shoot({ kind: "firework", x: h.x, y: h.y, ...aim(p, up, 600), r: 7, dmg: dmgB(p, c) * 0.7, life: 0.55, explode: c === 2 ? 54 : 34, color: col }));
+        w.later(0.05, () => {
+          // Angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 600, h.x, h.y, 7, 600 * 0.55);
+          w.combat.shoot({ kind: "firework", x: h.x, y: h.y, ...v, r: 7, dmg: dmgB(p, c) * 0.7, life: 0.55, explode: c === 2 ? 54 : 34, color: col });
+        });
       },
       special(p, w) {
         p.act("special", "wave", 0.42);
