@@ -354,10 +354,11 @@
         this.button("OPTIONS", () => this.showOptions(() => this.showMain())),
         this.button("CREDITS", () => this.showCredits()),
       );
-      s.append(menu);
-      const back = el("a", "back-link", "Back to the arcade");
+      // A link styled like the menu buttons, last in the list.
+      const back = el("a", "btn", "BACK TO THE ARCADE");
       back.href = "../../index.html";
-      s.append(back);
+      menu.append(back);
+      s.append(menu);
       this.show(s);
     }
 

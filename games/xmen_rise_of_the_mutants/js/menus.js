@@ -19,7 +19,7 @@
     { state: "victory", dur: 1.8 },
   ];
   const KIND_BY_CHAR = {
-    cyclops: ["punch", "visor", "visor"],
+    cyclops: ["visor", "visor", "visor"],
     wolverine: ["slash", "slash", "slash"],
     storm: ["blast", "rise", "rise"],
     jean: ["blast", "wave", "rise"],
@@ -83,6 +83,9 @@
     show(name, data = {}, push = true) {
       // A new lineup of heroes every time the main menu comes back.
       if (name === "main" && this.current !== "main" && this.app.antics) this.app.antics.shuffleLineup();
+      // The menu music plays on the main menu and on character select (including between
+      // levels, after the results screen or a story scene). It keeps playing if it already is.
+      if (name === "main" || name === "chars") XM.Audio.music("menu");
       if (push && this.current && this.current !== name) this.stack.push({ name: this.current, data: this.data });
       this.current = name;
       this.data = data;

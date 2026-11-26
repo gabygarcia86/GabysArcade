@@ -322,6 +322,9 @@
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(a);
+      // Drawn at r = 7; smaller and bigger blasts scale with their radius.
+      const k = p.r / 7;
+      ctx.scale(k, k);
       A.glow(ctx, 0, 0, 22, "#ff3b3b", 0.9);
       ctx.fillStyle = "#ff3b3b";
       ctx.fillRect(-26, -5, 34, 10);

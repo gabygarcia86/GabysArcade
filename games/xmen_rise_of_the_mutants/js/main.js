@@ -33,6 +33,7 @@
       this.applySettings();
       this.bindGlobal();
       this.menus.show("splash", {}, false);
+      XM.Audio.music("menu");
       this.engine.start();
     }
 
@@ -370,6 +371,18 @@
       return this.antics.hit(((clientX - r.left) / r.width) * XM.VIEW.w, ((clientY - r.top) / r.height) * XM.VIEW.h);
     }
 
+    // On short screens the main menu's buttons sit on the right, so the heroes move to the
+    // space left of them. Returns that space in view units, or null for the normal layout.
+    menuLineupArea() {
+      if (this.menus.current !== "main") return null;
+      const list = this.menus.root.querySelector(".menu-list");
+      if (!list) return null;
+      const r = this.canvas.getBoundingClientRect();
+      const lr = list.getBoundingClientRect();
+      if (!r.width || lr.left - r.left < r.width * 0.4) return null;
+      return { left: 0, right: ((lr.left - r.left) / r.width) * XM.VIEW.w };
+    }
+
     menuClick(clientX, clientY) {
       if (this.state !== "menu") return;
       const slot = this.menuPoint(clientX, clientY);
@@ -486,7 +499,9 @@
       XM.BG.draw(ctx, bg, this.t * 40, 0, this.t, vh);
       ctx.fillStyle = "rgba(8,4,20,0.45)";
       ctx.fillRect(0, 0, vw, vh);
-      // The team, lined up on the right. Click them for silly antics (menuAntics.js).
+      // The team, lined up on the right (or under the logo on short screens). Click them
+      // for silly antics (menuAntics.js).
+      this.antics.area = this.menuLineupArea();
       ctx.save();
       ctx.translate(XM.FX.shakeX, XM.FX.shakeY);
       this.antics.draw(ctx);

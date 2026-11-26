@@ -251,20 +251,12 @@ p {
   cursor: pointer;
 }
 
+/* The main menu's link back to the arcade, styled as one of the menu buttons. */
 .arcade-link {
-  position: absolute;
-  top: calc(14px + var(--safe-t));
-  left: calc(16px + var(--safe-l));
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(3, 5, 12, 0.5);
-  color: var(--muted);
-  font-size: 0.88rem;
-  text-decoration: none;
-}
-
-.arcade-link:hover {
-  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .menu-column {
@@ -313,10 +305,6 @@ p {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(7px, 1.4vh, 12px);
-}
-
-.menu-list .full-row {
-  grid-column: 1 / -1;
 }
 
 .menu-list .wide {

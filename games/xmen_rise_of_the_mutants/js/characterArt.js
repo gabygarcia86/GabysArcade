@@ -441,6 +441,33 @@
       A.glow(ctx, hand.x + cos(ang) * 12, hand.y + sin(ang) * 12, 16, pal.glow, 0.7);
       A.limb(ctx, hand.x, hand.y, hand.x + cos(ang) * 24, hand.y + sin(ang) * 24, 3.5, "#ffd9fb", false);
     }
+    // Nightcrawler's sword: drawn in his front hand while he attacks.
+    if (ch.id === "nightcrawler" && front && (an.state === "attack" || an.state === "special")) {
+      const ang = Math.atan2(hand.y - el.y, hand.x - el.x);
+      const ux = cos(ang);
+      const uy = sin(ang);
+      const tip = { x: hand.x + ux * 30, y: hand.y + uy * 30 };
+      // Pommel and grip behind the hand, then the blade (outline first, then steel).
+      A.limb(ctx, hand.x - ux * 5, hand.y - uy * 5, hand.x, hand.y, 2.6, "#3a2418", false);
+      A.circle(ctx, hand.x - ux * 6, hand.y - uy * 6, 1.8, "#d8b04a", true, 1);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = A.OUTLINE;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(hand.x, hand.y);
+      ctx.lineTo(tip.x, tip.y);
+      ctx.stroke();
+      ctx.strokeStyle = "#e6ebf5";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(hand.x, hand.y);
+      ctx.lineTo(tip.x, tip.y);
+      ctx.stroke();
+      // Crossguard across the blade at the hand.
+      const gx = -uy * 5;
+      const gy = ux * 5;
+      A.limb(ctx, hand.x + ux * 2 - gx, hand.y + uy * 2 - gy, hand.x + ux * 2 + gx, hand.y + uy * 2 + gy, 2.4, "#d8b04a");
+    }
     // A glowing hand while charging energy powers.
     if (front && an.power > 0) A.glow(ctx, hand.x, hand.y, 10 + an.power * 10, pal.glow, 0.8);
     if (front && ch.id === "gambit" && (an.state === "attack" || an.state === "victory" || an.state === "special")) {

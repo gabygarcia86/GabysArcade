@@ -968,6 +968,31 @@ input[type="range"] {
   outline: 3px solid var(--gold);
 }
 
+/* Typing a name on a phone (ui.js liftNameField): only the name form shows, at the top of
+   the screen, so the on-screen keyboard can't cover it. */
+.screen.typing {
+  padding-top: calc(var(--safe-t) + 8px);
+}
+
+.screen.typing .panel {
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.screen.typing .panel > :not(.submit-box),
+.screen.typing .submit-box > :not(.name-form):not(.status) {
+  display: none;
+}
+
+.screen.typing .submit-box {
+  margin: 0;
+  padding: 8px;
+}
+
+.screen.typing .status:empty {
+  display: none;
+}
+
 .status {
   min-height: 22px;
   margin: 8px 0 0;

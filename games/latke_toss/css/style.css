@@ -52,25 +52,6 @@ button {
 
 /* ---------- Layout ---------- */
 
-#page-nav {
-  position: fixed;
-  left: 10px;
-  bottom: 8px;
-  z-index: 30;
-}
-
-.nav-link {
-  color: var(--silver);
-  font-size: 13px;
-  opacity: 0.7;
-  text-decoration: none;
-}
-
-.nav-link:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
 #game-shell {
   position: relative;
   width: min(100vw, 1280px);
@@ -484,6 +465,11 @@ h2 {
   color: var(--white);
   background: linear-gradient(180deg, var(--royal-light), var(--royal));
   box-shadow: 0 4px 0 var(--navy-700);
+}
+
+a.mid-btn {
+  text-align: center;
+  text-decoration: none;
 }
 
 .mid-btn.ghost {

@@ -71,9 +71,10 @@
 .splash, .menu-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; max-width: 560px; padding-left: clamp(4px, 4vw, 60px); }
 .splash .btn { margin-top: 24px; }
 .splash .hint { opacity: 0.8; }
-.menu-top { display: flex; align-items: center; gap: 14px; width: 100%; justify-content: space-between; }
-.arcade-link { color: #fff; opacity: 0.85; text-decoration: none; font-weight: 600; font-size: 14px; }
-.arcade-link:hover { opacity: 1; text-decoration: underline; }
+.menu-top { display: flex; align-items: center; gap: 14px; width: 100%; justify-content: flex-end; }
+/* The link back to the arcade, styled as one of the menu buttons. It comes last, so in the
+   two-column menu it sits beside Settings. */
+.arcade-link { color: inherit; text-decoration: none; }
 .main-nav { display: grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap: 10px; margin-top: 14px; width: min(520px, 92vw); }
 .main-nav .btn.big { grid-column: 1 / -1; }
 .panel .main-nav { grid-template-columns: 1fr; width: 100%; }

@@ -11,7 +11,8 @@
   // or  jump: "audio/sfx/jump.wav". Leave a name out to keep the built-in sound.
   XM.AUDIO_FILES = {
     music: {
-      // menu: "audio/music/menu.mp3",
+      // Splash screen, main menu and character select between levels.
+      menu: "assets/audio/Music%20-%20Menu.mp3",
     },
     sfx: {
       // jump: "audio/sfx/jump.ogg",
@@ -135,6 +136,8 @@
         if (this.musicEl) document.hidden ? this.musicEl.pause() : this.musicEl.play().catch(() => {});
       });
       if (this.pendingMusic) this.music(this.pendingMusic);
+      // A music file started before the first tap may have been blocked by the browser.
+      if (this.musicEl && this.musicEl.paused) this.musicEl.play().catch(() => {});
     },
 
     setVolumes(v) {
@@ -164,24 +167,32 @@
       }
     },
 
+    // Music files can start before init() (the browser may still block them until the
+    // first tap, and init() retries); built-in tracks wait for init().
     music(name) {
-      if (!this.ctx) {
+      const file = (XM.AUDIO_FILES.music || {})[name];
+      if (!this.ctx && !file) {
         this.pendingMusic = name;
         return;
       }
-      if (this.currentName === name) return;
+      if (this.currentName === name) {
+        if (this.musicEl && this.musicEl.paused && !document.hidden) this.musicEl.play().catch(() => {});
+        return;
+      }
       this.stopMusic();
       this.currentName = name;
-      const file = (XM.AUDIO_FILES.music || {})[name];
       if (file) {
         const el = new window.Audio(file);
         el.loop = !(TRACKS[name] && TRACKS[name].once);
         el.volume = XM.U.clamp(this.volumes.master * this.volumes.music, 0, 1);
         el.play().catch(() => {});
         el.addEventListener("error", () => {
-          if (this.musicEl === el) {
-            this.musicEl = null;
-            this.startSynth(name);
+          if (this.musicEl !== el) return;
+          this.musicEl = null;
+          if (this.ctx) this.startSynth(name);
+          else {
+            this.currentName = "";
+            this.pendingMusic = name;
           }
         });
         this.musicEl = el;

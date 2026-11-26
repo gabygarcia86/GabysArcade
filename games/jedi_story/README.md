@@ -66,7 +66,7 @@ On phones and tablets, starting, restarting or continuing a level switches to fu
 
 **Bosses.** A boss guards while idle, so swinging at one usually gets blocked. Wait for an attack, then punish the recovery, parry it with a timed Deflect, or break the guard with Force Push. Bosses drop bacta at set points in the fight.
 
-**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are behind cracked walls, on ledges just inside pits, and on high platforms above the usual view. Finding them all unlocks a bonus line from Master Gale Garcian after the Exegol vision (every holocron up to that point), and three bonus ending scenes (every holocron in all ten levels). Holocrons found on any run of a level count.
+**Collectibles.** Each level has kyber crystals for score and three hidden holocrons worth 500 points each. Holocrons are off the main path, and the levels don't point them out: behind false walls and faint cracked walls that face back the way you came, in vaults whose switches sit up side climbs, on ledges you can only reach by Force-pushing a crate under them, at the bottom of drops that look bottomless, and on high platforms above the usual view. Finding them all unlocks a bonus line from Master Gale Garcian after the Exegol vision (every holocron up to that point), and three bonus ending scenes (every holocron in all ten levels). Holocrons found on any run of a level count.
 
 ### Upgrades
 
@@ -172,13 +172,13 @@ build(b) {
   b.run(420, ["storm", "scout"], { crystals: 5 }); // Floor with enemies and crystals
   b.pits([120, 140]);                              // Gaps with islands between them
   b.checkpoint();
-  b.secretRoom();                                  // Cracked wall hiding a holocron
+  b.crackedBack(340);                              // Faint cracked wall facing back, hiding a holocron
   b.arena(800, [["storm", "storm"], ["heavy"]]);   // Sealed fight, wave by wave
   b.exit();
 }
 ```
 
-Other chunks include `stairs`, `down`, `floats`, `movers`, `crumble`, `tower`, `lift`, `lasers`, `arcs`, `vents`, `crushers`, `spikeRun`, `fallers`, `door`, `bridge`, `crateWall`, `secretLedge`, `secretHigh` and `bossArena`.
+Other chunks include `stairs`, `down`, `floats`, `movers`, `crumble`, `tower`, `lift`, `lasers`, `arcs`, `vents`, `crushers`, `spikeRun`, `fallers`, `door`, `bridge`, `crateWall`, `pillars`, `overhang`, `upperRoute` and `bossArena`. Holocron secrets: `hiddenTunnel`, `crackedBack`, `crateLedge`, `vault`, `shaft` (only in themes whose pits fade into haze), `secretHigh`, plus the older `secretRoom` and `secretLedge`. Keep three holocrons per level: saves store each level's holocron count.
 
 If you change the campaign's save format, change `KEY` in `js/save.js` so old saves aren't misread.
 

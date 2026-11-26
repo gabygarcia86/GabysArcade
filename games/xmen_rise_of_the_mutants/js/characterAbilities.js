@@ -17,6 +17,37 @@
   const aim = (p, up, speed) => (up ? { vx: p.facing * speed * 0.72, vy: -speed * 0.72 } : { vx: p.facing * speed, vy: 0 });
   const targets = (w) => w.combat.onScreen().filter((e) => !e.prop || e.objective);
 
+  // The nearest enemy in front of a level shot from (sx, sy) that the shot would pass
+  // over (it sits lower than the shot), within `range`. Null if the nearest enemy in
+  // front is already in the shot's path, or nothing is low enough.
+  function lowTarget(w, p, sx, sy, r, range) {
+    let best = null;
+    let bd = Infinity;
+    for (const e of w.enemies) {
+      if (e.dead) continue;
+      const d = (e.x + e.w / 2 - sx) * p.facing;
+      if (d < -e.w / 2 || d > range) continue;
+      if (e.y + e.h < sy - r || e.y > sy + 160) continue; // above the shot, or far below
+      if (d < bd) {
+        bd = d;
+        best = e;
+      }
+    }
+    if (!best || best.y <= sy + r) return null; // level shot already hits it
+    return best;
+  }
+
+  // Velocity for a basic shot from (sx, sy). Like aim(), but a level shot that would fly
+  // over a short enemy on the ground (drones, creatures, turrets...) angles down at it.
+  function aimLow(w, p, up, speed, sx, sy, r, range) {
+    if (up) return aim(p, true, speed);
+    const e = lowTarget(w, p, sx, sy, r, range);
+    if (!e) return aim(p, false, speed);
+    const dx = Math.max(12, Math.abs(e.x + e.w / 2 - sx));
+    const ang = Math.min(1.0, Math.atan2(e.y + e.h / 2 - sy, dx));
+    return { vx: p.facing * speed * Math.cos(ang), vy: speed * Math.sin(ang) };
+  }
+
   function slashFx(w, p, color, big = 1, flip = false) {
     let t = 0;
     const x = p.cx;
@@ -183,22 +214,33 @@
   const Abilities = {
     // ===================== CYCLOPS =====================
     cyclops: {
+      // Optic Blast: no punches. Each hit fires a small optic blast from his visor; the
+      // third hit of a combo fires a medium one. Hold up to aim diagonally.
       basic(p, w, c, up) {
-        p.act("attack", up ? "aimUp" : "punch", 0.26);
-        XM.Audio.sfx("punch");
+        const big = c === 2;
+        p.act("attack", up ? "aimUp" : "visor", 0.26);
+        if (big) p.power = 0.6;
         w.later(0.07, () => {
-          if (up) {
-            const v = aim(p, true, 950);
-            w.combat.shoot({ kind: "optic", x: p.cx, y: p.y + p.h * 0.2, ...v, r: 7, dmg: dmgB(p, c) * 0.9, life: 0.45, color: "#ff3b3b", kb: 140 });
-            XM.Audio.sfx("blast");
-            return;
-          }
-          w.combat.melee(front(p, 34, 30), dmgB(p, c), { kb: c === 2 ? 260 : 130, dir: p.facing, color: "#ffd84a" });
-          if (c === 2) {
-            const h = hand(p);
-            w.combat.shoot({ kind: "optic", x: h.x, y: p.y + p.h * 0.2, vx: p.facing * 1000, vy: 0, r: 7, dmg: dmgB(p, c) * 0.8, life: 0.28, color: "#ff3b3b", kb: 200 });
-            XM.Audio.sfx("blast");
-          }
+          const speed = big ? 980 : 1050;
+          const life = big ? 0.5 : 0.4;
+          const r = big ? 10 : 5;
+          const sx = p.cx + p.facing * 8;
+          const sy = p.y + p.h * 0.2;
+          // Leaves at eye level, so it angles down at short enemies on the ground.
+          const v = aimLow(w, p, up, speed, sx, sy, r, speed * life);
+          w.combat.shoot({
+            kind: "optic",
+            x: sx,
+            y: sy,
+            ...v,
+            r,
+            dmg: dmgB(p, c) * (big ? 1.1 : 0.9),
+            life,
+            color: "#ff3b3b",
+            kb: big ? 260 : 120,
+          });
+          XM.Audio.sfx("blast");
+          if (big) XM.FX.shake(2, 0.12);
         });
       },
       special(p, w) {
@@ -230,7 +272,7 @@
         p.act("attack", "slash", 0.2);
         XM.Audio.sfx("slash");
         slashFx(w, p, "#e8eef6", c === 2 ? 1.3 : 1, c === 1);
-        w.later(0.05, () => w.combat.melee(front(p, 44, 48), dmgB(p, c), { kb: c === 2 ? 240 : 90, dir: p.facing, color: "#dfe4ea" }));
+        w.later(0.05, () => w.combat.melee(front(p, 54, 48), dmgB(p, c), { kb: c === 2 ? 240 : 90, dir: p.facing, color: "#dfe4ea" }));
       },
       special(p, w) {
         p.act("special", "slash", 0.45);
@@ -374,8 +416,13 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.24);
         XM.Audio.sfx("psychic");
-        const h = hand(p, up);
-        w.later(0.05, () => w.combat.shoot({ kind: "psy", x: h.x, y: h.y, ...aim(p, up, 720), r: c === 2 ? 10 : 7, dmg: dmgB(p, c), life: 0.7, color: "#ff6ad5", kb: 160, trail: 0.4 }));
+        w.later(0.05, () => {
+          // Recomputed when it fires; angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const r = c === 2 ? 10 : 7;
+          const v = aimLow(w, p, up, 720, h.x, h.y, r, 720 * 0.7);
+          w.combat.shoot({ kind: "psy", x: h.x, y: h.y, ...v, r, dmg: dmgB(p, c), life: 0.7, color: "#ff6ad5", kb: 160, trail: 0.4 });
+        });
       },
       special(p, w) {
         p.act("special", "wave", 0.45);
@@ -465,7 +512,7 @@
         p.act("attack", c === 2 ? "heavy" : "slash", 0.3);
         XM.Audio.sfx(c === 2 ? "punch" : "slash");
         slashFx(w, p, "#9fb8ff", 1.3, c === 1);
-        w.later(0.1, () => w.combat.melee(front(p, 52, 52), dmgB(p, c) * 1.05, { kb: c === 2 ? 320 : 180, dir: p.facing, heavy: c === 2, color: "#9fb8ff" }));
+        w.later(0.1, () => w.combat.melee(front(p, 62, 52), dmgB(p, c) * 1.05, { kb: c === 2 ? 320 : 180, dir: p.facing, heavy: c === 2, color: "#9fb8ff" }));
       },
       special(p, w) {
         p.act("special", "heavy", 0.75);
@@ -515,8 +562,12 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "throw", 0.22);
         XM.Audio.sfx("card");
-        const h = hand(p, up);
-        w.later(0.06, () => w.combat.shoot({ kind: "card", x: h.x, y: h.y, ...aim(p, up, 820), r: 6, dmg: dmgB(p, c) * 0.75, life: 0.7, explode: c === 2 ? 46 : 30, color: "#ff4fb3" }));
+        w.later(0.06, () => {
+          // Angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 820, h.x, h.y, 6, 820 * 0.7);
+          w.combat.shoot({ kind: "card", x: h.x, y: h.y, ...v, r: 6, dmg: dmgB(p, c) * 0.75, life: 0.7, explode: c === 2 ? 46 : 30, color: "#ff4fb3" });
+        });
       },
       special(p, w, up) {
         p.act("special", "throw", 0.4);
@@ -547,13 +598,15 @@
 
     // ===================== NIGHTCRAWLER =====================
     nightcrawler: {
+      // Sword Strike: blink beside the nearest foe and slash with his sword (a 3-hit
+      // combo of alternating cuts; the blade itself is drawn in characterArt.js).
       basic(p, w, c) {
-        p.act("attack", c === 1 ? "kick" : "slash", 0.24);
+        p.act("attack", "slash", 0.24);
         const e = w.combat.nearest(p.cx, p.cy, 170);
         if (e && Math.abs(e.y + e.h - (p.y + p.h)) < 90 && !e.prop) blinkTo(w, p, e);
         XM.Audio.sfx("slash");
-        slashFx(w, p, "#b09aff", 1, c === 1);
-        w.later(0.05, () => w.combat.melee(front(p, 42, 50), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
+        slashFx(w, p, "#e4e8ff", c === 2 ? 1.25 : 1.1, c === 1);
+        w.later(0.05, () => w.combat.melee(front(p, 64, 54), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
       },
       special(p, w) {
         p.act("special", "slash", 0.62);
@@ -616,7 +669,7 @@
         p.act("attack", "punch", 0.34);
         XM.Audio.sfx("punch");
         w.later(0.12, () => {
-          const n = w.combat.melee(front(p, 46, 40), dmgB(p, c) * 1.05, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
+          const n = w.combat.melee(front(p, 56, 40), dmgB(p, c) * 1.05, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
           if (n) XM.FX.shake(c === 2 ? 4 : 2, 0.12);
         });
       },
@@ -659,11 +712,12 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.22);
         XM.Audio.sfx("ice");
-        const h = hand(p, up);
         w.later(0.05, () => {
-          w.combat.shoot({ kind: "ice", x: h.x, y: h.y, ...aim(p, up, 780), r: 6, dmg: dmgB(p, c), life: 0.65, slow: 1.5, color: "#bff0ff", kb: 110 });
+          // Angles down at short enemies on the ground (the finisher's spread follows it).
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 780, h.x, h.y, 6, 780 * 0.65);
+          w.combat.shoot({ kind: "ice", x: h.x, y: h.y, ...v, r: 6, dmg: dmgB(p, c), life: 0.65, slow: 1.5, color: "#bff0ff", kb: 110 });
           if (c === 2) {
-            const v = aim(p, up, 780);
             w.combat.shoot({ kind: "ice", x: h.x, y: h.y - 8, vx: v.vx, vy: v.vy - 90, r: 6, dmg: dmgB(p, c) * 0.6, life: 0.65, slow: 1.5, color: "#bff0ff" });
             w.combat.shoot({ kind: "ice", x: h.x, y: h.y + 8, vx: v.vx, vy: v.vy + 90, r: 6, dmg: dmgB(p, c) * 0.6, life: 0.65, slow: 1.5, color: "#bff0ff" });
           }
@@ -698,7 +752,7 @@
         p.act("attack", "slash", 0.2);
         XM.Audio.sfx("slash");
         slashFx(w, p, "#ff4fe0", c === 2 ? 1.4 : 1.1, c === 1);
-        w.later(0.04, () => w.combat.melee(front(p, 50, 46), dmgB(p, c), { kb: c === 2 ? 220 : 80, dir: p.facing, stun: c === 2 ? 0.3 : 0, color: "#ff4fe0" }));
+        w.later(0.04, () => w.combat.melee(front(p, 60, 46), dmgB(p, c), { kb: c === 2 ? 220 : 80, dir: p.facing, stun: c === 2 ? 0.3 : 0, color: "#ff4fe0" }));
       },
       special(p, w, up) {
         p.act("special", "throw", 0.35);
@@ -755,9 +809,13 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.22);
         XM.Audio.sfx("firework");
-        const h = hand(p, up);
         const col = ["#ff5ad9", "#ffe14a", "#5ad9ff"][c];
-        w.later(0.05, () => w.combat.shoot({ kind: "firework", x: h.x, y: h.y, ...aim(p, up, 600), r: 7, dmg: dmgB(p, c) * 0.7, life: 0.55, explode: c === 2 ? 54 : 34, color: col }));
+        w.later(0.05, () => {
+          // Angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 600, h.x, h.y, 7, 600 * 0.55);
+          w.combat.shoot({ kind: "firework", x: h.x, y: h.y, ...v, r: 7, dmg: dmgB(p, c) * 0.7, life: 0.55, explode: c === 2 ? 54 : 34, color: col });
+        });
       },
       special(p, w) {
         p.act("special", "wave", 0.42);
