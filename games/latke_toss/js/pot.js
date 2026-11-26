@@ -42,6 +42,59 @@ function createSoftShadowTexture() {
   return new THREE.CanvasTexture(canvas);
 }
 
+// A Star of David: two interlaced triangle outlines, extruded and bent to lie flush on
+// the curved pot wall. Built facing +Z (toward the player), centered at height y.
+function createStarOfDavidGeometry(size, y, wallRadius) {
+  const outer = size;
+  const inner = size * 0.62; // the triangles' hollow centers set the stroke width
+  const triangleShape = (radius, flip) => {
+    const points = [];
+    for (let i = 0; i < 3; i++) {
+      const angle = Math.PI / 2 + (flip ? Math.PI : 0) + (i * Math.PI * 2) / 3;
+      points.push(new THREE.Vector2(Math.cos(angle) * radius, Math.sin(angle) * radius));
+    }
+    return points;
+  };
+  const parts = [];
+  for (const flip of [false, true]) {
+    const shape = new THREE.Shape(triangleShape(outer, flip));
+    shape.holes.push(new THREE.Path(triangleShape(inner, flip).reverse()));
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.018,
+      bevelEnabled: true,
+      bevelThickness: 0.006,
+      bevelSize: 0.005,
+      bevelSegments: 2,
+      curveSegments: 1,
+    });
+    // Nudge the second triangle forward a hair so the overlaps don't flicker.
+    if (flip) geometry.translate(0, 0, 0.003);
+    parts.push(geometry);
+  }
+
+  // Merge the two triangles into one geometry.
+  const merged = new THREE.BufferGeometry();
+  const positions = [];
+  for (const part of parts) {
+    const geometry = part.index ? part.toNonIndexed() : part;
+    positions.push(...geometry.attributes.position.array);
+    part.dispose();
+  }
+  // Wrap onto the wall: x becomes an arc length around the pot, z an offset from it.
+  for (let i = 0; i < positions.length; i += 3) {
+    const x = positions[i];
+    const z = positions[i + 2];
+    const angle = x / wallRadius;
+    const radius = wallRadius + z;
+    positions[i] = Math.sin(angle) * radius;
+    positions[i + 1] += y;
+    positions[i + 2] = Math.cos(angle) * radius;
+  }
+  merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  merged.computeVertexNormals();
+  return merged;
+}
+
 // Cross-section of the pot (radius, height), traced from the bottom center outward, up
 // the outside, over the rim, and down the inside. Lathe normals face "right" of the
 // direction of travel, so this ordering gives outward normals outside and inward ones
@@ -195,6 +248,16 @@ export class Pot {
     band.rotation.x = Math.PI / 2;
     band.position.y = 0.5;
     this.group.add(band);
+
+    // Golden Star of David on the front of the pot, facing the player.
+    const star = new THREE.Mesh(
+      createStarOfDavidGeometry(0.24, 0.79, POT.outerRadius - 0.004),
+      new THREE.MeshStandardMaterial({
+        color: 0xf2c14e, metalness: 0.85, roughness: 0.28, emissive: 0x4a3000, emissiveIntensity: 0.35,
+      }),
+    );
+    star.castShadow = true;
+    this.group.add(star);
 
     // Two loop handles. The half torus is rotated so it lies flat and bulges outward.
     const handleGeometry = new THREE.TorusGeometry(0.17, 0.045, 10, 20, Math.PI);
