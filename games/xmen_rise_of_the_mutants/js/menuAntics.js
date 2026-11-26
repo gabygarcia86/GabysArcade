@@ -3854,14 +3854,27 @@
       this.reset();
     }
 
+    // Where each hero stands. Normally they line up on the right facing the menu. When
+    // `this.area` is set (short screens, buttons on the right), they stand in that space
+    // under the logo instead, facing the buttons.
     slots() {
       const vw = XM.VIEW.w;
       const vh = XM.VIEW.h;
-      const gap = Math.min(86, vw * 0.075);
+      const n = this.lineup.length;
+      let x0 = vw * 0.58;
+      let gap = Math.min(86, vw * 0.075);
+      let facing = -1;
+      if (this.area) {
+        const left = this.area.left + 44;
+        const span = Math.max(0, this.area.right - 44 - left);
+        gap = n > 1 ? Math.min(86, span / (n - 1)) : 0;
+        x0 = left + (span - gap * (n - 1)) / 2;
+        facing = 1;
+      }
       return this.lineup.map((id, i) => {
         const ch = XM.CHAR[id];
         const hh = id === "professorx" ? 62 : ch.body.legs + ch.body.torso + ch.body.head * 2 + 2;
-        return { id, i, ch, x: vw * 0.58 + i * gap, y: vh - 40 - (i % 2) * 18, sc: SCALE, facing: -1, hh, visible: true };
+        return { id, i, ch, x: x0 + i * gap, y: vh - 40 - (i % 2) * 18, sc: SCALE, facing, hh, visible: true };
       });
     }
 

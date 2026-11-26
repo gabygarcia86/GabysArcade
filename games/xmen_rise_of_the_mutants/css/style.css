@@ -370,9 +370,17 @@ header.bar .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
   .results h1 { font-size: 30px; }
   .db-list { grid-template-columns: 1fr; }
 }
+/* Short screens (phones in landscape): logo top-left, buttons on the right, and the
+   empty space under the logo is left clear for the clickable hero lineup (menuAntics.js). */
 @media (max-height: 430px) {
-  .main-menu { flex-direction: row; flex-wrap: wrap; align-items: center; max-width: none; gap: 14px; }
-  .main-menu .logo { flex: 1 1 260px; }
-  .main-menu .menu-list { flex: 1 1 320px; }
-  .disclaimer { flex-basis: 100%; }
+  .main-menu {
+    display: grid; max-width: none; gap: 6px 14px;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    grid-template-rows: auto 1fr auto;
+  }
+  /* Centered in the left column, in the space above the heroes (who fill roughly the
+     bottom third of the screen). */
+  .main-menu .logo { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; margin-bottom: 34vh; }
+  .main-menu .menu-list { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+  .main-menu .disclaimer { grid-column: 2; grid-row: 3; text-align: right; }
 }
