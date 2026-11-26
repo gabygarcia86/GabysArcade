@@ -126,6 +126,9 @@ header.bar .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
 .splash { margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 22px; }
 .splash .blink { font-size: 20px; font-weight: 700; color: var(--gold); animation: pulse 0.9s infinite alternate; text-shadow: 2px 2px 0 var(--ink); }
 .main-menu { display: flex; flex-direction: column; gap: 18px; max-width: 470px; height: 100%; justify-content: center; overflow-y: auto; }
+.arcade-link { text-decoration: none; }
+.main-menu .btn.ghost { background: rgba(10, 6, 24, 0.85); }
+.main-menu .btn.ghost:hover, .main-menu .btn.ghost:focus-visible { background: rgba(40, 30, 70, 0.95); }
 .menu-list { display: flex; flex-direction: column; gap: 10px; }
 .menu-list .btn { justify-content: space-between; width: 100%; }
 .disclaimer { font-size: 11px; color: var(--muted); margin: 0; }

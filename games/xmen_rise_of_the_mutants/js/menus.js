@@ -83,7 +83,7 @@
       this.root.innerHTML = this[`render_${name}`](data);
       this.root.scrollTop = 0;
       this.bindPreviews();
-      const first = this.root.querySelector("[autofocus], .btn.primary, .btn");
+      const first = this.root.querySelector("[autofocus]") || this.root.querySelector(".btn.primary") || this.root.querySelector(".btn");
       if (first && !XM.Input.usingTouch) first.focus({ preventScroll: true });
       if (this[`after_${name}`]) this[`after_${name}`](data);
     }
@@ -409,7 +409,10 @@
             <button class="btn" data-act="achievements">Achievements <small>${XM.Achievements.count()}/${XM.Achievements.LIST.length}</small></button>
             <button class="btn" data-act="settings">Settings</button>
           </div>
-          <button class="btn ghost" data-act="credits">Credits</button>
+          <div class="row2">
+            <button class="btn ghost" data-act="credits">Credits</button>
+            <a class="btn ghost arcade-link" href="../../index.html" aria-label="Back to Gaby's Arcade">◀ Gaby's Arcade</a>
+          </div>
         </nav>
         <p class="disclaimer">A non-commercial fan game. X-Men is a trademark of Marvel.</p>
       </div>`;
