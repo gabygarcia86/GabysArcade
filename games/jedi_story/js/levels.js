@@ -122,6 +122,7 @@
     inKillZone(actor) {
       for (let i = 0; i < this.pits.length; i++) {
         const p = this.pits[i];
+        if (p.fake) continue; // Drawn like a pit, but there's a floor below (shaft()).
         if (actor.x > p.x && actor.x < p.x + p.w && actor.y >= p.y) return true;
       }
       return actor.y > this.bottom + 300;
@@ -211,13 +212,20 @@
       for (const b of this.bridges) {
         if (b.extending && b.w < b.fullW) b.w = Math.min(b.fullW, b.w + 520 * dt);
       }
+      const pbox = player.box;
       for (const cover of this.covers) {
+        // A false wall (hiddenTunnel) opens when the Jedi's middle steps inside it, so
+        // dropping past the shelf's edge doesn't give it away.
+        if (cover.walkIn && !cover.reveal && player.x > cover.x && player.x < cover.x + cover.w && overlap(pbox, cover)) {
+          cover.reveal = true;
+          game.audio.play("switch");
+          game.particles.text(player.x, player.y - player.h - 10, "SECRET", "#ffd76a", 15);
+        }
         if (cover.reveal) cover.alpha = Math.max(0, cover.alpha - dt * 3);
       }
 
       this.updateHazards(dt, game);
 
-      const pbox = player.box;
       for (const p of this.pickups) {
         if (p.taken) continue;
         if (overlap(pbox, { x: p.x - 6, y: p.y - 6, w: p.w + 12, h: p.h + 12 })) {
@@ -811,6 +819,192 @@
       this.solid({ x: x + 110, y: this.y - height, w: 120, h: 18, oneway: true, kind: "float" });
       this.pickup("crystal", x, this.y - height / 2 - 40);
       this.pickup("holocron", x + 170, this.y - height - 34);
+      return this;
+    }
+
+    // A rock shelf to climb over. Its far face is false: walking back into it from the
+    // other side opens a tunnel. The path never asks you to turn round, so it's easy to miss.
+    hiddenTunnel({ mesa = 460, depth = 200, rise = 92, after = 300, enemies = null, crystals = 4 } = {}) {
+      const x0 = this.x;
+      const y = this.y;
+      const tx = x0 + mesa - depth;
+      const roof = 26;
+      this.solid({ x: x0, y: y - rise, w: mesa - depth, h: DEPTH });
+      this.solid({ x: tx, y: y - rise, w: depth, h: roof });
+      this.solid({ x: tx, y, w: depth + after, h: DEPTH });
+      this.floorMark(x0, tx, y - rise);
+      this.floorMark(tx, tx + depth + after, y);
+      const inside = { x: tx, y: y - rise + roof, w: depth, h: rise - roof };
+      this.level.rooms.push({ ...inside });
+      this.level.covers.push({ ...inside, alpha: 1, reveal: false, walkIn: true });
+      this.pickup("holocron", tx + 40, y - 32);
+      this.pickup("crystal", tx + 110, y - 30);
+      // The cursor is still at x0 here, so these sit along the shelf's top.
+      if (crystals) this.crystals(crystals, 60, -rise - 46, Math.min(46, (mesa - depth - 90) / crystals));
+      this.x = tx + depth + after;
+      this.level.width = Math.max(this.level.width, this.x);
+      if (enemies) this.place(enemies, after - 90);
+      return this;
+    }
+
+    // Like secretRoom, but the cracked wall faces back the way you came, and its cracks
+    // are faint. The path runs over the room's roof and drops down past the crack.
+    crackedBack(len = 340, { after = 240, enemies = null } = {}) {
+      const x0 = this.x;
+      const y = this.y;
+      this.ground(len + 40 + after);
+      const rx = x0 + 40;
+      const top = y - 100;
+      this.solid({ x: rx, y: top, w: len, h: 24 });
+      this.solid({ x: rx, y: top, w: 18, h: 100, kind: "wall" });
+      const crack = this.solid({ x: rx + len - 22, y: top + 24, w: 22, h: 76, kind: "cracked" });
+      const cover = { x: rx + 18, y: top + 24, w: len - 40, h: 76, alpha: 1, reveal: false };
+      this.level.covers.push(cover);
+      this.level.rooms.push({ x: rx, y: top + 24, w: len, h: 76 });
+      const wall = {
+        x: crack.x - 6, y: crack.y, w: crack.w + 12, h: crack.h, broken: false, saberable: false, faint: true,
+        smash: (game) => {
+          crack.active = false;
+          wall.broken = true;
+          cover.reveal = true;
+          game.audio.play("explosion", 0.5);
+          game.particles.dust(crack.x + 10, crack.y + 30, this.level.theme.dust, 22);
+          game.particles.text(crack.x + 10, crack.y - 8, "SECRET", "#ffd76a", 15);
+        },
+      };
+      this.level.breakables.push(wall);
+      this.pickup("holocron", rx + 50, y - 40);
+      for (let i = 0; i < 3; i++) this.pickup("crystal", rx + 120 + i * 50, y - 40);
+      for (let i = 0; i < 3; i++) this.pickup("crystal", rx + 60 + i * 90, top - 40);
+      if (enemies) this.place(enemies, after - 60);
+      return this;
+    }
+
+    // A crate and a ledge too high to jump to. Force Push the crate along until it
+    // stops under the ledge (a low stop blocks it there), then climb.
+    crateLedge({ height = 165, len = 600, enemies = null } = {}) {
+      const x0 = this.x;
+      const y = this.y;
+      this.ground(len);
+      const size = 62;
+      const cx = x0 + 70;
+      const crate = this.solid({ x: cx, y: y - size, w: size, h: size, kind: "crate", vx: 0, vy: 0, moving: false, settled: true, homeX: cx, homeY: y - size });
+      this.level.crates.push(crate);
+      this.solid({ x: x0 + 430, y: y - 36, w: 24, h: 36, kind: "wall" });
+      this.solid({ x: x0 + 300, y: y - height, w: 120, h: 18, oneway: true, kind: "float" });
+      this.pickup("holocron", x0 + 360, y - height - 34);
+      if (enemies) enemies.forEach((type, i) => this.enemy(type, x0 + 500 + i * 40, y, { left: x0 + 470, right: x0 + len - 20 }));
+      return this;
+    }
+
+    // A small sealed vault under the path. Its switch sits up a side climb, on a perch
+    // you'd only visit if you went looking. stepsUp are the climb's heights.
+    vault({ stepsUp = [85, 170, 250], enemies = null } = {}) {
+      const x0 = this.x;
+      const y = this.y;
+      const len = 740;
+      this.ground(len);
+      stepsUp.forEach((h, i) => {
+        const last = i === stepsUp.length - 1;
+        this.solid({ x: x0 + (i % 2 ? 190 : 40), y: y - h, w: last ? 150 : 120, h: 18, oneway: true, kind: "float" });
+        if (!last) this.pickup("crystal", x0 + (i % 2 ? 250 : 100), y - h - 40);
+      });
+      const perchY = y - stepsUp[stepsUp.length - 1];
+      const perchX = x0 + ((stepsUp.length - 1) % 2 ? 190 : 40);
+      const vw = 170;
+      const vx = x0 + len - 40 - vw;
+      const door = this.solid({ x: vx - 26, y: y - 84, w: 26, h: 84, kind: "door", progress: 0, open: false, fullH: 84 });
+      this.level.doors.push(door);
+      this.solid({ x: vx - 26, y: y - 108, w: vw + 66, h: 24 });
+      this.solid({ x: vx + vw, y: y - 84, w: 40, h: 84, kind: "wall" });
+      this.solid({ x: vx - 170, y: y - 60, w: 100, h: 18, oneway: true, kind: "float" });
+      this.level.rooms.push({ x: vx, y: y - 84, w: vw, h: 84 });
+      this.level.switches.push({ x: perchX + 110, y: perchY - 52, w: 34, h: 52, on: false,
+        onFire: () => {
+          door.open = true;
+          this.game.audio.play("door");
+        } });
+      this.pickup("holocron", vx + vw / 2 + 30, y - 32);
+      this.pickup("crystal", vx + 40, y - 30);
+      if (enemies) enemies.forEach((type, i) => this.enemy(type, x0 + 370 + i * 50, y, { left: x0 + 320, right: vx - 40 }));
+      return this;
+    }
+
+    // Looks like any other drop, but there's a floor far below, ledges back up, and a
+    // tunnel under the ground ahead. Only for themes whose pits fade into haze.
+    shaft({ pit = 150, depth = 360, tunnel = 240, ahead = 220 } = {}) {
+      const x0 = this.x;
+      const y = this.y;
+      const by = y + depth;
+      const ceil = by - 80;
+      this.level.pits.push({ x: x0, y: y + PIT_DROP, w: pit, fake: true });
+      this.solid({ x: x0, y: by, w: pit + tunnel, h: DEPTH });
+      this.solid({ x: x0 + pit, y, w: tunnel + ahead, h: ceil - y });
+      this.solid({ x: x0 + pit + tunnel, y: ceil, w: ahead, h: DEPTH, kind: "wall" });
+      this.level.rooms.push({ x: x0 + pit, y: ceil, w: tunnel, h: 80 });
+      // Ledges zig-zag up the shaft, 90px apart, so a single jump climbs out.
+      for (let h = depth - 90, i = 0; h > 0; h -= 90, i++) {
+        const right = i % 2 === 0;
+        this.solid({ x: right ? x0 + pit - 74 : x0 + 4, y: y + h, w: 70, h: 16, oneway: true, kind: "float" });
+      }
+      this.floorMark(x0, x0 + pit + tunnel, by);
+      this.floorMark(x0 + pit + tunnel, x0 + pit + tunnel + ahead, y);
+      this.pickup("holocron", x0 + pit + tunnel - 40, by - 32);
+      for (let i = 0; i < 3; i++) this.pickup("crystal", x0 + pit + 40 + i * 50, by - 30);
+      this.x = x0 + pit + tunnel + ahead;
+      this.level.width = Math.max(this.level.width, this.x);
+      return this;
+    }
+
+    // ---------- Detail for the main path ----------
+
+    // Blocks of rock to hop over, with crystals on top and enemies in the dips between.
+    pillars(heights, { spacing = 220, w = 64, enemies = null } = {}) {
+      const x0 = this.x;
+      const len = (heights.length + 1) * spacing;
+      this.ground(len);
+      heights.forEach((h, i) => {
+        const px = x0 + (i + 1) * spacing - w / 2;
+        this.solid({ x: px, y: this.y - h, w, h });
+        this.pickup("crystal", px + w / 2, this.y - h - 40);
+      });
+      if (enemies) {
+        enemies.forEach((type, i) => {
+          if (!type) return;
+          const ex = x0 + (i + 1.5) * spacing;
+          this.enemy(type, ex, this.y, { left: ex - spacing / 2 + w / 2 + 8, right: ex + spacing / 2 - w / 2 - 8 });
+        });
+      }
+      return this;
+    }
+
+    // A stretch under a low rock ceiling.
+    overhang(len, { clearance = 150, enemies = null, crystals = 0 } = {}) {
+      const x0 = this.x;
+      this.ground(len);
+      this.solid({ x: x0 + 30, y: this.y - clearance - 240, w: len - 60, h: 240, kind: "wall" });
+      if (enemies) this.place(enemies, len - 80);
+      if (crystals) this.crystals(crystals, -len + 80, -48, Math.min(44, (len - 120) / crystals));
+      return this;
+    }
+
+    // Two ways through: the floor with its enemies, or a row of platforms overhead that
+    // carries the crystals.
+    upperRoute(len, { height = 140, n = 3, enemies = null } = {}) {
+      const x0 = this.x;
+      this.ground(len);
+      const y = this.y;
+      this.solid({ x: x0 + 40, y: y - Math.round(height * 0.55), w: 100, h: 18, oneway: true, kind: "float" });
+      const w = 120;
+      const span = len - 220;
+      const gap = n > 1 ? Math.min(140, (span - n * w) / (n - 1)) : 0;
+      for (let i = 0; i < n; i++) {
+        const px = x0 + 170 + i * (w + gap);
+        this.solid({ x: px, y: y - height, w, h: 18, oneway: true, kind: "float" });
+        this.pickup("crystal", px + 35, y - height - 40);
+        this.pickup("crystal", px + 85, y - height - 40);
+      }
+      if (enemies) this.place(enemies, len - 60);
       return this;
     }
 

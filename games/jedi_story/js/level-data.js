@@ -31,25 +31,30 @@
       build(b) {
         b.start().tip("Move with A / D or the Arrow keys. Press Space to jump.", "move");
         b.run(420, ["training"], { crystals: 5 }).tip("Press J to swing your lightsaber. Press it again to chain a combo.", "attack");
-        b.pits([100, 120], 190).run(360, ["training", "training"]);
+        b.pits([100, 120], 190).run(300, ["training", "training"]);
+        b.pillars([60, 90], { spacing: 200, enemies: ["training"] });
         b.checkpoint().tip("Force Push with K. It shoves enemies off ledges and hits switches.", "push");
         b.door();
         b.run(380, ["storm"], { crystals: 4 }).tip("Hold L to Deflect. Press it just as a bolt lands for a PERFECT return.", "deflect");
-        b.stairs(3, 66, 150).secretHigh(205);
-        b.run(460, ["storm", "scout"]);
+        b.stairs(3, 66, 150);
+        b.run(400, ["storm", "scout"]);
         b.lasers(3, { spacing: 170 });
-        b.checkpoint();
-        b.secretRoom();
+        b.checkpoint().tip("Holocrons hide off the main path: behind cracked walls, false walls and out-of-reach ledges. Look back now and then.", "push");
+        // Holocron 1: a faint cracked wall facing back the way you came.
+        b.crackedBack(340, { enemies: ["storm"] });
         b.floats([40, 90, 50], { gap: 112 });
-        b.run(420, ["storm", "storm"], { crystals: 5 });
+        b.upperRoute(640, { height: 140, enemies: ["storm", "storm"] });
         b.arena(760, [["storm", "scout"], ["storm", "storm", "scout"]], { platforms: [[230, 86, 150], [420, 86, 150]] });
         b.checkpoint();
         b.movers(2, { span: 150, speed: 1.2 });
         b.lift(190, { speed: 0.9 });
-        b.run(360, ["scout", "storm"], { crystals: 4 });
-        b.secretLedge(190);
-        b.run(300, ["storm"]);
-        b.crateWall(150).run(340, ["scout", "training"]);
+        b.run(300, ["scout", "storm"], { crystals: 4 });
+        // Holocron 2: push the crate under the high ledge.
+        b.crateLedge({ height: 165, enemies: ["scout"] });
+        b.overhang(420, { clearance: 150, enemies: ["storm"], crystals: 4 });
+        b.crateWall(150).run(300, ["scout", "training"]);
+        // Holocron 3: a false wall on the far side of the rock shelf.
+        b.hiddenTunnel({ enemies: ["storm"] });
         b.bridge(320);
         b.run(380, ["storm", "scout", "storm"], { crystals: 5 });
         b.exit();
@@ -63,23 +68,27 @@
         b.run(420, ["b1", "b1"], { crystals: 5 });
         b.spikeRun(2);
         b.floats([50, 86, 40], { gap: 118 });
-        b.run(400, ["b1", "storm"], { crystals: 3 }).secretHigh(205, -180);
+        b.run(360, ["b1", "storm"], { crystals: 3 });
+        // Holocron 1: a false wall on the far side of the rock shelf.
+        b.hiddenTunnel({ enemies: ["b1"] });
         b.checkpoint();
         b.tower(340, { enemies: { 2: "b1", 3: "b1" } });
         b.run(320, ["probe"], { crystals: 3 });
         b.crumble(4, { gap: 100 });
-        b.run(360, ["b2"]);
+        b.pillars([70, 95, 60], { spacing: 210, enemies: ["b2", null, "b1"] });
         b.fallers(3, { height: 280, w: 44, len: 40 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: the vault's switch is up the side climb.
+        b.vault({ enemies: ["b1"] });
         b.arena(800, [["b1", "b1", "b1"], ["storm", "b2"], ["probe", "b1", "b1"]], { platforms: [[150, 86, 150], [510, 86, 150]] });
         b.movers(3, { span: 150, speed: 1.3 });
-        b.run(320, ["storm", "probe"], { crystals: 4 });
+        b.overhang(380, { clearance: 150, enemies: ["storm", "probe"], crystals: 4 });
         b.door({ high: 80 });
         b.down(2, 80, 170);
         b.spikeRun(2, { spacing: 220 });
-        b.run(380, ["b2", "storm"], { crystals: 4 });
-        b.secretLedge(190);
+        // Holocron 3: a faint cracked wall facing back.
+        b.crackedBack(340, { enemies: ["b2"] });
+        b.run(300, ["b2", "storm"], { crystals: 4 });
         b.checkpoint();
         b.run(260, null);
         b.bossArena("maul", { platforms: [[120, 96, 170], [670, 96, 170]] });
@@ -95,23 +104,26 @@
         b.run(380, ["sand", "probe"], { crystals: 3 });
         b.vents(3, { jet: "#e6c48a", height: 170 });
         b.checkpoint();
-        b.stairs(2, 110, 180).secretHigh(250, -100);
-        b.run(420, ["sand", "security"]);
+        b.stairs(2, 110, 180);
+        // Holocron 1: push the crate under the high ledge.
+        b.crateLedge({ height: 245, enemies: ["sand"] });
+        b.run(360, ["sand", "security"]);
         b.crumble(5, { gap: 130, w: 100 });
-        b.run(340, ["b1", "b1", "sand"], { crystals: 4 });
-        b.secretRoom();
+        b.pillars([110, 150, 90], { spacing: 230, enemies: ["b1", "sand", null] });
         b.checkpoint();
+        // Holocron 2: a false wall on the far side of the rock shelf.
+        b.hiddenTunnel({ enemies: ["b1", "b1"] });
         b.movers(3, { span: 170, speed: 1.1 });
         b.arena(820, [["sand", "sand"], ["security", "b1", "b1"], ["probe", "security", "sand"]], { platforms: [[120, 100, 160], [540, 100, 160]] });
         b.down(2, 90, 170);
         b.spikeRun(3, { w: 120, spacing: 250 });
         b.floats([90, 150, 80, 130], { gap: 150, w: 110 });
         b.checkpoint();
-        b.run(320, ["security"], { crystals: 3 });
+        // Holocron 3: the vault's switch is on a perch above the view.
+        b.vault({ stepsUp: [110, 220, 320], enemies: ["security"] });
         b.bridge(380);
         b.vents(4, { jet: "#e6c48a", height: 200, spacing: 170, period: 2.2 });
-        b.run(360, ["sand", "security", "sand"], { crystals: 5 });
-        b.secretLedge(220);
+        b.upperRoute(660, { height: 170, enemies: ["sand", "security", "sand"] });
         b.tower(360, { enemies: { 1: "b1", 3: "sand" } });
         b.run(380, ["probe", "sand"], { crystals: 4 });
         b.exit();
@@ -129,21 +141,24 @@
         b.checkpoint();
         b.crumble(5, { gap: 140, w: 96 });
         b.run(360, ["security", "advanced"], { crystals: 4 });
-        b.stairs(2, 110, 170).secretHigh(250, -90);
-        b.run(320, ["sithguard", "storm"]);
+        b.stairs(2, 110, 170);
+        // Holocron 1: two double jumps up, behind you and above the view.
+        b.run(380, ["sithguard", "storm"]).secretHigh(300, -260);
         b.movers(3, { span: 180, speed: 1.4, w: 110 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: a faint cracked wall facing back.
+        b.crackedBack(360, { enemies: ["sithguard"] });
         b.arena(840, [["storm", "storm", "advanced"], ["sithguard", "security"], ["sithguard", "advanced", "advanced"]], { platforms: [[140, 100, 150], [550, 100, 150]] });
         b.down(3, 80, 150);
         b.lasers(4, { spacing: 150, period: 2 });
-        b.secretLedge(200);
-        b.run(340, ["advanced", "storm"], { crystals: 4 });
+        b.pillars([120, 160, 100], { spacing: 240, enemies: ["advanced", null, "storm"] });
         b.tower(420, { enemies: { 2: "advanced", 4: "security" } });
         b.checkpoint();
+        // Holocron 3: the vault's switch is on a perch above the view.
+        b.vault({ stepsUp: [110, 220, 320], enemies: ["sithguard"] });
         b.door({ high: 100 });
         b.vents(4, { jet: "#ff8a2a", height: 230, spacing: 170, period: 2.1 });
-        b.run(380, ["sithguard", "sithguard"], { crystals: 5 });
+        b.overhang(400, { clearance: 160, enemies: ["sithguard", "sithguard"], crystals: 5 });
         b.checkpoint();
         b.run(240, null);
         b.bossArena("dooku", { platforms: [[380, 100, 200]] });
@@ -159,19 +174,23 @@
         b.pits([170, 200], 180, [["snow"]]);
         b.checkpoint();
         b.floats([60, 120, 70, 130], { gap: 150, w: 120 });
-        b.run(380, ["snow", "security"], { crystals: 4 }).secretHigh(250, -150);
+        b.run(340, ["snow", "security"], { crystals: 4 });
+        // Holocron 1: this drop looks bottomless, but it isn't.
+        b.shaft();
         b.tower(340, { enemies: { 2: "snow", 3: "probe" } });
         b.fallers(4, { height: 240, spacing: 150 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: push the crate under the high ledge (mind the ice).
+        b.crateLedge({ height: 245, enemies: ["snow"] });
         b.arena(860, [["snow", "snow", "probe"], ["heavy", "snow"], ["heavy", "security", "probe"]], { platforms: [[150, 100, 160], [550, 100, 160]] });
         b.crumble(5, { gap: 130, w: 100 });
-        b.run(360, ["heavy"], { crystals: 3 });
+        b.pillars([110, 150], { spacing: 240, enemies: ["heavy", "snow"] });
         b.lasers(4, { spacing: 150, period: 2.1 });
         b.checkpoint();
         b.movers(3, { axis: "y", span: 150, speed: 1.2, height: 0 });
-        b.run(340, ["snow", "security"], { crystals: 4 });
-        b.secretLedge(220);
+        b.run(300, ["snow"], { crystals: 4 });
+        // Holocron 3: a false wall on the far side of the ice shelf.
+        b.hiddenTunnel({ enemies: ["snow", "security"] });
         b.crateWall(230);
         b.run(380, ["heavy", "snow"], { crystals: 4 });
         b.door({ high: 110 });
@@ -192,19 +211,23 @@
         b.run(340, ["security", "merc"]);
         b.checkpoint();
         b.arcs(3, { height: 38, spacing: 220 });
-        b.stairs(3, 100, 150).secretHigh(250, -60);
+        b.stairs(3, 100, 150);
+        // Holocron 1: the vault's switch is on a perch above the view.
+        b.vault({ stepsUp: [110, 220, 330], enemies: ["merc"] });
         b.run(360, ["assassin"], { crystals: 3 }).tip("Assassin droids blink around you. Keep moving.", "move");
         b.floats([80, 150, 90, 160], { gap: 160, w: 100 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: this drop looks bottomless, but it isn't.
+        b.shaft({ depth: 450 });
         b.vents(4, { jet: "#7fffe0", height: 200, spacing: 170, period: 2.1 });
         b.arena(880, [["merc", "merc", "imperial"], ["assassin", "security"], ["assassin", "merc", "imperial"]], { platforms: [[130, 104, 150], [590, 104, 150], [360, 170, 150]] });
         b.lift(280);
-        b.run(340, ["imperial", "merc"], { crystals: 4 });
+        b.upperRoute(680, { height: 170, enemies: ["imperial", "merc"] });
         b.crumble(5, { gap: 150, w: 92 });
         b.checkpoint();
         b.arcs(4, { height: 38, spacing: 190, period: 2 });
-        b.secretLedge(220);
+        // Holocron 3: a faint cracked wall facing back.
+        b.crackedBack(380, { enemies: ["assassin"] });
         b.tower(380, { enemies: { 2: "merc", 3: "imperial" } });
         b.run(400, ["assassin", "merc", "security"], { crystals: 5 });
         b.bridge(400);
@@ -225,20 +248,23 @@
         b.checkpoint();
         b.tower(380, { enemies: { 2: "scout", 3: "storm" } });
         b.movers(3, { span: 200, speed: 1.5, w: 110 });
-        b.run(380, ["heavy", "scout"], { crystals: 4 }).secretHigh(250, -180);
-        b.secretRoom();
+        // Holocron 1: two double jumps up, behind you and above the view.
+        b.run(380, ["heavy", "scout"], { crystals: 4 }).secretHigh(310, -280);
+        b.pillars([120, 160, 120], { spacing: 240, enemies: ["scout", "storm", null] });
         b.checkpoint();
         b.arena(880, [["storm", "scout", "scout"], ["heavy", "darktrooper"], ["darktrooper", "storm", "storm"]], { platforms: [[140, 104, 160], [580, 104, 160]] });
         b.lasers(4, { spacing: 140, period: 1.9 });
         b.door({ high: 110 });
         b.crushers(3, { period: 3.1 });
         b.checkpoint();
-        b.run(360, ["darktrooper"], { crystals: 3 });
+        // Holocron 2: a false wall on the far side of the bunker shelf.
+        b.hiddenTunnel({ mesa: 500, enemies: ["darktrooper"] });
         b.arcs(4, { height: 38, spacing: 190 });
-        b.secretLedge(220);
+        // Holocron 3: push the crate under the high ledge.
+        b.crateLedge({ height: 250, enemies: ["darktrooper"] });
         b.crumble(5, { gap: 150, w: 96 });
         b.stairs(3, 100, 150);
-        b.run(420, ["heavy", "storm", "darktrooper"], { crystals: 5 });
+        b.overhang(440, { clearance: 160, enemies: ["heavy", "storm", "darktrooper"], crystals: 5 });
         b.bridge(420);
         b.crushers(4, { period: 2.7, spacing: 210 });
         b.run(380, ["scout", "darktrooper"], { crystals: 4 });
@@ -253,23 +279,27 @@
         b.run(440, ["storm", "storm"], { crystals: 5 });
         b.lasers(4, { spacing: 150, period: 1.9 });
         b.movers(3, { span: 210, speed: 1.6, w: 110 });
-        b.run(380, ["security", "darktrooper"], { crystals: 3 }).secretHigh(250, -120);
+        b.run(380, ["security", "darktrooper"], { crystals: 3 });
+        // Holocron 1: this shaft looks bottomless, but it isn't.
+        b.shaft({ depth: 450 });
         b.checkpoint();
         b.crushers(4, { period: 2.8 });
         b.lift(320);
         b.run(360, ["royal"], { crystals: 3 }).tip("Royal Guards won't let a saber through. Break their guard with Force Push.", "push");
         b.floats([90, 160, 90, 170], { gap: 165, w: 100 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: the vault's switch is on a perch above the view.
+        b.vault({ stepsUp: [110, 220, 330], enemies: ["royal"] });
         b.arena(900, [["storm", "storm", "security"], ["royal", "royal"], ["darktrooper", "royal", "security"]], { platforms: [[140, 104, 160], [600, 104, 160]] });
         b.arcs(4, { height: 38, spacing: 180, period: 1.9 });
         b.door({ high: 110 });
         b.down(3, 90, 150);
-        b.secretLedge(220);
-        b.run(360, ["royal", "storm"], { crystals: 4 });
+        b.pillars([120, 160], { spacing: 240, enemies: ["storm", "royal"] });
         b.tower(420, { enemies: { 2: "storm", 3: "security", 4: "darktrooper" } });
         b.checkpoint();
         b.crushers(3, { period: 2.5, spacing: 210 });
+        // Holocron 3: a false wall on the far side of the bulkhead.
+        b.hiddenTunnel({ mesa: 520, depth: 220, enemies: ["darktrooper", "storm"] });
         b.bridge(440);
         b.lasers(5, { spacing: 130, period: 1.8, onTime: 0.9 });
         b.run(420, ["darktrooper", "royal", "royal"], { crystals: 5 });
@@ -286,25 +316,29 @@
         b.run(440, ["sithtrooper", "cultist"], { crystals: 5 });
         b.arcs(4, { height: 38, spacing: 190, period: 1.9 });
         b.floats([90, 170, 100, 180], { gap: 170, w: 96 });
-        b.run(380, ["advanced", "sithtrooper"], { crystals: 3 }).secretHigh(255, -160);
+        b.run(380, ["advanced", "sithtrooper"], { crystals: 3 });
+        // Holocron 1: a faint cracked wall facing back.
+        b.crackedBack(380, { enemies: ["cultist"] });
         b.checkpoint();
         b.crumble(6, { gap: 160, w: 90 });
         b.run(340, ["elite", "cultist"], { crystals: 3 });
         b.tower(440, { enemies: { 2: "cultist", 3: "sithtrooper", 4: "advanced" } });
         b.spikeRun(3, { w: 130, spacing: 260 });
         b.checkpoint();
-        b.secretRoom();
+        // Holocron 2: this drop looks bottomless, but it isn't.
+        b.shaft({ depth: 450, tunnel: 280 });
         b.vision();
         b.movers(3, { axis: "y", span: 170, speed: 1.5, w: 100 });
         b.arena(900, [["sithtrooper", "sithtrooper", "cultist"], ["elite", "advanced"], ["elite", "elite", "cultist"]], { platforms: [[140, 106, 160], [600, 106, 160]] });
         b.checkpoint();
         b.arcs(5, { height: 38, spacing: 170, period: 1.8 });
-        b.secretLedge(220);
-        b.run(380, ["sithtrooper", "elite"], { crystals: 4 });
+        // Holocron 3: push the crate under the high ledge.
+        b.crateLedge({ height: 250, enemies: ["sithtrooper"] });
+        b.upperRoute(700, { height: 170, enemies: ["sithtrooper", "elite"] });
         b.movers(4, { span: 210, speed: 1.8, w: 100 });
         b.stairs(3, 100, 150);
         b.bridge(440);
-        b.run(420, ["elite", "cultist", "advanced"], { crystals: 5 });
+        b.overhang(440, { clearance: 170, enemies: ["elite", "cultist", "advanced"], crystals: 5 });
         b.exit();
       },
     }),
@@ -316,16 +350,20 @@
         b.run(420, ["sithtrooper", "advanced"], { crystals: 5 });
         b.lasers(4, { spacing: 150, period: 1.8 });
         b.floats([90, 170, 90], { gap: 170, w: 100 });
-        b.run(360, ["elite"], { crystals: 3 }).secretHigh(255, -120);
+        b.run(360, ["elite"], { crystals: 3 });
+        // Holocron 1: the vault's switch is on a perch above the view.
+        b.vault({ stepsUp: [110, 220, 330], enemies: ["sithtrooper"] });
         b.checkpoint();
         b.arcs(4, { height: 38, spacing: 180, period: 1.8 });
         b.crushers(3, { period: 2.6, spacing: 210 });
-        b.secretRoom();
+        // Holocron 2: a false wall on the far side of the throne-room dais.
+        b.hiddenTunnel({ mesa: 520, depth: 220, enemies: ["elite"] });
         b.arena(900, [["sithtrooper", "sithtrooper", "advanced"], ["elite", "elite"], ["elite", "advanced", "advanced", "sithtrooper"]], { platforms: [[140, 106, 160], [600, 106, 160]] });
         b.checkpoint();
         b.movers(4, { span: 210, speed: 1.9, w: 100 });
-        b.secretLedge(220);
-        b.run(380, ["elite", "sithtrooper"], { crystals: 4 });
+        // Holocron 3: this drop looks bottomless, but it isn't.
+        b.shaft({ depth: 450, tunnel: 280 });
+        b.pillars([130, 170, 130], { spacing: 250, enemies: ["elite", "sithtrooper", null] });
         b.tower(440, { enemies: { 2: "advanced", 3: "sithtrooper", 4: "elite" } });
         b.door({ high: 110 });
         b.lasers(5, { spacing: 130, period: 1.7, onTime: 0.85 });

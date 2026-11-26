@@ -344,6 +344,11 @@
       ctx.fillRect(b.x, b.y, b.w, b.h);
       ctx.strokeStyle = this.theme.accent;
       ctx.lineWidth = 2;
+      // Some cracked walls (crackedBack) only show faint hairline cracks.
+      if (b.faint) {
+        ctx.globalAlpha = 0.32;
+        ctx.lineWidth = 1.2;
+      }
       ctx.beginPath();
       const cx = b.x + b.w / 2;
       for (const [dx, dy] of [[-b.w * 0.45, -22], [b.w * 0.42, -12], [-b.w * 0.38, 16], [b.w * 0.45, 26], [0, -b.h * 0.46], [2, b.h * 0.46]]) {
@@ -351,6 +356,7 @@
         ctx.lineTo(cx + dx, b.y + b.h / 2 + dy);
       }
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
 
     drawDoor(ctx, d, t) {
