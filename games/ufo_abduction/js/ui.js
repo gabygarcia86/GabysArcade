@@ -635,9 +635,36 @@
           },
           after: (el) => {
             if (this.submitted) this.renderBoard(el.querySelector("#inline-board"), r.mode, true);
+            this.liftNameField(el);
           },
         },
       );
+    }
+
+    // On phones the on-screen keyboard covers the lower half of the screen, which is where
+    // the name field sits, and the full-screen game can't scroll out of its way. While the
+    // field has focus on a touch screen, the panel shrinks to just the name form, pinned
+    // to the top of the screen (the .typing styles in style.css).
+    liftNameField(screen) {
+      const field = screen.querySelector("#player-name");
+      const form = screen.querySelector("[data-form=submit]");
+      if (!field || !form || !window.matchMedia("(pointer: coarse)").matches) return;
+      let pressing = false;
+      const drop = () => {
+        pressing = false;
+        if (document.activeElement !== field) screen.classList.remove("typing");
+      };
+      form.addEventListener("pointerdown", () => { pressing = true; }, true);
+      field.addEventListener("focus", () => {
+        screen.classList.add("typing");
+        screen.scrollTop = 0;
+      });
+      field.addEventListener("blur", () => {
+        // A tap on Submit Score blurs the field first: keep the layout still until the tap
+        // lands, or the button would move out from under the finger.
+        if (pressing) window.addEventListener("pointerup", () => setTimeout(drop, 60), { once: true });
+        else drop();
+      });
     }
 
     async submitScore() {
@@ -668,6 +695,7 @@
         status.textContent = "Score submitted!";
         const form = this.root.querySelector("[data-form=submit]");
         if (form) form.hidden = true;
+        input.blur(); // Closes the phone keyboard and restores the full panel.
         this.renderBoard(this.root.querySelector("#inline-board"), r.mode, true);
       } catch (error) {
         if (this.current !== "gameOver") return;
