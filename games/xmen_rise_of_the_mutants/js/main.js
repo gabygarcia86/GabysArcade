@@ -33,6 +33,7 @@
       this.applySettings();
       this.bindGlobal();
       this.menus.show("splash", {}, false);
+      XM.Audio.music("menu");
       this.engine.start();
     }
 
