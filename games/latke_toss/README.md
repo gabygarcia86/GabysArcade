@@ -151,18 +151,3 @@ A slightly wider ring counts as the rim and knocks the latke back out. Below the
 Works in current versions of Chrome, Edge, Firefox and Safari on desktop, Android and iOS. If WebGL is unavailable, or the scripts can't load, the page shows a message explaining why instead of a blank screen.
 
 ## TODO
-
-Make it fair to compare
-4. Daily challenge with a seeded layout. The dreidels now move every game, so some layouts are luckier than others, and that's a little unfair for leaderboards. A daily mode would use the date to decide the dreidel spots, so everyone gets the same layout that day, with its own daily top 10. Normal games stay random. It also gives people a reason to come back every day.
-5. Basic cheat check. The README notes that scores can be faked. A Supabase rule that rejects scores above a realistic maximum for 60 seconds on each difficulty would keep the top 10 believable.
-
-Make the round more exciting
-6. Final Fry. In the last 10 seconds the music speeds up, the pot moves a bit faster, and every latke counts double, so rounds end on a climax instead of fizzling out.
-7. End-of-round stats. Show accuracy, best streak and clean shots on the game-over screen, and save personal bests for each. Players then have goals beyond the total score.
-
-Longer-term replay value
-8. Small challenges that unlock cosmetics, such as a sweet-potato latke or a silver pot. Examples: "Land 5 clean shots in one round" or "Hit 3 dreidels in one game".
-
-I'd start with 1, 2 and 7 together. They're small changes to the existing scoring and game-over screen, and they change how the game feels the most. 4 is the one to add once people are actually competing on the leaderboard.
-
-Want me to implement any of these?
