@@ -383,4 +383,22 @@ header.bar .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
   .main-menu .logo { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: center; margin-bottom: 34vh; }
   .main-menu .menu-list { grid-column: 2; grid-row: 1 / 3; align-self: center; }
   .main-menu .disclaimer { grid-column: 2; grid-row: 3; text-align: right; }
+  .main-menu .menu-list { align-self: stretch; }
+}
+/* Short screens: the main menu's button rows shrink to share the height that's
+   available, so every button stays on screen instead of running off the bottom. */
+@media (max-height: 520px) {
+  .main-menu .menu-list { flex: 0 1 auto; min-height: 0; justify-content: center; }
+  .main-menu .menu-list > .btn, .main-menu .menu-list > .row2 { flex: 0 1 36px; min-height: 22px; }
+  .main-menu .menu-list .btn { padding-top: 0; padding-bottom: 0; }
+  .main-menu .menu-list .row2 > .btn { height: 100%; }
+}
+@media (max-height: 340px) {
+  .main-menu { gap: 4px 12px; }
+  .main-menu .menu-list { gap: 4px; }
+  .main-menu .menu-list > .btn, .main-menu .menu-list > .row2 { min-height: 18px; }
+  .main-menu .menu-list .btn { font-size: 11px; border-width: 2px; box-shadow: 2px 2px 0 var(--ink); }
+  .main-menu .menu-list .btn small { font-size: 9px; }
+  .main-menu .menu-list .btn.ghost { box-shadow: none; }
+  .main-menu .disclaimer { font-size: 9px; }
 }
