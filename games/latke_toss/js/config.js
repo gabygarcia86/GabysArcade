@@ -134,10 +134,18 @@ export const SCORING = {
   // Extra points for a clean drop that never touches the rim or wall ("Mazal!").
   cleanBonus: 5,
   // Landing latkes in a row raises a streak multiplier; any miss resets it. Each tier
-  // applies from the latke that reaches its count (highest reached tier wins).
+  // applies from the latke that reaches its count (highest reached tier wins). From the
+  // 6th in a row on, every tier doubles the one before it.
   streakTiers: [
     { count: 3, multiplier: 1.5 },
     { count: 6, multiplier: 2 },
+    { count: 10, multiplier: 4 },
+    { count: 15, multiplier: 8 },
+    { count: 20, multiplier: 16 },
+    { count: 25, multiplier: 32 },
+    { count: 30, multiplier: 64 },
+    { count: 40, multiplier: 128 },
+    { count: 50, multiplier: 256 },
   ],
 };
 
