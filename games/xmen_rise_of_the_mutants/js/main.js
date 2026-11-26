@@ -489,7 +489,7 @@
       // The team, lined up on the right. Click them for silly antics (menuAntics.js).
       ctx.save();
       ctx.translate(XM.FX.shakeX, XM.FX.shakeY);
-      this.antics.draw(ctx, this.state === "splash");
+      this.antics.draw(ctx);
       XM.FX.draw(ctx, { x: 0 });
       ctx.restore();
       ctx.fillStyle = A.halftone(ctx, "rgba(255,255,255,0.04)");

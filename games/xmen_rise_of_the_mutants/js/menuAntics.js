@@ -18,7 +18,7 @@
   const A = XM.Art;
   const U = XM.U;
   const { sin, cos, abs, PI, min, max } = Math;
-  const IDS = ["professorx", "storm", "cyclops", "wolverine", "jean", "gambit"];
+  const LINEUP_SIZE = 5;
   const SCALE = 1.7;
   const GAS = "#8fd14f";
 
@@ -30,6 +30,17 @@
   const hold = (t, a, b, c, d) => smooth(seg(t, a, b)) * (1 - smooth(seg(t, c, d)));
   const wob = (t, a, len = 0.6, f = 30) => (t < a || t > a + len ? 0 : sin((t - a) * f) * (1 - (t - a) / len));
   const within = (t, a, b) => t >= a && t <= b;
+  // Gives a spawned particle gravity (the pool can be full, so it may be null).
+  const drop = (p, g) => {
+    if (p) p.grav = g;
+  };
+  function shuffle(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }
 
   // ---------- Pose helpers (angles: 0 = down, PI/2 = forward, PI = up) ----------
   const P = {
@@ -1900,6 +1911,1698 @@
     ],
   };
 
+  // Walks the hero over toward a teammate and back again.
+  function visit(a, n, t0, t1, t2, t3, gap = 40) {
+    if (!n) return 0;
+    const target = n.x - a.S.x + (n.x > a.S.x ? -gap : gap);
+    const k = smooth(seg(a.t, t0, t1)) * (1 - smooth(seg(a.t, t2, t3)));
+    a.body.dx = target * k;
+    if (within(a.t, t0, t1) || within(a.t, t2, t3)) {
+      a.state = "walk";
+      a.phase = a.t * 10;
+      a.facing = within(a.t, t0, t1) ? Math.sign(target) || -1 : -Math.sign(target) || -1;
+    } else if (within(a.t, t1, t2)) a.facing = Math.sign(target) || -1;
+    return k;
+  }
+  function iceLook(a) {
+    return { pal: Object.assign({}, a.baseLook.pal, { skin: "#bfeaff", hair: "#e8fbff", suit: "#9fdcff", suit2: "#e8fbff", accent: "#ffffff", boots: "#9fdcff", gloves: "#bfeaff", belt: "#9fdcff", mask: "#bfeaff", coat: "#bfeaff", cape: "#bfeaff", capeIn: "#e8fbff" }), flags: Object.assign({}, a.baseLook.flags, { iceForm: true, aura: false, ultimate: false, stealth: false }) };
+  }
+
+  Object.assign(ANTICS, {
+    // ===================== BEAST =====================
+    beast: [
+      {
+        name: "Stars and Garters",
+        dur: 3.4,
+        run(a) {
+          const t = a.t;
+          a.body.dy = -abs(sin(t * 9)) * 26 * hold(t, 0.2, 0.3, 2.0, 2.2);
+          a.pose((p) => {
+            if (t < 2.2) P.armsUp(p);
+            p.legF = [0.6, 1.2];
+            p.legB = [-0.3, 1.0];
+          });
+          a.every(0.33, 0.2, 2.1, () => XM.Audio.sfx("boing"));
+          a.every(0.12, 0.2, 2.2, () => XM.FX.spawn(XM.FX.T.STAR, a.S.x + U.rand(-40, 40), a.S.y - U.rand(40, 120), 0, -40, 0.7, 6, "#ffe14a"));
+          a.say("Oh my stars and garters!", 0.3, 2.4);
+          a.say("I'm simply delighted.", 2.5, 3.4);
+        },
+      },
+      {
+        name: "Bedtime Reading",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.look = { pal: a.baseLook.pal, flags: Object.assign({}, a.baseLook.flags, { glasses: true }) };
+          const asleep = within(t, 1.8, 3.4);
+          a.pose((p) => {
+            p.armF = [1.5, 1.3];
+            p.armB = [1.4, 1.4];
+            p.headTilt = asleep ? 0.5 : 0.25;
+            if (t > 3.4) {
+              p.armF = [2.7, 2.4];
+              p.headTilt = -0.2;
+            }
+          });
+          a.front((ctx) => {
+            const h = a.head(a.S);
+            const drop = seg(t, 3.2, 3.45);
+            const x = a.S.x + a.S.facing * 30;
+            const y = U.lerp(a.S.y - 70, h.y - 14, drop);
+            if (t > 3.9) return;
+            ctx.save();
+            ctx.translate(x - a.S.facing * drop * 26, y);
+            ctx.rotate(drop * 2);
+            A.box(ctx, -16, -12, 32, 24, "#6a2a1a", true, 2, 2);
+            ctx.fillStyle = "#f8f0dc";
+            ctx.fillRect(-14, -10, 28, 20);
+            ctx.fillStyle = "#6a2a1a";
+            ctx.fillRect(-1, -10, 2, 20);
+            ctx.restore();
+          });
+          a.say("Ah, quantum thermodynamics...", 0.3, 1.7);
+          zzz(a, a.S.x, a.S.y - 140, 1.9, 3.2);
+          a.sfx(2.0, "snore");
+          a.sfx(3.4, "boing");
+          if (t > 3.45) a.stars(a.S);
+          a.say("A real page-turner.", 3.6, 4.6);
+        },
+      },
+      {
+        name: "Handstand Walk",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const up = hold(t, 0.2, 0.6, 3.1, 3.5);
+          a.body.rot = PI * up;
+          a.body.pivot = 32;
+          a.body.dy = -10 * up;
+          a.body.dx = sin(t * 1.6) * 40 * up;
+          a.pose((p) => {
+            const s = sin(t * 10);
+            p.armF = [2.9 + s * 0.2, 0.1];
+            p.armB = [2.9 - s * 0.2, 0.1];
+            p.legF = [0.2 + s * 0.2, 0.6];
+            p.legB = [-0.2 + s * 0.2, 0.6];
+          });
+          a.say("Excellent for circulation!", 1.0, 2.8);
+          a.sfx(3.5, "land");
+        },
+      },
+      {
+        name: "Science!",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const boom = t > 2.4;
+          a.filter = boom ? "brightness(0.4)" : "";
+          a.look = { pal: a.baseLook.pal, flags: Object.assign({}, a.baseLook.flags, { glasses: true }) };
+          a.pose((p) => {
+            if (!boom) {
+              p.armF = [1.5 + sin(t * 6) * 0.3, 1.0];
+              p.armB = [1.6 - sin(t * 6) * 0.3, 1.0];
+            } else {
+              p.armF = [0.4, 0.3];
+              p.armB = [-0.3, 0.3];
+            }
+          });
+          a.front((ctx) => {
+            if (boom) return;
+            const x = a.S.x + a.S.facing * 30;
+            const y = a.S.y - 70;
+            const pour = seg(t, 0.6, 2.0);
+            [[-12, "#5aff7a"], [12, "#ff5ad0"]].forEach(([dx, c], i) => {
+              ctx.save();
+              ctx.translate(x + dx, y - (i ? pour * 10 : 0));
+              ctx.rotate(i ? -a.S.facing * pour * 1.2 : 0);
+              A.poly(ctx, [-5, -12, 5, -12, 9, 10, -9, 10], "rgba(230,250,255,0.7)", true, 1.5);
+              ctx.fillStyle = c;
+              ctx.fillRect(-7, 0, 14, 9);
+              ctx.restore();
+            });
+            if (t > 1.6) A.glow(ctx, x - 12, y, 24 + sin(t * 30) * 6, "#ffe14a", 0.8);
+          });
+          a.every(0.12, 1.6, 2.4, () => XM.Audio.sfx("pop"));
+          a.once(2.4, () => {
+            XM.Audio.sfx("explosion");
+            XM.FX.shake(7, 0.4);
+            XM.FX.burst(a.S.x + a.S.facing * 30, a.S.y - 70, { count: 30, colors: ["#5aff7a", "#ff5ad0", "#ffe14a"], speed: 300, life: 0.6 });
+            XM.FX.smoke(a.S.x, a.S.y - 90, 10, "#3a3a3a");
+          });
+          a.say("Now, a dash of this...", 0.4, 2.0);
+          a.say("Hypothesis: confirmed.", 2.9, 4.4);
+        },
+      },
+      {
+        name: "Triple Flip",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const air = within(t, 0.4, 1.6);
+          a.body.dy = -bell(t, 0.4, 1.6) * 150;
+          a.body.rot = -a.S.facing * smooth(seg(t, 0.45, 1.55)) * PI * 6;
+          a.body.pivot = 30;
+          a.pose((p) => {
+            if (air) {
+              p.legF = [1.3, 2.2];
+              p.legB = [1.2, 2.3];
+              p.armF = [1.4, 1.6];
+              p.armB = [1.3, 1.7];
+              p.grounded = false;
+            } else if (t > 1.6) P.armsUp(p);
+          });
+          a.sfx(0.4, "jump");
+          a.sfx(1.6, "land");
+          a.sfx(1.7, "tada");
+          for (const o of a.others()) a.react(o, "score", 1.9, 2.1, U.pick(["10!", "10!", "9.8", "10!!"]));
+          a.say("And he sticks the landing!", 1.8, 3.4);
+        },
+      },
+      {
+        name: "Hairball",
+        dur: 3.8,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            if (t < 1.6) {
+              p.lean = 0.3 + sin(t * 24) * 0.12 * (t > 0.3 ? 1 : 0);
+              p.armF = [1.8, 2.2];
+            } else P.crossed(p);
+          });
+          a.every(0.3, 0.3, 1.5, () => {
+            XM.Audio.sfx("hit");
+            XM.FX.text(a.S.x + a.S.facing * 20, a.S.y - 120, "HACK", "#ffffff", 14, 0.5);
+          });
+          a.once(1.55, () => {
+            XM.Audio.sfx("splat");
+            drop(XM.FX.spawn(XM.FX.T.DOT, a.S.x + a.S.facing * 40, a.S.y - 90, a.S.facing * 140, -60, 1.0, 9, "#3550c8"), 600);
+          });
+          a.say("Pardon me. Occupational hazard.", 2.0, 3.8);
+        },
+      },
+      {
+        name: "Wet Dog Shake",
+        dur: 3.8,
+        run(a) {
+          const t = a.t;
+          const shake = within(t, 0.4, 1.8);
+          a.body.sx = shake ? 1 + sin(t * 50) * 0.08 : 1;
+          a.body.rot = shake ? sin(t * 50) * 0.1 : 0;
+          a.body.pivot = 25;
+          a.every(0.03, 0.4, 1.8, () => {
+            const ang = U.rand(0, PI * 2);
+            drop(XM.FX.spawn(XM.FX.T.SHARD, a.S.x, a.S.y - 60, cos(ang) * 240, sin(ang) * 240, 0.8, 3, U.pick(["#3550c8", "#5a7aff", "#7ab8ff"])), 300);
+          });
+          a.sfx(0.4, "wind");
+          const n = a.near();
+          if (n) a.react(n, "cringe", 1.0, 2.6, "Gross, Hank! Fur everywhere!");
+          a.say("Ahh. Much fluffier.", 2.0, 3.6);
+        },
+      },
+      {
+        name: "Fart Research",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.sfx(0.4, "fart", { len: 0.9 });
+          gas(a, a.S.x - a.S.facing * 18, a.S.y - 30, 0.4, 1.3);
+          a.look = { pal: a.baseLook.pal, flags: Object.assign({}, a.baseLook.flags, { glasses: t > 1.2 }) };
+          a.pose((p) => {
+            if (within(t, 1.2, 2.2)) {
+              p.armF = [-0.6, 0.6];
+              p.lean = 0.2;
+            } else if (t > 2.2) {
+              p.armF = [2.4, 0.6];
+              p.headTilt = -0.2;
+            }
+          });
+          a.front((ctx) => {
+            if (t < 1.4) return;
+            const up = t > 2.2;
+            const x = a.S.x + a.S.facing * (up ? 26 : -22);
+            const y = a.S.y - (up ? 110 : 40);
+            A.poly(ctx, [x - 4, y - 14, x + 4, y - 14, x + 4, y + 10, x - 4, y + 10], "rgba(230,250,255,0.75)", true, 1.5);
+            ctx.fillStyle = A.rgba(GAS, 0.85);
+            ctx.fillRect(x - 3, y - 4, 6, 13);
+            A.box(ctx, x - 5, y - 18, 10, 5, "#8a5a3a", true, 1, 1);
+          });
+          a.sfx(1.8, "pop");
+          const n = a.near();
+          if (n) a.react(n, "stinky", 1.0, 2.8, "Hank, NO.");
+          a.say("Fascinating composition!", 2.4, 4.2);
+        },
+      },
+      {
+        name: "Bear Hug",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          const k = visit(a, n, 0.2, 1.0, 3.3, 4.1, 26);
+          a.pose((p) => {
+            if (k > 0.95) {
+              p.armF = [1.5, 1.4];
+              p.armB = [1.5, 1.5];
+              p.lean = 0.15;
+            }
+          });
+          if (n) a.react(n, "squished", 1.1, 2.1, "Can't... breathe...");
+          a.say("Group hug!", 1.1, 2.6);
+          a.sfx(1.1, "squeak");
+        },
+      },
+      {
+        name: "Opera Night",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [1.4 + bell(t, 0.2, 3.6) * 1.2, 0.2];
+            p.armB = [-0.5, 1.6];
+            p.headTilt = -0.25 * bell(t, 0.2, 3.6);
+            p.lean = -0.12;
+            if (t > 3.8) {
+              p.lean = 0.5;
+              p.armF = [0.6, 1.4];
+            }
+          });
+          notes(a, a.S.x, a.S.y - 150, 0.3, 3.5, 0.18);
+          for (const o of a.others()) a.react(o, "ears", 1.4, 2.2);
+          a.once(3.0, () => {
+            XM.Audio.sfx("break");
+            XM.FX.burst(a.S.x + a.S.facing * 80, a.S.y - 140, { count: 16, color: "#e8fbff", speed: 200, life: 0.6, type: XM.FX.T.SHARD, grav: 500 });
+          });
+          a.say("♪ FIIIIGAAAROOOO! ♪", 0.4, 3.0);
+          a.say("Bravo, Henry. Bravo.", 3.7, 4.6);
+        },
+      },
+    ],
+
+    // ===================== ICEMAN =====================
+    iceman: [
+      {
+        name: "Ice Slide",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const slide = within(t, 0.3, 2.8);
+          a.body.dx = slide ? sin((t - 0.3) * 2.6) * 120 : 0;
+          a.body.rot = t > 2.6 && t < 3.2 ? a.S.facing * bell(t, 2.6, 3.2) * 1.4 : 0;
+          a.body.pivot = 0;
+          a.facing = slide ? (cos((t - 0.3) * 2.6) > 0 ? 1 : -1) : a.S.facing;
+          a.pose((p) => {
+            if (slide) {
+              p.lean = 0.2;
+              p.legF = [0.5, 0.3];
+              p.legB = [-0.5, 0.3];
+              p.armF = [1.6, 0];
+              p.armB = [1.5, 0];
+            }
+          });
+          a.back((ctx) => {
+            if (t > 3.6) return;
+            ctx.fillStyle = "rgba(200,240,255,0.6)";
+            A.roundRect(ctx, a.S.x - 150, a.S.y - 4, 300, 8, 4);
+            ctx.fill();
+          });
+          a.sfx(0.3, "ice");
+          a.sfx(2.8, "splat");
+          a.say("Wheeeee!", 0.4, 2.2);
+          a.say("...I'm okay!", 3.0, 4.0);
+        },
+      },
+      {
+        name: "Meet Bob",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            if (t < 1.4) {
+              p.armF = [1.4 + sin(t * 12) * 0.3, 0.6];
+              p.armB = [1.4 - sin(t * 12) * 0.3, 0.6];
+            } else P.hips(p);
+          });
+          const build = smooth(seg(t, 0.2, 1.4));
+          a.front((ctx) => {
+            const x = a.S.x + a.S.facing * 60;
+            const y = a.S.y;
+            const melt = seg(t, 3.2, 4.2);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(1, build * (1 - melt * 0.8));
+            A.circle(ctx, 0, -16, 18, "#f8fbff", true, 2);
+            A.circle(ctx, 0, -44, 13, "#f8fbff", true, 2);
+            A.circle(ctx, 0, -64, 9, "#f8fbff", true, 2);
+            ctx.fillStyle = "#111";
+            ctx.fillRect(-4, -67, 2, 2);
+            ctx.fillRect(2, -67, 2, 2);
+            A.poly(ctx, [0, -63, a.S.facing * -10, -61, 0, -60], "#ff8a1a", false);
+            ctx.restore();
+          });
+          a.sfx(1.4, "tada");
+          a.say("Meet Bob. My new best friend.", 1.5, 3.0);
+          a.say("...Bob? BOB!", 3.4, 4.4);
+        },
+      },
+      {
+        name: "Brain Freeze",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const freeze = t > 1.6;
+          a.pose((p) => {
+            if (!freeze) p.armF = within(t, 0.6, 1.5) ? [2.05, 2.5] : [1.4, 1.2];
+            else {
+              P.ears(p);
+              p.lean = -0.1 + sin(t * 20) * 0.05;
+            }
+          });
+          a.front((ctx) => {
+            if (freeze) return;
+            const x = a.S.x + a.S.facing * (within(t, 0.6, 1.5) ? 14 : 26);
+            const y = a.S.y - (within(t, 0.6, 1.5) ? 98 : 64);
+            A.poly(ctx, [x - 6, y, x + 6, y, x, y + 16], "#d8a868", true, 1.5);
+            A.circle(ctx, x, y - 4, 7, "#ffb0d8", true, 1.5);
+          });
+          a.every(0.3, 0.6, 1.5, () => XM.Audio.sfx("squeak"));
+          a.sfx(1.6, "slide");
+          a.say("Mmm, ice cream!", 0.3, 1.4);
+          a.say("AAAH! BRAIN FREEZE!", 1.7, 3.0);
+          a.say("...How is that even possible?", 3.0, 4.0);
+        },
+      },
+      {
+        name: "Ice Sculpture",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            if (t < 2.0) {
+              p.armF = [1.5, 0.3 + sin(t * 20) * 0.5];
+            } else P.hips(p);
+          });
+          a.every(0.08, 0.3, 2.0, () => drop(XM.FX.spawn(XM.FX.T.SHARD, a.S.x + a.S.facing * 60, a.S.y - U.rand(10, 100), U.rand(-80, 80), -60, 0.5, 3, "#e8fbff"), 400));
+          a.every(0.25, 0.3, 2.0, () => XM.Audio.sfx("ice"));
+          const reveal = seg(t, 0.3, 2.0);
+          a.front((ctx) => {
+            const x = a.S.x + a.S.facing * 60;
+            const y = a.S.y;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x - 60, y - 140 * reveal, 120, 140 * reveal + 2);
+            ctx.clip();
+            ctx.globalAlpha = 0.85;
+            XM.CharArt.draw(ctx, "iceman", iceLook(a), { state: "victory", t: 1 }, x, y, -a.S.facing, a.S.sc);
+            ctx.restore();
+            ctx.globalAlpha = 1;
+            if (t > 2.0 && t < 2.3) A.glow(ctx, x, y - 60, 40, "#ffffff", 0.8);
+          });
+          a.sfx(2.0, "ding");
+          a.say("Handsome devil, isn't he?", 2.3, 4.4);
+        },
+      },
+      {
+        name: "Snowball!",
+        dur: 3.8,
+        run(a) {
+          const t = a.t;
+          const n = a.find("wolverine", "cyclops") || a.near();
+          if (n) a.faceTo(n);
+          a.state = within(t, 0.3, 0.7) ? "attack" : "idle";
+          a.kind = "throw";
+          a.prog = seg(t, 0.3, 0.7);
+          if (n) {
+            a.front((ctx) => {
+              if (!within(t, 0.5, 1.0)) return;
+              const k = seg(t, 0.5, 1.0);
+              const h = a.hand(a.S);
+              const nh = a.head(n);
+              A.circle(ctx, U.lerp(h.x, nh.x, k), U.lerp(h.y, nh.y, k) - sin(k * PI) * 50, 7, "#ffffff", true, 1.5);
+            });
+            a.once(1.0, () => {
+              XM.Audio.sfx("splat");
+              const nh = a.head(n);
+              XM.FX.burst(nh.x, nh.y, { count: 16, color: "#ffffff", speed: 160, life: 0.6, type: XM.FX.T.DOT, grav: 400, size: 4 });
+            });
+            a.react(n, "bonk", 1.0, 0.5);
+            a.react(n, "unimpressed", 1.5, 2.2, n.id === "wolverine" ? "You're dead, Drake." : "...Really, Bobby?");
+          }
+          a.pose((p) => {
+            if (t > 1.2) p.bob = -abs(sin(t * 14)) * 3;
+          });
+          a.say("Bullseye!", 1.2, 2.4);
+        },
+      },
+      {
+        name: "Triple Axel",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const skate = within(t, 0.2, 3.4);
+          a.body.dx = skate ? sin(t * 2.2) * 90 : 0;
+          a.body.dy = -bell(t, 2.0, 2.8) * 70;
+          a.body.sx = within(t, 2.0, 2.8) ? cos((t - 2.0) * 24) : 1;
+          a.facing = skate ? (cos(t * 2.2) > 0 ? 1 : -1) : a.S.facing;
+          a.pose((p) => {
+            if (skate) {
+              p.legF = [0.1, 0.1];
+              p.legB = [-0.9, 0.2];
+              p.lean = 0.3;
+              p.armF = [1.7, 0];
+              p.armB = [-1.2, 0];
+            }
+            if (t > 3.4) P.armsUp(p);
+          });
+          a.every(0.05, 0.2, 3.4, () => XM.FX.spawn(XM.FX.T.STAR, a.S.x + a.body.dx, a.S.y - 2, 0, -20, 0.4, 4, "#e8fbff"));
+          a.sfx(2.0, "zip");
+          a.sfx(2.8, "tada");
+          a.say("Triple axel!", 2.6, 4.2);
+        },
+      },
+      {
+        name: "Frozen Assets",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          a.sfx(0.4, "fart", { len: 0.8 });
+          gas(a, a.S.x - a.S.facing * 16, a.S.y - 30, 0.4, 1.0);
+          a.sfx(1.2, "ice");
+          a.front((ctx) => {
+            if (t < 1.2) return;
+            const fall = seg(t, 1.3, 1.7);
+            const x = a.S.x - a.S.facing * 26;
+            const y = U.lerp(a.S.y - 40, a.S.y - 12, fall * fall);
+            A.box(ctx, x - 12, y - 12, 24, 24, "rgba(200,240,255,0.85)", true, 3, 2);
+            ctx.fillStyle = A.rgba(GAS, 0.7);
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, PI * 2);
+            ctx.fill();
+          });
+          a.sfx(1.7, "hitHeavy");
+          a.pose((p) => {
+            if (t > 1.8) {
+              p.armF = [1.1, 1.6];
+              p.headTilt = 0.2;
+            }
+          });
+          a.say("Heh. Frozen assets.", 2.0, 4.0);
+        },
+      },
+      {
+        name: "I'm Melting!",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const melt = hold(t, 0.3, 1.8, 2.6, 3.2);
+          a.body.sy = 1 - melt * 0.55;
+          a.body.sx = 1 + melt * 0.35;
+          a.pose((p) => P.flail(p, t));
+          a.back((ctx) => {
+            if (melt <= 0) return;
+            ctx.fillStyle = "rgba(150,210,255,0.6)";
+            ctx.beginPath();
+            ctx.ellipse(a.S.x, a.S.y, 30 + melt * 30, 5 + melt * 4, 0, 0, PI * 2);
+            ctx.fill();
+          });
+          a.sfx(0.3, "slideDown");
+          a.sfx(2.6, "slide");
+          a.say("I'm meeeelting!", 0.5, 2.4);
+          a.say("Phew. Refrozen.", 3.2, 4.2);
+        },
+      },
+      {
+        name: "Ice Puns",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [1.5, 0.6 + sin(t * 4) * 0.2];
+            if (t > 3.0) {
+              P.hips(p);
+              p.bob = -abs(sin(t * 14)) * 3;
+            }
+          });
+          a.say("Why did the snowman call his dog Frost?", 0.2, 1.8);
+          a.say("Because Frost bites!", 1.8, 3.0);
+          a.sfx(2.6, "rimshot");
+          for (const o of a.others()) a.react(o, "cringe", 2.6, 2.0, U.pick(["Booo!", "Ugh, Bobby.", "Stop it.", "*groan*"]));
+          a.say("I'll be here all week!", 3.2, 4.6);
+        },
+      },
+      {
+        name: "King of Cool",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const throne = smooth(seg(t, 0.2, 1.0));
+          a.look = { pal: a.baseLook.pal, flags: Object.assign({}, a.baseLook.flags, { crown: t > 1.0 }) };
+          a.back((ctx) => {
+            if (throne <= 0) return;
+            const x = a.S.x - a.S.facing * 10;
+            const y = a.S.y;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(1, throne);
+            A.poly(ctx, [-34, 0, -30, -150, -20, -170, -10, -140, 0, -175, 10, -140, 20, -170, 30, -150, 34, 0], "rgba(200,240,255,0.75)", true, 2);
+            ctx.restore();
+          });
+          a.pose((p) => {
+            if (t > 1.0) {
+              p.armF = [1.0, 1.2];
+              p.lean = -0.08;
+            }
+          });
+          a.sfx(0.2, "ice");
+          a.sfx(1.0, "tada");
+          a.say("Bow before the King of Cool.", 1.2, 3.0);
+          const n = a.near();
+          if (n) a.react(n, "unimpressed", 2.6, 1.6, "No.");
+        },
+      },
+    ],
+
+    // ===================== NIGHTCRAWLER =====================
+    nightcrawler: [
+      {
+        name: "Bamf Peekaboo",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const spots = a.mem.spots || (a.mem.spots = a.others().map((o) => o.x - a.S.x + U.rand(-26, 26)).concat([0]).slice(-4));
+          const times = [0.4, 1.2, 2.0, 2.8];
+          let idx = -1;
+          times.forEach((tt, i) => {
+            if (t >= tt) idx = i;
+            a.once(tt, () => {
+              XM.Audio.sfx("teleport");
+              XM.FX.smoke(a.S.x + a.body.dx, a.S.y - 50, 8, "#3a2a5a");
+            });
+          });
+          a.body.dx = idx >= 0 ? spots[min(idx, spots.length - 1)] || 0 : 0;
+          if (idx === times.length - 1) a.body.dx = 0;
+          a.body.dy = idx >= 0 && idx < 3 ? -20 : 0;
+          a.pose((p) => {
+            if (idx >= 0 && idx < 3) {
+              P.armsUp(p);
+              p.legF = [0.8, 1.4];
+            }
+          });
+          a.once(2.8, () => XM.FX.smoke(a.S.x, a.S.y - 50, 8, "#3a2a5a"));
+          a.say(["Bamf!", "Peekaboo!", "Over here!"][min(2, max(0, idx))], 0.5, 2.7);
+          a.say("Did you miss me?", 3.0, 4.2);
+        },
+      },
+      {
+        name: "Tail Juggling",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [1.4 + sin(t * 9) * 0.4, 0.6];
+            p.armB = [1.4 - sin(t * 9) * 0.4, 0.6];
+            p.bob = sin(t * 9) * 2;
+          });
+          a.front((ctx) => {
+            if (t > 3.6) return;
+            const cx = a.S.x;
+            const cy = a.S.y - 130;
+            const cols = ["#ff5a5a", "#5ad0ff", "#ffe14a", "#7aff7a"];
+            for (let i = 0; i < 4; i++) {
+              const ang = t * 6 + (i * PI) / 2;
+              A.circle(ctx, cx + cos(ang) * 30, cy + sin(ang) * 22, 6, cols[i], true, 1.5);
+            }
+          });
+          a.say("Look, Mutti! No hands!", 0.4, 1.8);
+          a.say("...Well, one tail.", 1.9, 3.4);
+          a.sfx(3.6, "tada");
+        },
+      },
+      {
+        name: "Hang Time",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const up = hold(t, 0.2, 0.6, 3.6, 4.0);
+          a.body.rot = PI * up;
+          a.body.pivot = 60;
+          a.body.dy = -30 * up;
+          a.body.dx = sin(t * 2.4) * 10 * up;
+          a.back((ctx) => {
+            if (up <= 0) return;
+            const y = a.S.y - 128 * up;
+            ctx.globalAlpha = up;
+            A.limb(ctx, a.S.x - 50, y, a.S.x + 50, y, 4, "#9aa3b2");
+            ctx.globalAlpha = 1;
+          });
+          a.pose((p) => {
+            p.armF = [0.2 + sin(t * 2) * 0.3, 0.4];
+            p.armB = [-0.2, 0.4];
+          });
+          a.say("Wunderbar! The view is better from here.", 0.8, 3.0);
+          a.sfx(3.9, "land");
+        },
+      },
+      {
+        name: "Brimstone",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.once(0.4, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 14, "#6a3a7a");
+          });
+          a.body.alpha = within(t, 0.4, 0.7) ? 0 : 1;
+          const n = a.near();
+          if (n) a.react(n, "stinky", 0.9, 3.0, "Kurt! The brimstone!");
+          a.pose((p) => {
+            if (t > 1.2) {
+              p.armF = [1.2, -1.3];
+              p.armB = [-1.0, 1.3];
+            }
+          });
+          a.every(0.12, 0.7, 2.4, () => XM.FX.smoke(a.S.x - a.S.facing * 10, a.S.y - 40, 1, "#6a3a7a"));
+          a.say("It's not me, it's the teleport!", 2.0, 4.2);
+        },
+      },
+      {
+        name: "En Garde!",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const lunge = (t % 0.8) / 0.8;
+          a.body.dx = within(t, 0.3, 3.0) ? sin(t * 3) * 30 : 0;
+          a.pose((p) => {
+            if (within(t, 0.3, 3.0)) {
+              p.legF = [0.7, 0.4];
+              p.legB = [-0.6, 0.2];
+              p.armF = [1.4 + lunge * 0.3, 0.1];
+              p.armB = [2.6, 1.6];
+              p.lean = 0.2 * lunge;
+            } else if (t > 3.1) P.armsUp(p);
+          });
+          a.front((ctx) => {
+            if (!within(t, 0.3, 3.0)) return;
+            const h = a.hand(a.S);
+            A.limb(ctx, h.x, h.y, h.x + a.facing * 42, h.y - 4, 2, "#e8eef6");
+            A.box(ctx, h.x - 4, h.y - 4, 8, 8, "#c9a227", true, 2, 1);
+          });
+          a.every(0.4, 0.3, 3.0, () => XM.Audio.sfx("slash"));
+          a.say("En garde, invisible scoundrel!", 0.4, 2.2);
+          a.say("Victory is mine!", 3.1, 4.2);
+        },
+      },
+      {
+        name: "Circus Act",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.headTilt = -0.35;
+            p.armF = [1.6, 0.2 + sin(t * 3) * 0.1];
+            p.armB = [-1.5, 0.2];
+            p.lift = 4;
+            p.legF = [0.0, 0];
+            p.legB = [-1.2, 0.2];
+            if (t > 3.2) {
+              p.lean = 0.6;
+              p.armF = [1.0, 1.3];
+            }
+          });
+          a.front((ctx) => {
+            if (t > 3.2) return;
+            const h = a.head(a.S);
+            const wobble = sin(t * 5) * 6;
+            A.circle(ctx, h.x + a.S.facing * 8 + wobble, h.y - 22, 10, "#e0262c", true, 2);
+            ctx.fillStyle = "#ffe14a";
+            ctx.fillRect(h.x + a.S.facing * 8 + wobble - 10, h.y - 24, 20, 4);
+          });
+          a.sfx(3.2, "tada");
+          a.say("The Incredible Nightcrawler!", 0.4, 2.2);
+          a.say("Danke, danke!", 3.3, 4.2);
+        },
+      },
+      {
+        name: "Sock Thief",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          const away = within(t, 0.4, 1.0);
+          a.once(0.4, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 10, "#3a2a5a");
+            if (n) XM.FX.smoke(n.x, n.y - 50, 10, "#3a2a5a");
+          });
+          a.once(1.0, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 10, "#3a2a5a");
+          });
+          a.body.alpha = away ? 0 : 1;
+          if (n) a.react(n, "scared", 0.5, 1.0);
+          a.pose((p) => {
+            if (t > 1.0) {
+              p.armF = [2.0 + (t > 2.0 ? 0.3 : 0), 2.2];
+              p.headTilt = t > 2.0 ? -0.3 : 0;
+            }
+          });
+          a.front((ctx) => {
+            if (t < 1.0) return;
+            const hd = a.head(a.S);
+            const x = hd.x + a.S.facing * 16;
+            const y = hd.y + 6;
+            A.poly(ctx, [x - 4, y - 14, x + 4, y - 14, x + 4, y, x + 10, y + 4, x + 10, y + 8, x - 4, y + 8], "#f4f4f4", true, 1.5);
+            ctx.fillStyle = "#e0262c";
+            ctx.fillRect(x - 4, y - 14, 8, 3);
+          });
+          a.say("I wanted the hat...", 1.2, 2.2);
+          a.once(2.2, () => XM.FX.text(a.S.x, a.S.y - 150, "*sniff*", "#ffffff", 14, 0.8));
+          a.say("ACH! Mein Gott!", 2.6, 4.4);
+          a.once(2.6, () => XM.FX.smoke(a.S.x + a.S.facing * 20, a.S.y - 100, 4, GAS));
+        },
+      },
+      {
+        name: "Tail Tickle",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          a.pose((p) => {
+            p.armF = [-0.3, 0.3];
+            p.armB = [-0.4, 0.3];
+            p.headTilt = -0.15;
+          });
+          if (n) {
+            a.front((ctx) => {
+              if (!within(t, 0.3, 3.2)) return;
+              const x0 = a.S.x - a.S.facing * 8;
+              const y0 = a.S.y - 40;
+              const x1 = n.x;
+              const y1 = n.y - 50 + sin(t * 20) * 6;
+              ctx.strokeStyle = A.OUTLINE;
+              ctx.lineWidth = 5;
+              ctx.beginPath();
+              ctx.moveTo(x0, y0);
+              ctx.quadraticCurveTo((x0 + x1) / 2, y0 + 50, x1, y1);
+              ctx.stroke();
+              ctx.strokeStyle = a.baseLook.pal.skin;
+              ctx.lineWidth = 2.8;
+              ctx.stroke();
+              A.poly(ctx, [x1, y1 - 6, x1 + 4, y1, x1, y1 + 3, x1 - 4, y1], a.baseLook.pal.skin, true, 1.5);
+            });
+            a.react(n, "laugh", 0.5, 2.8, "HAHAHA! STOP!");
+          }
+          a.say("Coochie coochie coo!", 0.5, 2.2);
+        },
+      },
+      {
+        name: "Teleport Glitch",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.once(0.4, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 12, "#3a2a5a");
+          });
+          a.once(1.0, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 12, "#3a2a5a");
+          });
+          a.body.alpha = within(t, 0.4, 1.0) ? 0 : 1;
+          const glitched = within(t, 1.0, 3.0);
+          a.body.rot = glitched ? PI : 0;
+          a.body.pivot = 32;
+          a.body.dy = glitched ? -8 : 0;
+          a.pose((p) => {
+            if (glitched) P.flail(p, t * 0.6);
+          });
+          a.once(3.0, () => {
+            XM.Audio.sfx("teleport");
+            XM.FX.smoke(a.S.x, a.S.y - 50, 10, "#3a2a5a");
+          });
+          a.say("...Do I look different?", 1.3, 2.8);
+          a.say("Much better.", 3.2, 4.2);
+        },
+      },
+      {
+        name: "Cartwheel Spree",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const k = seg(t, 0.3, 3.0);
+          a.body.dx = sin(k * PI * 2) * 140;
+          a.body.rot = -a.S.facing * k * PI * 6;
+          a.body.pivot = 32;
+          a.body.dy = -12 * bell(t, 0.3, 3.0);
+          a.pose((p) => {
+            if (k > 0 && k < 1) {
+              p.armF = [2.9, 0];
+              p.armB = [-2.9, 0];
+              p.legF = [0.8, 0];
+              p.legB = [-0.8, 0];
+            } else if (t > 3.0) P.armsUp(p);
+          });
+          a.every(0.25, 0.3, 3.0, () => XM.Audio.sfx("dodge"));
+          a.sfx(3.0, "tada");
+          a.say("Ta-daaa!", 3.0, 4.0);
+        },
+      },
+    ],
+
+    // ===================== COLOSSUS =====================
+    colossus: [
+      {
+        name: "Admire the Steel",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          const poseN = Math.floor(t / 0.9) % 3;
+          a.pose((p) => {
+            if (poseN === 0) {
+              p.armF = [1.75, 1.45];
+              p.armB = [1.35, 1.65];
+            } else if (poseN === 1) {
+              p.armF = [2.9, 1.3];
+              p.armB = [2.9, 1.4];
+            } else {
+              p.armF = [0.9, 1.7];
+              p.armB = [0.9, 1.8];
+              p.lean = 0.15;
+            }
+          });
+          a.every(0.9, 0, 3.0, () => {
+            XM.Audio.sfx("ding");
+            const h = a.hand(a.S);
+            XM.FX.spawn(XM.FX.T.STAR, h.x, h.y - 10, 0, -30, 0.6, 9, "#ffffff");
+          });
+          a.say("Admire the steel, comrades.", 0.3, 2.6);
+          const n = a.near();
+          if (n) a.react(n, "unimpressed", 2.6, 1.4, "We get it, Piotr.");
+        },
+      },
+      {
+        name: "Masterpiece",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            if (t < 2.6) {
+              p.armF = [1.5, 0.3 + sin(t * 10) * 0.25];
+              p.armB = [1.0, 1.4];
+            } else P.hips(p);
+          });
+          a.front((ctx) => {
+            const x = a.S.x + a.S.facing * 60;
+            const y = a.S.y;
+            A.limb(ctx, x - 16, y, x - 6, y - 70, 3, "#8a5a2a");
+            A.limb(ctx, x + 16, y, x + 6, y - 70, 3, "#8a5a2a");
+            A.box(ctx, x - 26, y - 100, 52, 44, "#fffdf2", true, 2, 2);
+            const k = seg(t, 0.3, 2.4);
+            ctx.strokeStyle = "#1a1a1a";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (k > 0.1) ctx.arc(x, y - 88, 6, 0, PI * 2);
+            if (k > 0.3) {
+              ctx.moveTo(x, y - 82);
+              ctx.lineTo(x, y - 68);
+            }
+            if (k > 0.5) {
+              ctx.moveTo(x - 8, y - 78);
+              ctx.lineTo(x + 8, y - 78);
+            }
+            if (k > 0.7) {
+              ctx.moveTo(x, y - 68);
+              ctx.lineTo(x - 6, y - 60);
+              ctx.moveTo(x, y - 68);
+              ctx.lineTo(x + 6, y - 60);
+            }
+            ctx.stroke();
+            if (k > 0.9) A.text(ctx, "WOLVIE", x, y - 104, 8, "#c4161c", "center", false);
+          });
+          a.every(0.3, 0.3, 2.4, () => XM.Audio.sfx("step"));
+          a.say("Is masterpiece. Is you, Logan.", 2.7, 4.6);
+          const n = a.find("wolverine") || a.near();
+          if (n) a.react(n, "cringe", 3.2, 1.4, "...I got a neck.");
+        },
+      },
+      {
+        name: "Fridge Magnet",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.every(0.25, 0.2, 1.2, () => XM.Audio.sfx("squeak"));
+          a.front((ctx) => {
+            if (t < 0.2) return;
+            const k = smooth(seg(t, 0.2, 1.3));
+            const tx = a.S.x;
+            const ty = a.S.y - 90;
+            const x = U.lerp(a.S.x + a.S.facing * 300, tx, k);
+            const y = U.lerp(a.S.y - 200, ty, k);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(k * 3);
+            A.box(ctx, -10, -7, 20, 14, "#ff5aa0", true, 3, 1.5);
+            A.text(ctx, "I♥NY", 0, 0, 7, "#ffffff", "center", false);
+            ctx.restore();
+          });
+          a.sfx(1.3, "hitHeavy");
+          a.pose((p) => {
+            if (t > 1.3) {
+              p.headTilt = 0.35;
+              p.armF = [1.3, 1.6];
+            }
+          });
+          a.say("...Magneto?", 1.6, 2.8);
+          a.say("Ah. Is only souvenir.", 3.0, 4.2);
+        },
+      },
+      {
+        name: "Rusty Toot",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          a.sfx(0.4, "fart", { len: 0.9 });
+          a.sfx(0.45, "hitHeavy");
+          a.every(0.07, 0.4, 1.3, () => XM.FX.smoke(a.S.x - a.S.facing * 16, a.S.y - 34, 2, "#a8542a"));
+          a.body.dy = within(t, 0.4, 1.3) ? sin(t * 80) * 1.5 : 0;
+          a.pose((p) => {
+            if (t > 1.4) {
+              p.armF = [1.8, 2.2];
+              p.lean = 0.3;
+              p.headTilt = 0.2;
+            }
+          });
+          const n = a.near();
+          if (n) a.react(n, "stinky", 0.9, 2.6, "Smells like... pennies?");
+          a.say("Excuse me. Is rust.", 1.6, 3.4);
+        },
+      },
+      {
+        name: "Fastball Special",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          const n = a.find("wolverine") || a.near();
+          if (n) a.faceTo(n);
+          a.pose((p) => {
+            if (within(t, 0.4, 1.0)) {
+              p.armF = [2.9, 1.2];
+              p.lean = -0.25;
+            } else if (within(t, 1.0, 1.5)) {
+              p.armF = [1.6, 0];
+              p.lean = 0.35;
+            } else if (t > 3.8) P.armsUp(p);
+          });
+          if (n) a.react(n, "thrown", 1.0, 3.2, n.id === "wolverine" ? "I hate this move." : "WHY ME?!");
+          a.say("FASTBALL SPECIAL!", 0.4, 1.9);
+          a.sfx(1.0, "zip");
+          a.say("...He will come back.", 2.4, 3.8);
+        },
+      },
+      {
+        name: "Kitten Friend",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [1.5, 1.4];
+            p.headTilt = 0.2;
+            p.bob = sin(t * 2) * 1.5;
+          });
+          a.front((ctx) => {
+            const h = a.hand(a.S);
+            const x = h.x + a.S.facing * -2;
+            const y = h.y - 14;
+            A.ellipse(ctx, x, y, 9, 6, 0, "#f2a24a", true, 1.5);
+            A.circle(ctx, x + a.S.facing * 8, y - 5, 5, "#f2a24a", true, 1.5);
+            A.poly(ctx, [x + a.S.facing * 5, y - 9, x + a.S.facing * 6, y - 14, x + a.S.facing * 9, y - 9], "#f2a24a", true, 1);
+            A.poly(ctx, [x + a.S.facing * 9, y - 9, x + a.S.facing * 11, y - 14, x + a.S.facing * 12, y - 8], "#f2a24a", true, 1);
+            ctx.strokeStyle = A.OUTLINE;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x - a.S.facing * 8, y);
+            ctx.quadraticCurveTo(x - a.S.facing * 16, y - 6 + sin(t * 5) * 4, x - a.S.facing * 12, y - 14);
+            ctx.stroke();
+          });
+          a.every(0.8, 0.5, 3.6, () => {
+            XM.Audio.sfx("squeak");
+            XM.FX.text(a.S.x + a.S.facing * 30, a.S.y - 110, "mew", "#ffffff", 12, 0.8);
+          });
+          a.every(0.5, 1.0, 4.0, () => XM.FX.text(a.S.x + U.rand(-20, 20), a.S.y - 150, "♥", "#ff5a9a", 16, 1.0, -40));
+          a.say("Hello, tiny friend.", 0.4, 2.0);
+          a.say("I will call you... Tank.", 2.2, 4.4);
+        },
+      },
+      {
+        name: "Bendy Barbell",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const lift = smooth(seg(t, 0.4, 1.4));
+          const bend = seg(t, 1.6, 2.6);
+          a.pose((p) => {
+            p.armF = [U.lerp(0.4, 3.0, lift), 0.2];
+            p.armB = [U.lerp(0.3, 2.9, lift), 0.2];
+            p.legF = [0.4, 0.4 * (1 - lift) + 0.1];
+            p.legB = [-0.4, 0.3 * (1 - lift) + 0.1];
+          });
+          a.front((ctx) => {
+            const h = a.hand(a.S);
+            const y = U.lerp(a.S.y - 50, a.S.y - 160, lift);
+            const x = a.S.x;
+            ctx.strokeStyle = "#8a919c";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x - 60, y + bend * 26);
+            ctx.quadraticCurveTo(x, y - bend * 10, x + 60, y + bend * 26);
+            ctx.stroke();
+            [-1, 1].forEach((s) => A.box(ctx, x + s * 60 - 8, y + bend * 26 - 18, 16, 36, "#2a2a32", true, 3, 2));
+            void h;
+          });
+          a.sfx(1.4, "hitHeavy");
+          a.every(0.3, 1.6, 2.6, () => XM.Audio.sfx("squeak"));
+          a.say("Hmph. Is too light.", 2.8, 4.4);
+        },
+      },
+      {
+        name: "Squeaky Joints",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            if (t < 1.6) {
+              const s = Math.floor(t * 6) % 2;
+              p.armF = [1.2 + s * 0.4, 0.4];
+              p.armB = [0.6 + s * 0.3, 0.4];
+            } else if (t < 2.8) {
+              p.armF = [1.4, 1.2];
+              p.armB = [1.9, 1.9];
+            } else {
+              const s = sin(t * 10);
+              p.armF = [1.4 + s * 0.6, 0.4];
+              p.armB = [1.0 - s * 0.6, 0.4];
+            }
+          });
+          a.every(0.17, 0.2, 1.6, () => XM.Audio.sfx("squeak"));
+          a.front((ctx) => {
+            if (!within(t, 1.6, 2.8)) return;
+            const h = a.hand(a.S);
+            A.box(ctx, h.x - 8, h.y - 12, 16, 16, "#c8302a", true, 3, 1.5);
+            A.limb(ctx, h.x, h.y - 12, h.x - a.S.facing * 14, h.y - 30, 2, "#9aa3b2");
+          });
+          a.every(0.1, 1.8, 2.7, () => XM.FX.spawn(XM.FX.T.DOT, a.S.x + U.rand(-10, 10), a.S.y - 90, 0, 80, 0.5, 3, "#3a2a10"));
+          a.say("*squeak* *squeak*", 0.3, 1.5);
+          a.say("Ahh. Smooth like butter.", 2.9, 4.4);
+        },
+      },
+      {
+        name: "Steel Squat Dance",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.body.dy = 18 * hold(t, 0.2, 0.4, 3.6, 3.9);
+          a.pose((p) => {
+            const s = sin(t * 9) > 0 ? 1 : -1;
+            p.armF = [1.0, 1.9];
+            p.armB = [1.15, 1.8];
+            p.legF = s > 0 ? [1.5, 0.1] : [0.6, 1.8];
+            p.legB = s > 0 ? [0.6, 1.8] : [1.5, 0.1];
+            p.grounded = false;
+            p.lift = -18;
+          });
+          a.every(0.35, 0.2, 3.6, () => {
+            XM.Audio.sfx("stomp");
+            XM.FX.text(a.S.x + U.rand(-30, 30), a.S.y - 120, "HEY!", "#ffe14a", 16, 0.6);
+          });
+          for (const o of a.others()) a.react(o, "danceAlong", 1.0, 2.6);
+          a.say("Dance with me, comrades!", 0.4, 1.8);
+        },
+      },
+      {
+        name: "Feather Test",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const laugh = t > 2.4;
+          a.pose((p) => {
+            if (!laugh) P.crossed(p);
+            else {
+              p.armF = [1.3, 1.6];
+              p.lean = 0.25;
+              p.bob = -abs(sin(t * 16)) * 4;
+            }
+          });
+          a.front((ctx) => {
+            if (t > 3.6) return;
+            const x = a.S.x + a.S.facing * 20 + sin(t * 9) * 14;
+            const y = a.S.y - 70 + cos(t * 7) * 18;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(sin(t * 9) * 0.6);
+            A.ellipse(ctx, 0, 0, 4, 12, 0, "#f8f8ff", true, 1.2);
+            ctx.restore();
+          });
+          a.say("I am steel. I feel nothing.", 0.3, 2.2);
+          a.say("HA! HAHA! STOP! HAHAHA!", 2.5, 4.4);
+          a.every(0.3, 2.5, 4.0, () => XM.Audio.sfx("squeak"));
+        },
+      },
+    ],
+
+    // ===================== PSYLOCKE =====================
+    psylocke: [
+      {
+        name: "Ninja Vanish",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          a.once(0.4, () => {
+            XM.Audio.sfx("explosion");
+            XM.FX.smoke(a.S.x, a.S.y - 40, 16, "#6a5a8a");
+          });
+          const gone = within(t, 0.45, 1.6);
+          a.body.alpha = gone ? 0 : 1;
+          if (n && t > 1.6 && t < 3.2) {
+            a.body.dx = n.x - a.S.x + (n.x > a.S.x ? 30 : -30);
+            a.faceTo(n);
+          }
+          a.once(1.6, () => XM.FX.smoke(a.S.x + a.body.dx, a.S.y - 40, 6, "#6a5a8a"));
+          if (n) a.react(n, "scared", 1.7, 1.6, "GAH!");
+          a.pose((p) => {
+            if (t > 1.6 && t < 3.2) P.armsUp(p);
+          });
+          a.say("Boo.", 1.7, 2.6);
+          a.once(3.2, () => XM.FX.smoke(a.S.x, a.S.y - 40, 6, "#6a5a8a"));
+        },
+      },
+      {
+        name: "Psychic Butterfly",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          const h = a.head(a.S);
+          const land = n && t > 3.0;
+          const nh = n ? a.head(n) : h;
+          const bx = land ? nh.x + n.facing * 8 : h.x + sin(t * 1.7) * 90 + a.S.facing * 40;
+          const by = land ? nh.y - 2 : h.y - 40 + sin(t * 2.9) * 30;
+          a.facing = bx > a.S.x ? 1 : -1;
+          a.pose((p) => {
+            p.armF = [2.3, 0.3];
+            p.headTilt = -0.2;
+          });
+          a.front((ctx) => {
+            const flap = abs(sin(t * 14));
+            A.glow(ctx, bx, by, 18, "#ff4fe0", 0.7);
+            ctx.fillStyle = "#ff9af0";
+            ctx.strokeStyle = A.OUTLINE;
+            ctx.lineWidth = 1.2;
+            for (const s of [-1, 1]) {
+              ctx.beginPath();
+              ctx.ellipse(bx + s * 6 * flap, by - 3, 6 * flap + 1, 8, s * 0.4, 0, PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+          });
+          if (n) a.react(n, "cringe", 3.0, 1.6, "...Hi.");
+          a.say("Isn't it lovely?", 0.4, 2.4);
+        },
+      },
+      {
+        name: "Blade Chef",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.state = within(t, 0.4, 2.4) ? "attack" : "idle";
+          a.kind = "slash";
+          a.prog = (t * 3.3) % 1;
+          a.front((ctx) => {
+            const x = a.S.x + a.S.facing * 46;
+            const y = a.S.y - 4;
+            A.ellipse(ctx, x, y, 22, 8, 0, "#e8e2d2", true, 2);
+            const cut = Math.floor(seg(t, 0.4, 2.4) * 6);
+            const cols = ["#5aba4a", "#e0262c", "#ff8a1a", "#ffe14a"];
+            for (let i = 0; i < 8; i++) {
+              if (i > cut + 2) continue;
+              ctx.fillStyle = cols[i % 4];
+              ctx.fillRect(x - 14 + (i % 4) * 7, y - 6 - Math.floor(i / 4) * 4, 5, 4);
+            }
+          });
+          a.every(0.15, 0.4, 2.4, () => {
+            XM.Audio.sfx("slash");
+            drop(XM.FX.spawn(XM.FX.T.SHARD, a.S.x + a.S.facing * 46, a.S.y - 30, U.rand(-80, 80), -120, 0.6, 3, U.pick(["#5aba4a", "#e0262c", "#ff8a1a"])), 500);
+          });
+          a.sfx(2.5, "ding");
+          a.say("Lunch is served.", 2.6, 4.6);
+        },
+      },
+      {
+        name: "Hair Whip",
+        dur: 3.8,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          const flip = within(t, 0.5, 1.0);
+          a.speed = flip ? 600 : 0;
+          a.vy = flip ? -500 : 0;
+          a.body.flip = within(t, 0.5, 2.6);
+          a.pose((p) => {
+            p.headTilt = flip ? -0.4 : 0;
+            p.armB = [-0.6, 1.6];
+          });
+          a.sfx(0.6, "wind");
+          if (n) {
+            a.react(n, "bonk", 0.8, 0.5);
+            a.react(n, "unimpressed", 1.3, 2.2, "Your HAIR, Betsy!");
+          }
+          a.say("Oops.", 1.4, 2.6);
+          a.say("It's a gift.", 2.8, 3.8);
+        },
+      },
+      {
+        name: "Kata Fail",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const fall = t > 2.6;
+          a.state = within(t, 0.3, 2.5) ? "attack" : "idle";
+          a.kind = ["slash", "kick", "stab", "punch"][Math.floor(t * 3) % 4];
+          a.prog = (t * 3) % 1;
+          a.combo = Math.floor(t * 3) % 3;
+          a.body.rot = fall ? a.S.facing * smooth(seg(t, 2.6, 2.9)) * 1.5 : 0;
+          a.body.pivot = 0;
+          a.every(0.33, 0.3, 2.5, () => XM.Audio.sfx("dodge"));
+          a.say("HIYAH! HA! HUP!", 0.4, 2.4);
+          a.sfx(2.6, "slideDown");
+          a.sfx(2.9, "splat");
+          a.say("...My sash.", 3.0, 4.4);
+        },
+      },
+      {
+        name: "Psychic Blame",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          a.sfx(0.4, "fart", { len: 0.5 });
+          gas(a, a.S.x - a.S.facing * 14, a.S.y - 34, 0.4, 0.9, 0.1);
+          a.pose((p) => {
+            if (t > 1.0 && t < 3.0) P.temple(p);
+          });
+          a.power = bell(t, 1.0, 3.0);
+          if (n) {
+            a.front((ctx) => {
+              if (!within(t, 1.0, 2.8)) return;
+              const h1 = a.head(a.S);
+              const h2 = a.head(n);
+              for (let i = 0; i < 3; i++) {
+                const k = (t * 1.8 + i / 3) % 1;
+                A.glow(ctx, U.lerp(h1.x, h2.x, k), U.lerp(h1.y, h2.y, k), 10, "#ff4fe0", 0.8);
+              }
+            });
+            a.react(n, "cringe", 1.6, 2.8);
+            a.think("...was that ME?", 1.8, 3.6, n);
+          }
+          a.say("Shameful, really.", 3.3, 4.6);
+        },
+      },
+      {
+        name: "Fortune Teller",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          a.pose((p) => {
+            p.armF = [1.5, 0.6];
+            p.armB = [1.4, 0.7];
+          });
+          a.front((ctx) => {
+            const h = a.hand(a.S);
+            A.glow(ctx, h.x, h.y - 16, 26 + sin(t * 5) * 4, "#ff4fe0", 0.7);
+            A.circle(ctx, h.x, h.y - 16, 11, "rgba(255,190,250,0.7)", true, 2);
+          });
+          if (!a.mem.fortune) a.mem.fortune = U.pick(["You will step on a LEGO.", "Your socks will be damp. Forever.", "A seagull is plotting against you.", "You will sneeze at the worst moment."]);
+          a.say("I see your future...", 0.3, 1.7);
+          if (n) {
+            a.say(a.mem.fortune, 1.8, 3.4);
+            a.react(n, "scared", 3.2, 1.4, "NOOO!");
+          }
+          a.sfx(1.8, "ding");
+        },
+      },
+      {
+        name: "Shadow Puppets",
+        dur: 4.8,
+        run(a) {
+          const t = a.t;
+          const shape = Math.floor(seg(t, 0.4, 3.9) * 3);
+          a.pose((p) => {
+            p.armF = [2.0, 0.8 + sin(t * 3) * 0.1];
+            p.armB = [1.8, 1.0];
+          });
+          a.back((ctx) => {
+            if (!within(t, 0.4, 4.0)) return;
+            const x = a.S.x + a.S.facing * 120;
+            const y = a.S.y - 200;
+            A.glow(ctx, x, y, 90, "#ff4fe0", 0.25);
+            ctx.fillStyle = "rgba(20,8,30,0.85)";
+            ctx.beginPath();
+            if (shape === 0) {
+              ctx.ellipse(x, y, 30, 22, 0, 0, PI * 2);
+              ctx.ellipse(x - 10, y - 30, 6, 20, -0.2, 0, PI * 2);
+              ctx.ellipse(x + 8, y - 30, 6, 20, 0.2, 0, PI * 2);
+            } else if (shape === 1) {
+              ctx.moveTo(x - 50, y);
+              ctx.lineTo(x - 10, y - 30);
+              ctx.lineTo(x + 30, y - 10);
+              ctx.lineTo(x + 60, y - 30 + sin(t * 8) * 10);
+              ctx.lineTo(x + 30, y + 10);
+              ctx.lineTo(x - 10, y + 20);
+            } else {
+              ctx.ellipse(x, y, 36, 18, 0, 0, PI * 2);
+              ctx.ellipse(x + 34, y - 10, 12, 10, 0, 0, PI * 2);
+              ctx.rect(x - 30, y + 10, 6, 20);
+              ctx.rect(x + 20, y + 10, 6, 20);
+            }
+            ctx.fill();
+          });
+          a.say(["A bunny!", "A dragon!", "...A cow?"][min(2, shape)], 0.5, 4.0);
+          a.every(1.17, 0.4, 3.9, () => XM.Audio.sfx("pop"));
+        },
+      },
+      {
+        name: "Stealth Mode",
+        dur: 4.0,
+        run(a) {
+          const t = a.t;
+          a.body.dx = a.S.facing * 60 * smooth(seg(t, 0.3, 1.6)) * (1 - smooth(seg(t, 3.0, 3.8)));
+          a.state = within(t, 0.3, 1.6) || within(t, 3.0, 3.8) ? "walk" : "idle";
+          a.phase = t * 5;
+          a.facing = t > 3.0 ? -a.S.facing : a.S.facing;
+          a.pose((p) => {
+            p.lean = 0.3;
+            p.armF = [1.3, 1.4];
+            p.armB = [-0.6, 1.8];
+            p.legF = [p.legF[0], p.legF[1] + 0.4];
+          });
+          a.sfx(1.6, "squeak");
+          a.once(1.6, () => XM.FX.text(a.S.x + a.S.facing * 60, a.S.y - 20, "SQUEAK", "#ffe14a", 14, 0.8));
+          a.say("Silent as a shadow...", 0.3, 1.5);
+          a.say("...Nobody heard that.", 1.9, 3.0);
+        },
+      },
+      {
+        name: "Paper Plane",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          const n = a.find("cyclops") || a.near();
+          a.pose((p) => P.temple(p));
+          a.power = bell(t, 0.3, 3.0);
+          a.front((ctx) => {
+            if (t < 0.3 || t > 3.4) return;
+            const h = a.head(a.S);
+            const k = seg(t, 0.4, 2.8);
+            let x = h.x + sin(k * PI * 3) * 120 * (1 - k);
+            let y = h.y - 60 - sin(k * PI * 2) * 50;
+            if (n) {
+              const nh = a.head(n);
+              x = U.lerp(x, nh.x, k * k);
+              y = U.lerp(y, nh.y, k * k);
+            }
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(cos(k * PI * 3) * 0.6);
+            A.glow(ctx, 0, 0, 16, "#ff4fe0", 0.5);
+            A.poly(ctx, [14, 0, -10, -8, -4, 0, -10, 6], "#ffffff", true, 1.5);
+            ctx.restore();
+          });
+          if (n) {
+            a.react(n, "bonk", 2.8, 0.5);
+            a.react(n, "unimpressed", 3.2, 1.4, "Right in the visor.");
+          }
+          a.sfx(2.8, "pop");
+          a.say("Whee~", 0.6, 2.2);
+        },
+      },
+    ],
+
+    // ===================== JUBILEE =====================
+    jubilee: [
+      {
+        name: "Fireworks Show",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            const s = Math.floor(t * 2.5) % 2;
+            p.armF = s ? [2.9, 0.1] : [2.4, 0.3];
+            p.armB = s ? [2.4, 0.3] : [2.9, 0.1];
+          });
+          const shots = [0.4, 1.0, 1.6, 2.2, 2.8];
+          a.mem.fw = a.mem.fw || shots.map(() => ({ x: a.S.x + U.rand(-300, 100), y: U.rand(60, 200), c: U.pick(["#ff5ad9", "#ffe14a", "#5ad9ff", "#7dff7a", "#ff8a3d"]) }));
+          shots.forEach((tt, i) => {
+            const f = a.mem.fw[i];
+            a.sfx(tt, "firework");
+            a.once(tt + 0.45, () => {
+              XM.FX.burst(f.x, f.y, { count: 40, colors: [f.c, "#ffffff"], speed: 260, life: 1.1, type: XM.FX.T.STAR, size: 5, grav: 80 });
+              XM.FX.ring(f.x, f.y, 70, f.c, 0.5, 5);
+            });
+          });
+          a.front((ctx) => {
+            shots.forEach((tt, i) => {
+              const k = seg(t, tt, tt + 0.45);
+              if (k <= 0 || k >= 1) return;
+              const f = a.mem.fw[i];
+              A.glow(ctx, U.lerp(a.S.x, f.x, k), U.lerp(a.S.y - 100, f.y, k), 10, f.c, 1);
+            });
+          });
+          for (const o of a.others()) a.react(o, "awe", 1.0, 3.0, U.pick(["Ooooh!", "Aaaah!", "Pretty!"]));
+          a.say("Light show, baby!", 0.3, 1.6);
+        },
+      },
+      {
+        name: "Bubblegum",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          const size = smooth(seg(t, 0.4, 2.2));
+          const popped = t > 2.3;
+          a.front((ctx) => {
+            const h = a.head(a.S);
+            const x = h.x + a.S.facing * 10;
+            if (!popped) {
+              A.circle(ctx, x + a.S.facing * size * 14, h.y + 4, 3 + size * 28, "rgba(255,140,200,0.85)", true, 2);
+              A.circle(ctx, x + a.S.facing * size * 14 - 6, h.y - 6, 3 + size * 6, "rgba(255,255,255,0.5)", false);
+            } else if (t < 4.0) {
+              ctx.fillStyle = "rgba(255,140,200,0.95)";
+              ctx.beginPath();
+              ctx.arc(h.x, h.y, 13, 0, PI * 2);
+              ctx.fill();
+            }
+          });
+          a.sfx(2.3, "pop");
+          a.sfx(2.35, "splat");
+          a.say("Totally meant that.", 2.6, 4.2);
+        },
+      },
+      {
+        name: "Sparkler Dance",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => P.dance(p, t, 10));
+          a.every(0.04, 0.2, 3.8, () => {
+            for (const side of [-1, 1]) {
+              const x = a.S.x + side * 30 + sin(t * 10 + side) * 10;
+              const y = a.S.y - 130 + cos(t * 10) * 10;
+              XM.FX.spawn(XM.FX.T.SPARK, x, y, U.rand(-120, 120), U.rand(-120, 60), 0.3, 1.5, U.pick(["#ffe14a", "#ffffff", "#ff8a3d"]));
+            }
+          });
+          notes(a, a.S.x, a.S.y - 160, 0.2, 3.8, 0.24);
+          a.say("Mall rat moves!", 0.4, 2.2);
+        },
+      },
+      {
+        name: "Squad Selfie",
+        dur: 4.6,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [2.5, 0.5];
+            p.armB = [2.9, 0.2];
+          });
+          a.front((ctx) => {
+            const x = a.S.x + a.S.facing * 30;
+            const y = a.S.y - 125;
+            A.box(ctx, x - 7, y - 12, 14, 22, "#ff5a9a", true, 3, 2);
+          });
+          for (const o of a.others()) a.react(o, "pose", 0.6, 2.6);
+          [1.4, 2.0, 2.6].forEach((tt) => {
+            a.sfx(tt, "pop");
+            a.once(tt, () => XM.FX.flash("#ffffff", 0.35, 4));
+          });
+          a.say("Everybody say 'mutant'!", 0.3, 1.4);
+          a.say("Posting it. #XMen", 3.2, 4.6);
+        },
+      },
+      {
+        name: "So Bored",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [1.4, 1.5];
+            p.headTilt = 0.35;
+            p.lean = -0.05;
+            if (within(t, 2.0, 2.6)) {
+              p.headTilt = -0.3;
+              p.armB = [2.2, 1.6];
+            }
+          });
+          a.front((ctx) => {
+            const h = a.hand(a.S);
+            A.box(ctx, h.x - 6, h.y - 18, 12, 18, "#ff5a9a", true, 3, 1.5);
+            ctx.fillStyle = A.rgba("#7ae8ff", 0.6 + 0.3 * sin(t * 6));
+            ctx.fillRect(h.x - 4, h.y - 16, 8, 13);
+          });
+          a.every(0.4, 0.2, 1.8, () => XM.Audio.sfx("type"));
+          a.say("Ugh. Are we there yet?", 0.3, 1.8);
+          a.say("*sigh*", 2.0, 2.6);
+          a.say("I'm SO bored.", 2.8, 4.4);
+        },
+      },
+      {
+        name: "Party Popper",
+        dur: 3.8,
+        run(a) {
+          const t = a.t;
+          const n = a.near();
+          if (n) a.faceTo(n);
+          a.body.dx = n ? (n.x - a.S.x) * 0.35 * smooth(seg(t, 0.2, 0.8)) * (1 - smooth(seg(t, 3.0, 3.6))) : 0;
+          a.state = within(t, 0.2, 0.8) || within(t, 3.0, 3.6) ? "walk" : "idle";
+          a.phase = t * 10;
+          a.pose((p) => {
+            if (t > 0.8 && t < 1.2) p.armF = [1.7, 0.1];
+            else if (t > 1.2 && t < 3.0) p.bob = -abs(sin(t * 14)) * 3;
+          });
+          a.once(1.0, () => {
+            XM.Audio.sfx("firework");
+            const h = a.hand(a.S);
+            XM.FX.burst(h.x, h.y, { count: 30, colors: ["#ff5ad9", "#ffe14a", "#5ad9ff", "#7dff7a"], speed: 300, life: 0.9, type: XM.FX.T.SHARD, angle: a.facing > 0 ? 0 : PI, spread: 1.2, grav: 400 });
+          });
+          if (n) a.react(n, "scared", 1.0, 1.4, "AAH!");
+          a.say("GOTCHA!", 1.1, 2.6);
+        },
+      },
+      {
+        name: "Glitter Toot",
+        dur: 4.2,
+        run(a) {
+          const t = a.t;
+          a.sfx(0.4, "fart", { len: 0.6 });
+          a.sfx(0.5, "firework");
+          a.every(0.04, 0.5, 1.4, () => XM.FX.spawn(XM.FX.T.STAR, a.S.x - a.S.facing * 14, a.S.y - 34, -a.S.facing * U.rand(40, 160), U.rand(-80, 20), 0.9, 5, U.pick(["#ff5ad9", "#ffe14a", "#5ad9ff", "#ffffff"])));
+          a.pose((p) => {
+            if (t > 1.4) {
+              p.armF = [2.0, 2.5];
+              p.headTilt = 0.3;
+            }
+          });
+          for (const o of a.others()) a.react(o, "awe", 1.2, 1.6, "...Sparkly?");
+          a.say("...Oops. Glitter toot.", 1.6, 3.4);
+          a.say("Smells like strawberries!", 3.4, 4.2);
+        },
+      },
+      {
+        name: "Roller Disaster",
+        dur: 4.4,
+        run(a) {
+          const t = a.t;
+          const fall = t > 2.6;
+          a.body.dx = sin(t * 2.2) * 90 * hold(t, 0.2, 0.5, 2.6, 2.8);
+          a.facing = t < 2.6 ? (cos(t * 2.2) > 0 ? 1 : -1) : a.S.facing;
+          a.body.rot = fall ? -a.S.facing * smooth(seg(t, 2.6, 2.85)) * 1.45 : 0;
+          a.body.pivot = 0;
+          a.pose((p) => {
+            if (!fall) {
+              p.legF = [0.3 + sin(t * 4) * 0.3, 0.3];
+              p.legB = [-0.3 - sin(t * 4) * 0.3, 0.3];
+              p.lean = 0.2;
+              p.armF = [1.5 + sin(t * 4) * 0.3, 0.3];
+              p.armB = [1.2, 0.3];
+            } else P.flail(p, t * 0.4);
+          });
+          a.front((ctx) => {
+            for (const s of [-6, 6]) {
+              ctx.fillStyle = "#ff5a9a";
+              ctx.beginPath();
+              ctx.arc(a.S.x + a.body.dx + s, a.S.y - 2, 3, 0, PI * 2);
+              ctx.fill();
+            }
+          });
+          a.sfx(2.6, "slideDown");
+          a.sfx(2.85, "splat");
+          a.say("Watch this!", 0.3, 1.8);
+          a.say("I'm okay! Totally okay!", 3.0, 4.4);
+        },
+      },
+      {
+        name: "Sky Writing",
+        dur: 4.8,
+        run(a) {
+          const t = a.t;
+          a.pose((p) => {
+            p.armF = [2.6 + sin(t * 4) * 0.2, 0.2];
+          });
+          const letters = "JUBES!";
+          const shown = Math.floor(seg(t, 0.3, 2.8) * letters.length + 0.001);
+          a.front((ctx) => {
+            if (t > 4.4) return;
+            const x0 = a.S.x - 180;
+            ctx.globalAlpha = 1 - seg(t, 3.8, 4.4);
+            for (let i = 0; i < shown; i++) {
+              const x = x0 + i * 46;
+              const y = 120 + sin(t * 3 + i) * 4;
+              A.glow(ctx, x, y, 30, ["#ff5ad9", "#ffe14a", "#5ad9ff", "#7dff7a", "#ff8a3d", "#ffffff"][i], 0.6);
+              A.text(ctx, letters[i], x, y, 40, "#ffffff", "center");
+            }
+            ctx.globalAlpha = 1;
+          });
+          a.every(2.5 / letters.length, 0.3, 2.8, () => XM.Audio.sfx("firework"));
+          a.sfx(2.9, "tada");
+          a.say("Signed, sealed, sparkled!", 3.0, 4.8);
+        },
+      },
+      {
+        name: "Sugar Rush",
+        dur: 4.8,
+        run(a) {
+          const t = a.t;
+          const rush = within(t, 0.9, 2.9);
+          a.pose((p) => {
+            if (t < 0.9) p.armF = [2.05, 2.5];
+            else if (rush) P.flail(p, t * 2);
+            else P.sleep(p, t);
+          });
+          a.body.dx = rush ? sin(t * 9) * 120 + U.rand(-4, 4) : 0;
+          a.body.dy = rush ? -abs(sin(t * 13)) * 20 : 0;
+          a.facing = rush ? (cos(t * 9) > 0 ? 1 : -1) : a.S.facing;
+          a.front((ctx) => {
+            if (t > 0.9) return;
+            const h = a.hand(a.S);
+            A.box(ctx, h.x - 8, h.y - 6, 16, 9, "#e0262c", true, 3, 1.5);
+            A.text(ctx, "SUGAR", h.x, h.y - 1, 6, "#ffffff", "center", false);
+          });
+          a.every(0.15, 0.9, 2.9, () => XM.Audio.sfx("squeak"));
+          a.say("Candy! CANDY! CAAANDY!", 1.0, 2.8);
+          zzz(a, a.S.x, a.S.y - 130, 3.1, 4.6);
+          a.sfx(3.2, "snore");
+        },
+      },
+    ],
+  });
+
   // ======================================================================
   // Reactions: what a teammate does when they get pranked.
   // ======================================================================
@@ -2070,6 +3773,61 @@
       a.body.pivot = 0;
       a.pose((p) => (p.headTilt = -0.4 * bell(a.t, 0, a.dur)));
     },
+    score(a) {
+      a.pose((p) => (p.armF = [2.75, 0.2]));
+      a.front((ctx) => {
+        const h = a.hand(a.S);
+        A.box(ctx, h.x - 12, h.y - 70, 24, 18, "#ffffff", true, 2, 2);
+        A.limb(ctx, h.x, h.y - 52, h.x, h.y - 40, 2, "#8a5a2a", false);
+      });
+    },
+    squished(a) {
+      const k = hold(a.t, 0, 0.2, a.dur - 0.3, a.dur);
+      a.body.sy = 1 - 0.14 * k + sin(a.t * 20) * 0.02 * k;
+      a.body.sx = 1 + 0.1 * k;
+      a.pose((p) => {
+        p.armF = [0.2, 0.1];
+        p.armB = [-0.2, 0.1];
+        p.headTilt = -0.3 * k;
+      });
+    },
+    thrown(a) {
+      const t = a.t;
+      const out = smooth(seg(t, 0, 0.6));
+      const back = smooth(seg(t, a.dur - 0.8, a.dur - 0.35));
+      a.body.dy = -800 * out * (1 - back);
+      a.body.dx = -a.S.facing * 200 * out * (1 - back);
+      a.body.rot = t * 14 * (1 - back);
+      a.body.pivot = 30;
+      a.pose((p) => P.flail(p, t));
+      a.sfx(0, "slide");
+      a.sfx(a.dur - 0.8, "slideDown");
+      a.once(a.dur - 0.35, () => {
+        XM.Audio.sfx("stomp");
+        XM.FX.shake(5, 0.3);
+        XM.FX.smoke(a.S.x, a.S.y, 8, "#b8b0a0");
+      });
+      if (t > a.dur - 0.35) a.stars(a.S);
+    },
+    laugh(a) {
+      a.pose((p) => {
+        p.lean = -0.2;
+        p.bob = -abs(sin(a.t * 18)) * 4;
+        p.armF = [0.9, 1.6];
+        p.armB = [0.8, 1.7];
+      });
+      a.every(0.4, 0, a.dur, () => XM.FX.text(a.S.x + U.rand(-20, 20), a.S.y - a.S.hh * a.S.sc - 20, "HA", "#ffe14a", 14, 0.6));
+    },
+    awe(a) {
+      a.pose((p) => {
+        p.headTilt = -0.45;
+        p.lean = -0.12;
+        p.armF = [1.6, 1.3];
+      });
+    },
+    pose(a) {
+      a.state = "victory";
+    },
   };
 
   // ======================================================================
@@ -2081,15 +3839,29 @@
       this.t = 0;
       this.clicked = false;
       this.slotsCache = [];
+      this.lineup = [];
+      this.shuffleLineup();
     }
 
-    slots(showAll) {
+    // Picks a fresh lineup of unlocked heroes, favoring the ones who sat out last time.
+    shuffleLineup() {
+      const prev = this.lineup;
+      const pool = shuffle(XM.CHARS.map((c) => c.id).filter((id) => ANTICS[id] && XM.Save.char(id).unlocked));
+      pool.sort((x, y) => (prev.includes(x) ? 1 : 0) - (prev.includes(y) ? 1 : 0));
+      const pick = shuffle(pool.slice(0, LINEUP_SIZE));
+      if (pick.length > 1 && pick.join() === prev.join()) pick.push(pick.shift());
+      this.lineup = pick;
+      this.reset();
+    }
+
+    slots() {
       const vw = XM.VIEW.w;
       const vh = XM.VIEW.h;
-      return IDS.map((id, i) => {
+      const gap = Math.min(86, vw * 0.075);
+      return this.lineup.map((id, i) => {
         const ch = XM.CHAR[id];
         const hh = id === "professorx" ? 62 : ch.body.legs + ch.body.torso + ch.body.head * 2 + 2;
-        return { id, i, ch, x: vw * 0.56 + i * Math.min(80, vw * 0.07), y: vh - 40 - (i % 2) * 18, sc: SCALE, facing: -1, hh, visible: showAll || XM.Save.char(id).unlocked };
+        return { id, i, ch, x: vw * 0.58 + i * gap, y: vh - 40 - (i % 2) * 18, sc: SCALE, facing: -1, hh, visible: true };
       });
     }
 
@@ -2166,6 +3938,7 @@
         state: "idle",
         kind: null,
         prog: 0,
+        combo: 0,
         phase: 0,
         power: 0,
         speed: 0,
@@ -2265,8 +4038,8 @@
       return a;
     }
 
-    draw(ctx, showAll) {
-      const slots = this.slots(showAll);
+    draw(ctx) {
+      const slots = this.slots();
       this.slotsCache = slots;
       const bubbles = [];
       for (const S of slots) {
@@ -2297,7 +4070,7 @@
         ctx.scale(b.sx, b.sy);
         ctx.translate(0, piv);
         const facing = a.facing * (b.flip ? -1 : 1);
-        const an = { state: a.state, t: a.state === "idle" ? this.t + S.i : a.t, phase: a.phase, kind: a.kind, prog: a.prog, power: a.power, speed: a.speed, vy: a.vy, hd: true, pose: a.poseFn };
+        const an = { state: a.state, t: a.state === "idle" ? this.t + S.i : a.t, phase: a.phase, kind: a.kind, prog: a.prog, combo: a.combo, power: a.power, speed: a.speed, vy: a.vy, hd: true, pose: a.poseFn };
         XM.CharArt.draw(ctx, S.id, a.look || look, an, 0, 0, facing, S.sc, b.alpha);
         ctx.restore();
         for (const fn of a.fronts) fn(ctx);

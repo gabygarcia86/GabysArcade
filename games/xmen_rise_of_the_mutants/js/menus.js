@@ -81,6 +81,8 @@
     }
 
     show(name, data = {}, push = true) {
+      // A new lineup of heroes every time the main menu comes back.
+      if (name === "main" && this.current !== "main" && this.app.antics) this.app.antics.shuffleLineup();
       if (push && this.current && this.current !== name) this.stack.push({ name: this.current, data: this.data });
       this.current = name;
       this.data = data;
