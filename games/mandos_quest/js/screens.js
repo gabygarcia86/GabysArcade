@@ -156,7 +156,6 @@
       const { save, progression } = app;
       return `
         <section class="screen main-menu">
-          <a class="arcade-link" href="../../index.html">&#8592; Gaby&rsquo;s Arcade</a>
           <div class="menu-column">
             <h1 class="logo"><span>Mando&rsquo;s</span><strong>Quest</strong><em>The Last Star Map</em></h1>
             <nav class="menu-list" aria-label="Main menu">
@@ -167,7 +166,8 @@
               ${button("open", `Bounty Pucks <small>${progression.totalPucks()}/30</small>`, { id: "pucks" })}
               ${button("open", `Leaderboard${save.pendingScore ? " <small>Score to submit</small>" : ""}`, { id: "leaderboard" })}
               ${button("open", "Options", { id: "options" })}
-              ${button("open", "Credits", { id: "credits", kind: "full-row" })}
+              ${button("open", "Credits", { id: "credits" })}
+              <a class="btn arcade-link" href="../../index.html">&#8592; Gaby&rsquo;s Arcade</a>
             </nav>
             ${app.saveManager.available ? "" : `<p class="warning">This browser is blocking storage, so progress can't be saved.</p>`}
           </div>
