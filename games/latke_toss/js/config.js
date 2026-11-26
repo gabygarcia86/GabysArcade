@@ -74,6 +74,9 @@ export const DIFFICULTIES = {
     label: 'Medium',
     tagline: 'Slides side to side',
     center: { x: 0, y: 0, z: -2.8 },
+    // Each game the pot's distance from the plate is random within this range (its side
+    // to side slide stays centered). Not much closer than the old -2.8, up to ~1.4 farther.
+    randomCenter: { x: [0, 0], z: [-4.2, -2.4] },
     amplitude: { x: 2.3, y: 0, z: 0 },
     speed: { x: 0.9, y: 0, z: 0 },
     phase: { x: 0, y: 0, z: 0 },

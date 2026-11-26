@@ -8,7 +8,7 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 
 1. Pick a difficulty on the title screen:
    - **Easy**: the pot sits still, at a different random spot each game.
-   - **Medium**: the pot slides side to side.
+   - **Medium**: the pot slides side to side, at a different random distance each game.
    - **Hard**: the pot floats and drifts left/right, up/down and toward/away from you. A glowing column and ring on the table show its height and position.
 2. Press **Start Game**. After a short "Ready? Go!" the 60-second clock starts.
 3. Press (or touch) the latke on the plate, **drag upward toward the pot** to aim, and **release** to toss.
