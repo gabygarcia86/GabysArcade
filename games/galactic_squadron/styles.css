@@ -299,6 +299,13 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.back-btn,
+.back-btn:link,
+.back-btn:visited,
+.back-btn:hover,
+.back-btn:focus-visible {
   text-decoration: none;
 }
 

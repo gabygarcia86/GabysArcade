@@ -360,18 +360,19 @@ body:not(.touch) .touch-only {
   color: var(--muted);
 }
 
-.back-link {
-  position: absolute;
-  left: max(14px, env(safe-area-inset-left));
-  top: max(12px, env(safe-area-inset-top));
-  color: var(--muted);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-decoration: none;
+/* The title screen's link back to the arcade, styled like the menu buttons around it. */
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.back-link:hover {
-  color: var(--cyan);
+.back-btn,
+.back-btn:link,
+.back-btn:visited,
+.back-btn:hover,
+.back-btn:focus-visible {
+  text-decoration: none;
 }
 
 /* -------------------------------------------------------------------- menu */
@@ -1245,6 +1246,23 @@ select:focus-visible {
 
   .btn {
     min-height: 40px;
+  }
+}
+
+/* Very short landscape phones: tighten the title buttons so the whole menu, including the
+   ARCADE button, fits without scrolling. */
+@media (max-height: 400px) and (orientation: landscape) {
+  .title-buttons .btn {
+    min-height: 36px;
+    margin-top: 0.4em;
+  }
+
+  .title-buttons .btn.big {
+    min-height: 46px;
+  }
+
+  .controls-hint {
+    margin-top: 0.6em;
   }
 }
 
