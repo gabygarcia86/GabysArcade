@@ -522,12 +522,14 @@
       XM.BG.draw(ctx, bg, this.t * 40, 0, this.t, vh);
       ctx.fillStyle = "rgba(8,4,20,0.45)";
       ctx.fillRect(0, 0, vw, vh);
-      // The team, lined up on the right (or under the logo on short screens). Click them
-      // for silly antics (menuAntics.js).
+      // The title screen shows Cyclops rallying the team; the menu shows the team, lined up
+      // on the right (or under the logo on short screens). Click them for silly antics
+      // (menuAntics.js).
       this.antics.area = this.menuLineupArea();
       ctx.save();
       ctx.translate(XM.FX.shakeX, XM.FX.shakeY);
-      this.antics.draw(ctx);
+      if (this.state === "splash") this.antics.drawSplash(ctx, this.t);
+      else this.antics.draw(ctx);
       XM.FX.draw(ctx, { x: 0 });
       ctx.restore();
       ctx.fillStyle = A.halftone(ctx, "rgba(255,255,255,0.04)");
