@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS = {
   speedLines: true,
   touch: 'auto',      // auto | on | off
   showFps: false,
+  fullscreen: true,   // go full screen automatically on the first tap and on PLAY
 };
 
 function defaultStats() {
@@ -94,7 +95,7 @@ function sanitize(raw) {
   const s = raw.settings || {};
   if (Number.isFinite(s.music)) d.settings.music = Math.round(Math.min(100, Math.max(0, s.music)));
   if (Number.isFinite(s.sfx)) d.settings.sfx = Math.round(Math.min(100, Math.max(0, s.sfx)));
-  for (const k of ['ambience', 'shake', 'speedLines', 'showFps']) if (typeof s[k] === 'boolean') d.settings[k] = s[k];
+  for (const k of ['ambience', 'shake', 'speedLines', 'showFps', 'fullscreen']) if (typeof s[k] === 'boolean') d.settings[k] = s[k];
   if (['auto', 'low', 'medium', 'high'].includes(s.quality)) d.settings.quality = s.quality;
   if (['auto', 'on', 'off'].includes(s.touch)) d.settings.touch = s.touch;
 
