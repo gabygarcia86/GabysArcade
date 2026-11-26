@@ -199,7 +199,7 @@
       body: { legs: 28, torso: 20, head: 8.5, chest: 15, hip: 11, arm: 5, leg: 6, lean: 0.12 },
       joinsAfter: 3,
       attacks: {
-        basic: { name: "Teleport Strike", desc: "Blink next to the nearest enemy and strike." },
+        basic: { name: "Sword Strike", desc: "Blink next to the nearest enemy and slash with his sword." },
         special: { name: "Rapid Teleport Attack", desc: "Four lightning-fast teleport strikes on nearby foes." },
         ultimate: { name: "Teleport Slash Barrage", desc: "Teleport across the battlefield, striking every enemy three times." },
       },

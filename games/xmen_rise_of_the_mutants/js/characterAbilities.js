@@ -547,13 +547,15 @@
 
     // ===================== NIGHTCRAWLER =====================
     nightcrawler: {
+      // Sword Strike: blink beside the nearest foe and slash with his sword (a 3-hit
+      // combo of alternating cuts; the blade itself is drawn in characterArt.js).
       basic(p, w, c) {
-        p.act("attack", c === 1 ? "kick" : "slash", 0.24);
+        p.act("attack", "slash", 0.24);
         const e = w.combat.nearest(p.cx, p.cy, 170);
         if (e && Math.abs(e.y + e.h - (p.y + p.h)) < 90 && !e.prop) blinkTo(w, p, e);
         XM.Audio.sfx("slash");
-        slashFx(w, p, "#b09aff", 1, c === 1);
-        w.later(0.05, () => w.combat.melee(front(p, 42, 50), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
+        slashFx(w, p, "#e4e8ff", c === 2 ? 1.25 : 1.1, c === 1);
+        w.later(0.05, () => w.combat.melee(front(p, 54, 54), dmgB(p, c) * 1.05, { kb: 150, dir: p.facing, color: "#b09aff" }));
       },
       special(p, w) {
         p.act("special", "slash", 0.62);
