@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Coming Soon - X-Men: Rise of the Mutants</title>
+    <script src="../../assets/js/coming-soon-guard.js"></script>
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0b0716">
+    <meta name="description"
+      content="X-Men: Rise of the Mutants: a 2D superhero action platformer RPG with 20 story levels, 12 playable X-Men, 120 outfits and 10 boss battles.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/icon-32.png">
+    <link rel="icon" type="image/png" sizes="114x114"
+      href="icon/icon-114.png">
+    <link rel="icon" type="image/png" sizes="128x128"
+      href="icon/icon-128.png">
+    <link rel="icon" type="image/png" sizes="256x256"
+      href="icon/icon-256.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
+    <link rel="preload" href="../../assets/fonts/oxanium-latin-wght-normal.woff2"
+      as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="game" aria-label="X-Men: Rise of the Mutants game view"></canvas>
+
+      <div id="touch" hidden>
+        <div class="t-ctl t-stick" data-ctl="stick" aria-label="Movement joystick"><div class="t-knob"></div></div>
+        <button class="t-ctl t-btn jump" data-ctl="jump" data-action="jump" type="button">JUMP</button>
+        <button class="t-ctl t-btn attack" data-ctl="attack" data-action="attack" type="button">ATK</button>
+        <button class="t-ctl t-btn special" data-ctl="special" data-action="special" type="button">SPC</button>
+        <button class="t-ctl t-btn ultimate" data-ctl="ultimate" data-action="ultimate" type="button">ULT</button>
+        <button class="t-ctl t-btn dodge" data-ctl="dodge" data-action="dodge" type="button">DODGE</button>
+        <button class="t-ctl t-btn interact ghost" data-ctl="interact" data-action="interact" type="button">USE</button>
+      </div>
+
+      <button id="pause-btn" type="button" aria-label="Pause" hidden><i></i><i></i></button>
+
+      <div id="story-controls" hidden>
+        <button id="story-skip" class="btn ghost" type="button">Skip ▶▶</button>
+        <button id="story-next" class="btn primary" type="button">Next ▶</button>
+      </div>
+
+      <div id="ui" hidden></div>
+      <div id="toasts" aria-live="polite"></div>
+      <div id="rotate"><span>⟳</span><p>Turn your device sideways to play</p></div>
+      <p id="boot-error" hidden></p>
+    </main>
+    <noscript>X-Men: Rise of the Mutants needs JavaScript to run.</noscript>
+
+    <!-- Plain scripts, not ES modules, so the game also runs from file://. Order matters. -->
+    <script src="js/engine.js"></script>
+    <script src="js/saveSystem.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/collision.js"></script>
+    <script src="js/characters.js"></script>
+    <script src="js/characterCustomization.js"></script>
+    <script src="js/characterArt.js"></script>
+    <script src="js/characterProgression.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/characterAbilities.js"></script>
+    <script src="js/collectibles.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/bosses.js"></script>
+    <script src="js/backgrounds.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/story.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/leaderboard.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/menus.js"></script>
+    <script src="js/menuAntics.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
