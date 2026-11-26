@@ -107,7 +107,8 @@ html, body {
 
 .sub { margin: 0 0 .8em; color: var(--muted); text-align: center; font-size: .95em; }
 
-.logo-spacer { height: 12.4em; flex: none; }
+/* Room for the canvas-drawn logo above the main menu (1.25em = 20 game pixels). */
+.logo-spacer { height: 11.15em; flex: none; }
 
 .menu { display: flex; flex-direction: column; gap: .42em; width: 19em; }
 .row { display: flex; gap: .6em; justify-content: center; flex-wrap: wrap; align-items: center; }
@@ -139,14 +140,7 @@ html, body {
 .btn.danger:hover, .btn.danger:focus { background: linear-gradient(180deg, #ff8a7c, #c9312a); color: #2a0402; }
 .btn[disabled] { opacity: .4; cursor: not-allowed; }
 
-.back-link {
-  color: var(--muted);
-  font-size: .78em;
-  letter-spacing: .08em;
-  text-decoration: none;
-  margin-top: .8em;
-}
-.back-link:hover, .back-link:focus { color: var(--ink); outline: none; }
+a.btn { display: block; text-align: center; text-decoration: none; }
 
 .panel {
   background: var(--panel);
