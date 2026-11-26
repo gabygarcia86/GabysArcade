@@ -135,7 +135,6 @@ export class UI {
     this.screen('menu', `
       <div class="menu-wrap">
         <div class="menu-top">
-          <a class="arcade-link" href="../../index.html">‹ Gaby's Arcade</a>
           ${this.coinBadge()}
         </div>
         <h1 class="logo small">JET SKI<span>PARADISE</span></h1>
@@ -149,6 +148,7 @@ export class UI {
           <button type="button" class="btn" data-action="achievements">Achievements</button>
           <button type="button" class="btn gold" data-action="leaderboard">Leaderboard</button>
           <button type="button" class="btn" data-action="settings">Settings</button>
+          <a class="btn arcade-link" href="../../index.html">‹ Gaby's Arcade</a>
         </nav>
         <p class="menu-foot">Riding the <b>${esc(skiById(d.skis.selected).name)}</b> · ${Object.keys(d.achievements).length}/${ACHIEVEMENTS.length} achievements</p>
       </div>`, {
