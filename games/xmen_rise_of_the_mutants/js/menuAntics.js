@@ -4100,6 +4100,27 @@
       }
     }
 
+    // The title screen: Cyclops alone, rallying the team before the menu (and lineup) appears.
+    drawSplash(ctx, t) {
+      const vw = XM.VIEW.w;
+      const vh = XM.VIEW.h;
+      const ch = XM.CHAR.cyclops;
+      const sc = 2.2;
+      const S = { id: "cyclops", i: 0, ch, x: vw * 0.82, y: vh - 34, sc, facing: -1, hh: ch.body.legs + ch.body.torso + ch.body.head * 2 + 2, visible: true };
+      // Fist goes up and forward over the first half second (clear of his visor), then
+      // pumps gently; the other hand rests on his hip.
+      const raise = smooth(seg(t, 0.15, 0.6));
+      const pump = raise >= 1 ? sin(t * 3) * 0.08 : 0;
+      const pose = (p) => {
+        p.armF = [0.2 + (2.45 - 0.2) * raise + pump, 0.45 - 0.1 * raise];
+        p.armB = [-0.25 - 0.3 * raise, 0.5 + 1.1 * raise];
+        p.lean = -0.05 * raise;
+        p.headTilt = -0.1 * raise;
+      };
+      XM.CharArt.draw(ctx, S.id, XM.Outfits.current(S.id), { state: "idle", t, hd: true, pose }, S.x, S.y, S.facing, S.sc);
+      if (t > 0.5) this.bubble(ctx, { S, text: "To me, my X-Men!", think: false });
+    }
+
     bubble(ctx, b) {
       const S = b.S;
       const dx = b.body ? b.body.dx : 0;

@@ -426,14 +426,37 @@ body.reduced-motion .logo-eq i {
   text-align: center;
 }
 
-.menu-foot-actions {
+/* Back and Fullscreen share a row; Back fills it when full screen isn't available. */
+.menu-row {
   display: flex;
-  gap: 18px;
-  align-items: center;
+  gap: 12px;
 }
 
-.menu-foot a {
-  color: var(--muted);
+.menu-row > .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0.5em;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.menu-row > .btn[hidden] {
+  display: none;
+}
+
+.menu-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-back,
+.menu-back:link,
+.menu-back:visited,
+.menu-back:hover,
+.menu-back:focus-visible {
+  color: var(--text);
+  text-decoration: none;
 }
 
 /* ---------------------------------------------------------------- song select */

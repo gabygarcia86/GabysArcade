@@ -239,17 +239,10 @@ h3 {
 .best-row b { color: var(--white); }
 .dot { color: var(--pink); }
 
-.menu-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 12px;
-  font: 900 14px/1 var(--font-display);
-  color: var(--muted);
-  text-decoration: none;
-}
-.menu-back svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 3; }
-.menu-back:hover { color: var(--white); }
+/* The main menu's link back to the arcade, styled like the buttons above it. */
+.menu-back { display: flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-display); }
+.menu-back, .menu-back:link, .menu-back:visited, .menu-back:hover, .menu-back:focus-visible { text-decoration: none; }
+.menu-back svg { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 3; }
 
 /* ---------- missions & how to ---------- */
 

@@ -294,27 +294,19 @@ h3 {
   font-size: 0.82em;
 }
 
-.back-link {
-  position: absolute;
-  left: calc(var(--s) * 14px);
-  bottom: calc(var(--s) * 14px);
-  padding: 0.45em 0.9em;
-  border: 1px solid rgba(56, 214, 255, 0.35);
-  border-radius: calc(var(--s) * 8px);
-  background: rgba(10, 20, 50, 0.7);
-  color: var(--muted);
-  font: 800 0.75em var(--ui-font);
-  letter-spacing: 0.14em;
-  text-decoration: none;
-  transition: background 0.15s, box-shadow 0.15s;
+/* The title screen's link back to the arcade, styled like the menu buttons around it. */
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.back-link:hover,
-.back-link:focus-visible {
-  outline: none;
-  color: var(--text);
-  background: rgba(30, 60, 130, 0.85);
-  box-shadow: 0 0 0 2px var(--cyan);
+.back-btn,
+.back-btn:link,
+.back-btn:visited,
+.back-btn:hover,
+.back-btn:focus-visible {
+  text-decoration: none;
 }
 
 .btn.danger {

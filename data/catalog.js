@@ -355,12 +355,12 @@ window.ARCADE_CATALOG = {
     },
     {
       folder: "turkey_toss",
-      title: "Coming Soon - Turkey Toss",
+      title: "Turkey Toss",
       description:
         "A 60-second 3D Thanksgiving feast. Land turkey legs on plates, stack multipliers and bounce off the giant roast.",
       categories: ["Arcade", "Holiday"],
       tags: ["holiday", "thanksgiving", "3d", "timed", "leaderboard", "touch"],
-      added: "",
+      added: "2026-11-26",
     },
     {
       folder: "ufo_abduction",

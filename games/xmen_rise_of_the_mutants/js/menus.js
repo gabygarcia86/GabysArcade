@@ -50,6 +50,7 @@
         if (!el && this.current === "main" && !e.target.closest("a, button, input")) return this.app.menuClick(e.clientX, e.clientY);
         if (!el || el.disabled) return;
         e.preventDefault();
+        if (el.dataset.act !== "fullscreen") this.app.ensureFullscreen();
         this.act(el.dataset.act, el.dataset, el);
       });
       // A pointer cursor over the heroes on the main menu.

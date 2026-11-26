@@ -603,6 +603,7 @@ export class UI {
     toggle('set-shake', 'shake');
     toggle('set-lines', 'speedLines');
     toggle('set-fps', 'showFps');
+    toggle('set-fullscreen', 'fullscreen');
     const seg = (id, key) => {
       const box = $(id);
       const paint = () => {

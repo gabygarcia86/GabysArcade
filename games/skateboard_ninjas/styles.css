@@ -475,8 +475,9 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px soli
 .trick-table thead th { font: 900 11px/1 var(--font-display); color: var(--cyan); letter-spacing: 0.06em; }
 .trick-table tbody th { color: var(--yellow); width: 3.4em; }
 
-.back-link { position: absolute; left: 14px; bottom: -28px; color: var(--muted); font-weight: 700; font-size: 12px; text-decoration: none; }
-.back-link:hover { color: var(--white); }
+/* The title menu's link back to the arcade, styled like the buttons beside it. */
+.back-btn { font-family: var(--font-display); display: inline-flex; align-items: center; justify-content: center; }
+.back-btn, .back-btn:link, .back-btn:visited, .back-btn:hover, .back-btn:focus-visible { text-decoration: none; }
 
 .rotate-hint { display: none; margin: 34px 0 0; font-weight: 700; font-size: 13px; color: var(--yellow); text-align: center; }
 
@@ -673,6 +674,11 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px soli
   .final-score strong { font-size: 40px; }
   .results-panel { gap: 6px; }
   .btn { padding: 9px 18px; }
+  /* Title menu as a two-column grid, BACK across the bottom, so it fits a phone held sideways. */
+  .title-main { gap: 8px; }
+  .title-main .menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+  .title-main .menu-buttons .btn { font-size: 14px; padding: 8px 10px; }
+  .title-main .menu-buttons .back-btn { grid-column: 1 / -1; }
   /* All four results buttons share one row so none fall below the fold. */
   .results-panel { width: min(720px, 100%); }
   .results-actions { flex-flow: row wrap; justify-content: center; gap: 8px; }

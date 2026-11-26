@@ -172,6 +172,10 @@ export class Game {
     if (key === 'music' || key === 'sfx' || key === 'ambience') this.audio.applyVolumes();
     if (key === 'quality' || key === 'touch') this.applyQuality(key === 'quality');
     if (key === 'showFps' && !this.settings.showFps) this.ui.fps(null);
+    if (key === 'fullscreen') {
+      if (this.settings.fullscreen) this.enterFullscreen();
+      else this.exitFullscreen();
+    }
     this.save.save();
   }
 
@@ -260,6 +264,50 @@ export class Game {
     };
     window.addEventListener('pointerdown', unlock, { capture: true });
     window.addEventListener('keydown', unlock, { capture: true });
+    // Full screen on the first interaction. Browsers only allow it from a real gesture: a
+    // mouse press counts on pointerdown, but a touch only counts once the finger lifts.
+    const firstGesture = (e) => {
+      if (e.type === 'pointerdown' && e.pointerType !== 'mouse') return;
+      if (e.type === 'pointerup' && e.pointerType === 'mouse') return;
+      if (e.type === 'keydown' && ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(e.key)) return;
+      window.removeEventListener('pointerdown', firstGesture, true);
+      window.removeEventListener('pointerup', firstGesture, true);
+      window.removeEventListener('keydown', firstGesture, true);
+      this.autoFullscreen();
+    };
+    window.addEventListener('pointerdown', firstGesture, true);
+    window.addEventListener('pointerup', firstGesture, true);
+    window.addEventListener('keydown', firstGesture, true);
+    if (!this.canFullscreen()) document.getElementById('set-fullscreen-row').hidden = true;
+  }
+
+  // ----------------------------------------------------------- full screen
+  canFullscreen() {
+    const el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen); // iPhones only allow it for video
+  }
+
+  isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  // Called from taps, clicks and key presses only: browsers refuse full screen otherwise.
+  autoFullscreen() {
+    if (this.settings.fullscreen) this.enterFullscreen();
+  }
+
+  enterFullscreen() {
+    if (this.isFullscreen() || !this.canFullscreen()) return;
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    // The prefixed version returns no promise. If refused, the game keeps running windowed.
+    Promise.resolve(req.call(el, { navigationUI: 'hide' })).catch(() => {});
+  }
+
+  exitFullscreen() {
+    if (!this.isFullscreen()) return;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) Promise.resolve(exit.call(document)).catch(() => {});
   }
 
   bindWindow() {
@@ -438,6 +486,7 @@ export class Game {
 
   startRun() {
     this.audio.unlock();
+    this.autoFullscreen(); // back to full screen if the player left it
     this.audio.startMusic();
     if (this.state === 'playing' || this.state === 'paused' || this.state === 'crashing') this.endRunEarly();
     // Every level gets a turn before any of them repeats.

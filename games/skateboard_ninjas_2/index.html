@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="256x256"
       href="icon/icon-256.png">
     <link rel="apple-touch-icon" sizes="256x256" href="icon/icon-256.png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <script type="module" src="src/main.js?v=3"></script>
   </head>
   <body>
@@ -111,6 +111,10 @@
               <button id="stats-btn" class="btn btn-secondary" type="button">STATS</button>
               <button id="settings-btn" class="btn btn-secondary" type="button">SETTINGS</button>
             </div>
+            <a class="btn btn-ghost menu-back" href="../../index.html" aria-label="Back to Gaby's Arcade">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+              BACK
+            </a>
           </div>
           <p class="best-row">BEST <b id="menu-best">0</b> <span class="dot">&bull;</span> <b id="menu-best-dist">0</b> m</p>
           <div class="missions">
@@ -150,10 +154,6 @@
               <li>Power-ups: magnet (coins), shield (survive one hit), star frenzy (unlimited stars).</li>
             </ul>
           </details>
-          <a class="menu-back" href="../../index.html">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-            Back
-          </a>
         </div>
       </section>
 
@@ -323,6 +323,10 @@
               <button class="chip" type="button" data-value="on">ON</button>
               <button class="chip" type="button" data-value="off">OFF</button>
             </div>
+          </div>
+          <div class="set-row" id="set-fullscreen-row">
+            <span class="set-label">Full screen</span>
+            <button id="set-fullscreen" class="chip" type="button" aria-pressed="true">ON</button>
           </div>
           <div class="set-row">
             <span class="set-label">Show FPS</span>
