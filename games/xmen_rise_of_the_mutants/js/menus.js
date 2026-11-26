@@ -19,7 +19,7 @@
     { state: "victory", dur: 1.8 },
   ];
   const KIND_BY_CHAR = {
-    cyclops: ["punch", "visor", "visor"],
+    cyclops: ["visor", "visor", "visor"],
     wolverine: ["slash", "slash", "slash"],
     storm: ["blast", "rise", "rise"],
     jean: ["blast", "wave", "rise"],

@@ -17,6 +17,26 @@
   const aim = (p, up, speed) => (up ? { vx: p.facing * speed * 0.72, vy: -speed * 0.72 } : { vx: p.facing * speed, vy: 0 });
   const targets = (w) => w.combat.onScreen().filter((e) => !e.prop || e.objective);
 
+  // The nearest enemy in front of a level shot from (sx, sy) that the shot would pass
+  // over (it sits lower than the shot), within `range`. Null if the nearest enemy in
+  // front is already in the shot's path, or nothing is low enough.
+  function lowTarget(w, p, sx, sy, r, range) {
+    let best = null;
+    let bd = Infinity;
+    for (const e of w.enemies) {
+      if (e.dead) continue;
+      const d = (e.x + e.w / 2 - sx) * p.facing;
+      if (d < -e.w / 2 || d > range) continue;
+      if (e.y + e.h < sy - r || e.y > sy + 160) continue; // above the shot, or far below
+      if (d < bd) {
+        bd = d;
+        best = e;
+      }
+    }
+    if (!best || best.y <= sy + r) return null; // level shot already hits it
+    return best;
+  }
+
   function slashFx(w, p, color, big = 1, flip = false) {
     let t = 0;
     const x = p.cx;
@@ -183,22 +203,42 @@
   const Abilities = {
     // ===================== CYCLOPS =====================
     cyclops: {
+      // Optic Blast: no punches. Each hit fires a small optic blast from his visor; the
+      // third hit of a combo fires a medium one. Hold up to aim diagonally.
       basic(p, w, c, up) {
-        p.act("attack", up ? "aimUp" : "punch", 0.26);
-        XM.Audio.sfx("punch");
+        const big = c === 2;
+        p.act("attack", up ? "aimUp" : "visor", 0.26);
+        if (big) p.power = 0.6;
         w.later(0.07, () => {
-          if (up) {
-            const v = aim(p, true, 950);
-            w.combat.shoot({ kind: "optic", x: p.cx, y: p.y + p.h * 0.2, ...v, r: 7, dmg: dmgB(p, c) * 0.9, life: 0.45, color: "#ff3b3b", kb: 140 });
-            XM.Audio.sfx("blast");
-            return;
+          const speed = big ? 980 : 1050;
+          const life = big ? 0.5 : 0.4;
+          const r = big ? 10 : 5;
+          const sx = p.cx + p.facing * 8;
+          const sy = p.y + p.h * 0.2;
+          let v = aim(p, up, speed);
+          // The blast leaves at eye level, which flies over short enemies on the ground
+          // (drones, creatures, turrets...). Angle it down at the nearest one in front.
+          if (!up) {
+            const e = lowTarget(w, p, sx, sy, r, speed * life);
+            if (e) {
+              const dx = Math.max(12, Math.abs(e.x + e.w / 2 - sx));
+              const ang = Math.min(1.0, Math.atan2(e.y + e.h / 2 - sy, dx));
+              v = { vx: p.facing * speed * Math.cos(ang), vy: speed * Math.sin(ang) };
+            }
           }
-          w.combat.melee(front(p, 34, 30), dmgB(p, c), { kb: c === 2 ? 260 : 130, dir: p.facing, color: "#ffd84a" });
-          if (c === 2) {
-            const h = hand(p);
-            w.combat.shoot({ kind: "optic", x: h.x, y: p.y + p.h * 0.2, vx: p.facing * 1000, vy: 0, r: 7, dmg: dmgB(p, c) * 0.8, life: 0.28, color: "#ff3b3b", kb: 200 });
-            XM.Audio.sfx("blast");
-          }
+          w.combat.shoot({
+            kind: "optic",
+            x: sx,
+            y: sy,
+            ...v,
+            r,
+            dmg: dmgB(p, c) * (big ? 1.1 : 0.9),
+            life,
+            color: "#ff3b3b",
+            kb: big ? 260 : 120,
+          });
+          XM.Audio.sfx("blast");
+          if (big) XM.FX.shake(2, 0.12);
         });
       },
       special(p, w) {

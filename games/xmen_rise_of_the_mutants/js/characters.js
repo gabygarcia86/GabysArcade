@@ -27,7 +27,7 @@
       size: { w: 26, h: 62 },
       body: { legs: 30, torso: 22, head: 8.5, chest: 17, hip: 13, arm: 6, leg: 7 },
       attacks: {
-        basic: { name: "Optic Punch", desc: "A three-hit combo; the last punch fires a short optic burst." },
+        basic: { name: "Optic Blast", desc: "Fire small optic blasts; the third hit of a combo fires a bigger one." },
         special: { name: "Wide Optic Blast", desc: "A wide, piercing beam that pushes enemies back." },
         ultimate: { name: "Massive Optic Beam", desc: "A screen-length beam that damages every enemy in its path." },
       },
