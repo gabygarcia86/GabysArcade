@@ -56,6 +56,8 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 | Shield | Shift | Shield |
 | Pause | Escape | Pause button |
 
+**Options > Touch control size** makes the on-screen controls Normal, Large or Extra large. **Options > Arrange touch controls** opens an editor where you drag each control (or the movement arrows with Drop) to a new place, for both the ground and the space controls. Reset puts them back. The layout is saved with your settings as a share of the screen, so it also fits after rotating the device, and controls are always kept on screen.
+
 On phones and tablets, starting, restarting or retrying a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there. **Options > Toggle fullscreen** works on any browser that supports it.
 
 ## Campaign
@@ -164,6 +166,7 @@ mandos_quest/
     ├── audioConfig.js      ★ Your audio file paths
     ├── audioManager.js     Playback and generated audio
     ├── inputManager.js     Keyboard and multi-touch
+    ├── touchLayout.js      Touch control size, placement and the editor for them
     ├── leaderboard.js      Supabase requests
     ├── hud.js              In-game display
     ├── notices.js          Popup placement on touch and small screens

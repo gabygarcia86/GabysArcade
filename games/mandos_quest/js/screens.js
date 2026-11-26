@@ -366,6 +366,8 @@
               ${select("effects", "Visual effects", [["high", "High"], ["low", "Low: faster"]])}
               ${toggle("shake", "Screen shake")}
               ${select("touch", "Touch controls", [["auto", "Automatic"], ["on", "Always show"], ["off", "Always hide"]])}
+              ${select("touchSize", "Touch control size", MQ.TouchLayout.SIZE_NAMES)}
+              ${button("touchLayout", "Arrange touch controls")}
               ${app.canFullscreen ? button("fullscreen", "Toggle fullscreen") : ""}
             </div>
             <div class="option-group">

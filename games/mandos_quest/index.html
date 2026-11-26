@@ -35,7 +35,7 @@
       <canvas id="notices" aria-hidden="true" hidden></canvas>
 
       <div id="touch" hidden>
-        <div class="touch-left">
+        <div class="touch-left" data-layout="move">
           <div class="touch-move" data-move-pad>
             <div class="touch-btn" data-action="left" aria-label="Move left"><span>&#9664;</span></div>
             <div class="touch-btn" data-action="right" aria-label="Move right"><span>&#9654;</span></div>
@@ -44,22 +44,22 @@
           <div class="touch-btn drop" data-action="down" aria-label="Drop through ledge"><span>&#9660;<small>Drop</small></span></div>
         </div>
         <div class="touch-actions">
-          <div class="touch-btn small" data-action="switch"><span>Weapon</span></div>
-          <div class="touch-btn small force" data-action="force"><span>Force</span></div>
-          <div class="touch-btn fire" data-action="attack"><span>Fire</span></div>
-          <div class="touch-btn jump" data-action="jump"><span>Jump<small>hold to fly</small></span></div>
+          <div class="touch-btn small" data-action="switch" data-layout="weapon"><span>Weapon</span></div>
+          <div class="touch-btn small force" data-action="force" data-layout="force"><span>Force</span></div>
+          <div class="touch-btn fire" data-action="attack" data-layout="fire"><span>Fire</span></div>
+          <div class="touch-btn jump" data-action="jump" data-layout="jump"><span>Jump<small>hold to fly</small></span></div>
         </div>
       </div>
 
       <div id="space-touch" hidden>
-        <div class="space-stick" aria-label="Flight stick">
+        <div class="space-stick" aria-label="Flight stick" data-layout="stick">
           <div class="stick-base"><i class="stick-knob"></i></div>
         </div>
         <div class="touch-actions">
-          <div class="touch-btn small upgrade" data-action="switch"><span>Upgrade<small id="space-upgrade-name">None</small></span></div>
-          <div class="touch-btn small shield" data-action="dodge"><span>Shield</span></div>
-          <div class="touch-btn rockets" data-action="force"><span>Rockets</span></div>
-          <div class="touch-btn fire" data-action="attack"><span>Fire</span></div>
+          <div class="touch-btn small upgrade" data-action="switch" data-layout="upgrade"><span>Upgrade<small id="space-upgrade-name">None</small></span></div>
+          <div class="touch-btn small shield" data-action="dodge" data-layout="shield"><span>Shield</span></div>
+          <div class="touch-btn rockets" data-action="force" data-layout="rockets"><span>Rockets</span></div>
+          <div class="touch-btn fire" data-action="attack" data-layout="spaceFire"><span>Fire</span></div>
         </div>
       </div>
 
@@ -148,6 +148,7 @@
     <script src="js/screens.js"></script>
     <script src="js/uiManager.js"></script>
     <script src="js/gameStateManager.js"></script>
+    <script src="js/touchLayout.js"></script>
     <script src="js/gameEngine.js"></script>
     <script src="js/main.js"></script>
   </body>

@@ -1319,7 +1319,8 @@ p {
 
 #touch,
 #space-touch {
-  --size: clamp(58px, 17vmin, 92px);
+  --touch-scale: 1;
+  --size: calc(clamp(58px, 17vmin, 92px) * var(--touch-scale));
   position: absolute;
   z-index: 3;
   right: 0;
@@ -1335,6 +1336,94 @@ p {
 
 .touch-left {
   position: relative;
+}
+
+/* Moved by the player in Options > Arrange touch controls. */
+[data-layout] {
+  position: relative;
+}
+
+/* ---------- Arranging the touch controls ---------- */
+
+#touch.is-editing,
+#space-touch.is-editing {
+  z-index: 31;
+}
+
+.is-editing [data-layout] {
+  outline: 2px dashed rgba(255, 212, 92, 0.8);
+  outline-offset: 4px;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.is-editing .is-dragging {
+  outline-style: solid;
+  cursor: grabbing;
+}
+
+#touch-editor-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(5, 10, 18, 0.72);
+}
+
+#touch-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 32;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b));
+  pointer-events: none;
+}
+
+#touch-editor[data-spot="middle"] {
+  align-items: center;
+}
+
+#touch-editor[data-spot="bottom"] {
+  align-items: flex-end;
+}
+
+#touch-editor[hidden],
+#touch-editor-backdrop[hidden] {
+  display: none;
+}
+
+.touch-editor-bar {
+  pointer-events: auto;
+}
+
+.touch-editor-bar {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  max-width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 20, 34, 0.94);
+}
+
+.touch-editor-title {
+  margin: 0;
+  font-weight: 800;
+  text-align: center;
+}
+
+.touch-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.touch-editor-row .btn {
+  min-height: 38px;
+  padding: 6px 12px;
 }
 
 .touch-move {
@@ -1571,7 +1660,7 @@ p {
 
   #touch,
   #space-touch {
-    --size: clamp(66px, 20vw, 100px);
+    --size: calc(clamp(66px, 20vw, 100px) * var(--touch-scale));
     padding-bottom: calc(5vh + var(--safe-b));
   }
 
