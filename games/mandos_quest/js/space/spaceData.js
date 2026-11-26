@@ -50,6 +50,8 @@
       missileEvery: 0.72,
       missileDamage: 34,
       missileBlast: 62,
+      // How far below the ship each volley levels off, in turn. Infinity drops to the surface.
+      missileLanes: [70, 170, Infinity, 270, 120, Infinity],
       laserEvery: 0.6,
       laserTime: 0.17,
       laserDamage: [42, 64],

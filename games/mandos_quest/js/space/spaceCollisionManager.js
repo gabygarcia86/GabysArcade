@@ -77,6 +77,23 @@
       return best;
     }
 
+    // The nearest target ahead of a cruising missile and close to its height.
+    laneTarget(x, y) {
+      let best = null;
+      let nearest = 520;
+      for (let i = 0; i < this.targets.length; i++) {
+        const t = this.targets[i];
+        if (!t.active || !t.hittable || t.kind === "rock" || t.shielded) continue;
+        if (t.x < x - 30 || Math.abs(t.y - y) > 90 + (t.ry || 0)) continue;
+        const distance = hypot(t.x - x, t.y - y);
+        if (distance < nearest) {
+          nearest = distance;
+          best = t;
+        }
+      }
+      return best;
+    }
+
     floorAt(x, fallback) {
       let floor = fallback;
       for (let i = 0; i < this.solids.length; i++) {

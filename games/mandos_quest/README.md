@@ -94,7 +94,7 @@ Each capsule moves the highlight one place along the upgrade bar. Install the hi
 | Twin Blaster | Two bolts, then three | 2 | Always |
 | Spread Shot | Angled bolts | 2 | After Level 4 |
 | Rear Shot | Fires backward, for ships that circle behind | 2 | Always |
-| Missile Launcher | Missiles that drop and seek targets on the surface | 2 | Always |
+| Missile Launcher | Missiles that drop to different heights, then fly ahead and seek targets near their height. Some go all the way down and seek targets on the surface | 2 | Always |
 | Energy Shield | Absorbs damage until it's used up | 1 | Always. Stronger after Level 8 |
 | Laser Cannon | A piercing beam | 2 | After Level 8 |
 
@@ -214,4 +214,3 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- fix space missions missle upgrade, it just goes to the bottom, have it go at different hieghts
