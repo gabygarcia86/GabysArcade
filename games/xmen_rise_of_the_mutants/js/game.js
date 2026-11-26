@@ -283,9 +283,14 @@
       const p = this.player;
       let x;
       let y;
+      // An ambush in progress keeps its gates shut, so come back inside it.
+      const arena = this.level.arenas.find((a) => a.active);
       if (this.boss && !this.boss.dead) {
         x = this.boss.arena.x0 + 60;
         y = this.boss.arena.floor;
+      } else if (arena) {
+        x = arena.x0 + T * 2;
+        y = this.level.g * T;
       } else if (this.checkpoint) {
         x = this.checkpoint.x - p.w / 2;
         y = this.checkpoint.y;
@@ -506,7 +511,6 @@
             a.wave = -1;
             this.setGate(a.gates[0], a.rows, true);
             this.setGate(a.gates[1], a.rows, true);
-            this.cam.lock = { x0: a.x0, x1: a.x1 };
             XM.Audio.sfx("alarm");
             this.say("AMBUSH! Defeat every enemy!", 2);
             this.nextWave(a);
@@ -521,7 +525,6 @@
             a.active = false;
             this.setGate(a.gates[0], a.rows, false);
             this.setGate(a.gates[1], a.rows, false);
-            this.cam.lock = null;
             XM.Audio.sfx("unlock");
             this.say("Area clear!", 1.6);
             this.addScore(1000, p.cx, p.y - 30);
@@ -562,7 +565,6 @@
         if (!locked && p.cx > bd.trigger && !p.dead) {
           bd.started = true;
           this.setGate(bd.gate, bd.rows, true);
-          this.cam.lock = { x0: bd.arena.x0 - T, x1: bd.arena.x1 };
           this.boss = new XM.Boss(this, bd.id, bd.arena);
           this.enemies.push(this.boss);
           this.bossBanner = 3.2;
@@ -621,7 +623,8 @@
       const cam = this.cam;
       const vw = XM.VIEW.w;
       const vh = XM.VIEW.h;
-      XM.BG.draw(ctx, this.bg, cam.x, cam.y, this.t, this.level.H * T);
+      // The backdrop stays put when the camera looks below the level's bottom edge.
+      XM.BG.draw(ctx, this.bg, cam.x, Math.min(cam.y, Math.max(0, this.level.H * T - vh)), this.t, this.level.H * T);
       ctx.save();
       const ox = Math.round(-cam.x + XM.FX.shakeX);
       const oy = Math.round(-cam.y + XM.FX.shakeY);
@@ -656,19 +659,26 @@
     drawTiles(ctx, fakeOnly) {
       const L = this.level;
       const cam = this.cam;
-      const x0 = Math.max(0, Math.floor(cam.x / T) - 1);
-      const x1 = Math.min(L.W - 1, Math.ceil((cam.x + XM.VIEW.w) / T) + 1);
+      // The camera can look past the level's edges: draw the solid walls beyond the sides
+      // (physics treats them as solid) and carry the bottom row's ground on downward.
+      const x0 = Math.floor(cam.x / T) - 1;
+      const x1 = Math.ceil((cam.x + XM.VIEW.w) / T) + 1;
       const y0 = Math.max(0, Math.floor(cam.y / T) - 1);
-      const y1 = Math.min(L.H - 1, Math.ceil((cam.y + XM.VIEW.h) / T) + 1);
+      const y1 = Math.ceil((cam.y + XM.VIEW.h) / T) + 1;
       const ts = this.tiles;
       const t = this.t;
       for (let ty = y0; ty <= y1; ty++) {
         const row = ty * L.W;
         for (let tx = x0; tx <= x1; tx++) {
-          const code = L.tiles[row + tx];
-          if (!code) continue;
           const x = tx * T;
           const y = ty * T;
+          if (tx < 0 || tx >= L.W || ty >= L.H) {
+            if (fakeOnly) continue;
+            if (tx < 0 || tx >= L.W || L.tiles[(L.H - 1) * L.W + tx] === TL.SOLID) ctx.drawImage(ts.body, x, y);
+            continue;
+          }
+          const code = L.tiles[row + tx];
+          if (!code) continue;
           if (fakeOnly) {
             if (code !== TL.FAKE) continue;
             const inside = L.secrets.some((s) => s.inside && Math.abs(s.x + s.w - x) < T * 2);
