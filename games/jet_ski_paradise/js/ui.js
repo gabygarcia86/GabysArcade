@@ -79,9 +79,21 @@ export class UI {
 
   // Renders a screen. opts: { onAction, onInput, onChange, onSubmit, back, showroom: 'ski'|'rider', cls }
   screen(name, html, opts = {}) {
+    // Redrawing the same screen (after picking a colour, a tab, a part...) keeps each
+    // scrolling area where it was, instead of jumping back to the top.
+    const scrollers = ['.screen', '.side-panel', '.panel-body'];
+    const kept = name === this.current
+      ? scrollers.map((sel) => { const el = this.root.querySelector(sel); return el ? el.scrollTop : 0; })
+      : null;
     this.current = name;
     this.handlers = opts;
     this.root.innerHTML = `<div class="screen screen-${name}${opts.showroom ? ' showroom-screen' : ''}${opts.cls ? ' ' + opts.cls : ''}">${html}</div>`;
+    if (kept) {
+      scrollers.forEach((sel, i) => {
+        const el = this.root.querySelector(sel);
+        if (el && kept[i]) el.scrollTop = kept[i];
+      });
+    }
     this.app.setShowroom(opts.showroom || null);
     const first = this.root.querySelector('[autofocus]');
     if (first) first.focus();

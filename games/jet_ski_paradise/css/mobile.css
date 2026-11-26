@@ -109,6 +109,14 @@
   .side-panel { width: 55%; height: 100%; border-radius: 0; border-left: 1px solid var(--line); border-top: none; }
 }
 
+/* On small screens the details above the tabs (a jet ski's description, stats and buy
+   button) left the option list (paint colours and so on) squeezed into a sliver too
+   small to see or scroll. Here the whole side panel scrolls as one instead. */
+@media (max-width: 760px), (max-height: 520px) {
+  .side-panel { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+  .side-panel .panel-body { flex: none; overflow: visible; padding-bottom: 18px; }
+}
+
 @media (max-width: 480px) {
   .panel { border-radius: 16px; }
   .btn { font-size: 16px; padding: 10px 16px; }
