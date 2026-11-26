@@ -37,6 +37,17 @@
     return best;
   }
 
+  // Velocity for a basic shot from (sx, sy). Like aim(), but a level shot that would fly
+  // over a short enemy on the ground (drones, creatures, turrets...) angles down at it.
+  function aimLow(w, p, up, speed, sx, sy, r, range) {
+    if (up) return aim(p, true, speed);
+    const e = lowTarget(w, p, sx, sy, r, range);
+    if (!e) return aim(p, false, speed);
+    const dx = Math.max(12, Math.abs(e.x + e.w / 2 - sx));
+    const ang = Math.min(1.0, Math.atan2(e.y + e.h / 2 - sy, dx));
+    return { vx: p.facing * speed * Math.cos(ang), vy: speed * Math.sin(ang) };
+  }
+
   function slashFx(w, p, color, big = 1, flip = false) {
     let t = 0;
     const x = p.cx;
@@ -215,17 +226,8 @@
           const r = big ? 10 : 5;
           const sx = p.cx + p.facing * 8;
           const sy = p.y + p.h * 0.2;
-          let v = aim(p, up, speed);
-          // The blast leaves at eye level, which flies over short enemies on the ground
-          // (drones, creatures, turrets...). Angle it down at the nearest one in front.
-          if (!up) {
-            const e = lowTarget(w, p, sx, sy, r, speed * life);
-            if (e) {
-              const dx = Math.max(12, Math.abs(e.x + e.w / 2 - sx));
-              const ang = Math.min(1.0, Math.atan2(e.y + e.h / 2 - sy, dx));
-              v = { vx: p.facing * speed * Math.cos(ang), vy: speed * Math.sin(ang) };
-            }
-          }
+          // Leaves at eye level, so it angles down at short enemies on the ground.
+          const v = aimLow(w, p, up, speed, sx, sy, r, speed * life);
           w.combat.shoot({
             kind: "optic",
             x: sx,
@@ -414,8 +416,13 @@
       basic(p, w, c, up) {
         p.act("attack", up ? "aimUp" : "blast", 0.24);
         XM.Audio.sfx("psychic");
-        const h = hand(p, up);
-        w.later(0.05, () => w.combat.shoot({ kind: "psy", x: h.x, y: h.y, ...aim(p, up, 720), r: c === 2 ? 10 : 7, dmg: dmgB(p, c), life: 0.7, color: "#ff6ad5", kb: 160, trail: 0.4 }));
+        w.later(0.05, () => {
+          // Recomputed when it fires; angles down at short enemies on the ground.
+          const h = hand(p, up);
+          const r = c === 2 ? 10 : 7;
+          const v = aimLow(w, p, up, 720, h.x, h.y, r, 720 * 0.7);
+          w.combat.shoot({ kind: "psy", x: h.x, y: h.y, ...v, r, dmg: dmgB(p, c), life: 0.7, color: "#ff6ad5", kb: 160, trail: 0.4 });
+        });
       },
       special(p, w) {
         p.act("special", "wave", 0.45);
