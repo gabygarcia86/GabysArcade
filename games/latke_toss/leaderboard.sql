@@ -15,9 +15,15 @@ create table if not exists public.latke_toss_scores (
   constraint nickname_length check (char_length(nickname) between 1 and 16),
   constraint nickname_trimmed check (nickname = btrim(nickname)),
   constraint nickname_printable check (nickname !~ '[[:cntrl:]]'),
-  -- Generous on purpose: dreidel boosts stack, so high scores can climb quickly.
-  constraint score_range check (score between 1 and 1000000)
+  -- Generous on purpose: streak tiers, dreidel boosts and the Final Fry all stack.
+  constraint score_range check (score between 1 and 100000000)
 );
+
+-- Tables made before the streak tiers allowed scores only up to 1,000,000. This raises
+-- the cap on an existing table too (and is harmless on a new one).
+alter table public.latke_toss_scores drop constraint if exists score_range;
+alter table public.latke_toss_scores
+  add constraint score_range check (score between 1 and 100000000);
 
 -- Keeps each difficulty's top 10 query fast as the table grows.
 create index if not exists latke_toss_scores_rank_idx

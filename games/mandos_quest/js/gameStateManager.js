@@ -229,6 +229,9 @@
         case "fullscreen":
           this.toggleFullscreen();
           break;
+        case "touchLayout":
+          this.touchLayout.open(() => this.ui.render());
+          break;
       }
     }
 

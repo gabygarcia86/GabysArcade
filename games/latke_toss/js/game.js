@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import { ROUND, PHYSICS, LAUNCH, LATKE, POT, DIFFICULTIES, MENORAH, DREIDEL } from './config.js';
+import {
+  ROUND, PHYSICS, LAUNCH, LATKE, POT, DIFFICULTIES, MENORAH, DREIDEL, SCORING, GOLDEN, FINAL_FRY, STATS,
+} from './config.js';
 import { Pot } from './pot.js';
-import { LatkePool } from './latke.js';
+import { LatkePool, setLatkeGolden, latkeBaseColor } from './latke.js';
 import { SplashEffects } from './particles.js';
 import { GeltShower } from './gelt.js';
 import { AimController } from './controls.js';
@@ -65,6 +67,53 @@ class ScoreStore {
       // Storage blocked: the best score lasts for this session only.
     }
     return true;
+  }
+}
+
+// ---------- Personal-best round stats (one entry per difficulty) ----------
+
+const STATS_KEY = 'latkeToss.bestStats.v1';
+const EMPTY_STATS = () => ({ accuracy: 0, streak: 0, clean: 0 });
+
+class StatsStore {
+  constructor() {
+    this.memory = { easy: EMPTY_STATS(), medium: EMPTY_STATS(), hard: EMPTY_STATS() };
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(STATS_KEY) || '{}');
+      for (const key of Object.keys(this.memory)) {
+        for (const stat of Object.keys(this.memory[key])) {
+          const value = Number(saved[key] && saved[key][stat]);
+          if (Number.isFinite(value) && value > 0) this.memory[key][stat] = value;
+        }
+      }
+    } catch {
+      // localStorage unavailable or corrupted: bests last for this session only.
+    }
+  }
+
+  /**
+   * Records a round's stats. Returns the previous bests and which stats set a new record.
+   * `accuracy` is null when the round had too few throws to count.
+   */
+  submit(difficulty, { accuracy, streak, clean }) {
+    const best = this.memory[difficulty];
+    const previous = { ...best };
+    const records = {
+      accuracy: accuracy !== null && accuracy > best.accuracy,
+      streak: streak > best.streak,
+      clean: clean > best.clean,
+    };
+    if (records.accuracy) best.accuracy = accuracy;
+    if (records.streak) best.streak = streak;
+    if (records.clean) best.clean = clean;
+    if (records.accuracy || records.streak || records.clean) {
+      try {
+        window.localStorage.setItem(STATS_KEY, JSON.stringify(this.memory));
+      } catch {
+        // Storage blocked: bests last for this session only.
+      }
+    }
+    return { previous, best: { ...best }, records };
   }
 }
 
@@ -177,6 +226,7 @@ class ThrownLatke {
     this.fade = 0; // 0..1 shrink-out progress before returning to the pool
     this.active = false;
     this.scored = false;
+    this.golden = false; // the rare bonus latke
     this.lastClank = -1;
     this.hitDreidels = new Set(); // each dreidel rains gelt once per latke
     this.hitMenorah = false; // each latke puts out at most one candle
@@ -208,6 +258,7 @@ export class Game {
     this.gelt = new GeltShower(this.scene, this.audio, gameScene.dreidels);
     this.aimVisuals = new AimVisuals(this.scene);
     this.scores = new ScoreStore();
+    this.bestStats = new StatsStore();
 
     this.thrown = Array.from({ length: this.pool.all.length }, () => new ThrownLatke());
     this.current = null; // latke on the plate (state AIMING) or null until the next one spawns
@@ -216,10 +267,17 @@ export class Game {
     this.pausedFrom = null;
     this.difficultyKey = loadDifficulty();
     this.score = 0;
-    this.multiplier = 1; // points per latke: menorah bonus times every active dreidel boost
+    this.multiplier = 1; // menorah bonus x every active dreidel boost x streak bonus
+    this.streak = 0; // latkes landed in a row; any miss resets it
+    this.finalFry = false; // the last FINAL_FRY.seconds of the round
+    this.potTime = 0; // drives pot motion; runs faster during the Final Fry
+    this.round = { throws: 0, hits: 0, clean: 0, bestStreak: 0 }; // this round's stats
+    this.roundStats = null; // filled in at the buzzer for the game-over screen
+    this.streakMultiplier = 1;
+    this.latkesSinceGolden = 0;
     this.menorahMultiplier = 1; // becomes MENORAH.multiplier once every candle is lit
     this.dreidelBoosts = []; // roundElapsed time at which each active dreidel boost expires
-    this.simTime = 0; // drives pot motion; advances in fixed steps
+    this.simTime = 0; // fixed-step simulation clock (idle bob, rim-clank spacing)
     this.roundElapsed = 0; // drives the countdown; only advances while PLAYING
     this.accumulator = 0;
     this.readyTimer = 0;
@@ -363,8 +421,36 @@ export class Game {
     this.ui.showBanner("Time's up!", { gold: true, duration: 0 });
     this.ui.fadeHint();
     this.isNewBest = this.scores.submit(this.difficultyKey, this.score);
+    this._finishRoundStats();
     this.gameOverTimer = ROUND.gameOverDelaySeconds;
     this.audio.play('tick');
+  }
+
+  // The last stretch of the round: double points, a faster pot and faster music.
+  _startFinalFry() {
+    this.finalFry = true;
+    this._updateMultiplier();
+    this.ui.setFinalFry(true);
+    this.ui.showBanner(`Final Fry! ${FINAL_FRY.multiplier}\u00d7`, { gold: true, duration: 1300 });
+    this.audio.play('finalFry');
+    this.audio.music.setRate(FINAL_FRY.musicRate);
+  }
+
+  _potRate() {
+    return this.finalFry ? FINAL_FRY.potSpeed : 1;
+  }
+
+  // Freezes this round's stats at the buzzer and checks them against the personal bests.
+  _finishRoundStats() {
+    const { throws, hits, clean, bestStreak } = this.round;
+    const accuracy = throws > 0 ? Math.round((hits / throws) * 100) : 0;
+    const counts = throws >= STATS.minThrowsForAccuracy;
+    const result = this.bestStats.submit(this.difficultyKey, {
+      accuracy: counts ? accuracy : null,
+      streak: bestStreak,
+      clean,
+    });
+    this.roundStats = { throws, hits, clean, bestStreak, accuracy, accuracyCounts: counts, ...result };
   }
 
   _showGameOver() {
@@ -378,6 +464,7 @@ export class Game {
       difficultyLabel: DIFFICULTIES[this.difficultyKey].label,
       best: this.scores.get(this.difficultyKey),
       isNewBest: this.isNewBest,
+      stats: this.roundStats,
     });
     this.audio.play('gameOver');
     this.audio.music.playMenu();
@@ -396,7 +483,18 @@ export class Game {
     this.gameScene.resetCandles();
     this.menorahMultiplier = 1;
     this.dreidelBoosts.length = 0;
+    this.streak = 0;
+    this.streakMultiplier = 1;
+    this.latkesSinceGolden = 0;
+    this.ui.setStreak(0);
+    this.finalFry = false;
+    this.potTime = 0;
+    this.round = { throws: 0, hits: 0, clean: 0, bestStreak: 0 };
+    this.roundStats = null;
+    this.ui.setFinalFry(false);
+    this.audio.music.setRate(1);
     this._updateMultiplier();
+    this.pot.randomizePlacement();
     this.pot.reset();
     this.aimVisuals.hide();
     this.score = 0;
@@ -444,6 +542,16 @@ export class Game {
     thrown.lastClank = -1;
     thrown.hitDreidels.clear();
     thrown.hitMenorah = false;
+    // Now and then (never first in a round) the next latke is a golden bonus latke.
+    thrown.golden = this.state === GameState.PLAYING
+      && this.latkesSinceGolden >= GOLDEN.minGap
+      && Math.random() < GOLDEN.chance;
+    this.latkesSinceGolden = thrown.golden ? 0 : this.latkesSinceGolden + 1;
+    setLatkeGolden(mesh, thrown.golden);
+    if (thrown.golden) {
+      this.ui.showBanner('Golden Latke!', { gold: true, duration: 1100 });
+      this.audio.play('golden');
+    }
     // Random resting yaw shows a different side of the irregular outline each time.
     thrown.restQuaternion.setFromAxisAngle(_up, Math.random() * Math.PI * 2);
     thrown.body.reset(REST_POSITION, thrown.restQuaternion);
@@ -524,7 +632,13 @@ export class Game {
     thrown.scored = true;
     this._resolve(thrown, LatkeState.SUCCESS);
     this._startFrying(thrown, localHit);
-    const points = this.multiplier;
+    this._addToStreak();
+    const clean = !thrown.body.touchedPot;
+    this.round.throws += 1;
+    this.round.hits += 1;
+    if (clean) this.round.clean += 1;
+    const base = (thrown.golden ? GOLDEN.points : SCORING.pointsPerLatke) + (clean ? SCORING.cleanBonus : 0);
+    const points = Math.round(base * this.multiplier);
     this.score += points;
     this.ui.setScore(this.score, true);
 
@@ -533,10 +647,42 @@ export class Game {
     this.pot.splash(localHit.x, localHit.z);
     this.audio.play('splash');
 
-    const clean = !thrown.body.touchedPot;
     _worldHit.y += 0.6;
-    this._popupAt(_worldHit, `+${points}${clean ? '<small>Mazal!</small>' : ''}`, points > 1 ? 'double' : '');
+    const notes = [];
+    if (thrown.golden) notes.push('Golden!');
+    if (clean) notes.push(`Mazal! +${SCORING.cleanBonus}`);
+    if (this.streak >= 2) notes.push(`${this.streak} in a row`);
+    const style = thrown.golden ? 'golden' : this.multiplier > 1 ? 'double' : '';
+    this._popupAt(_worldHit, `+${points}${notes.length ? `<small>${notes.join(' \u00b7 ')}</small>` : ''}`, style);
+    if (thrown.golden) this.effects.sparkleBurst(_worldHit);
     this._lightCandle();
+  }
+
+  // A landed latke extends the streak and may reach a higher streak tier.
+  _addToStreak() {
+    this.streak += 1;
+    this.round.bestStreak = Math.max(this.round.bestStreak, this.streak);
+    this.ui.setStreak(this.streak);
+    let multiplier = 1;
+    for (const tier of SCORING.streakTiers) if (this.streak >= tier.count) multiplier = tier.multiplier;
+    if (multiplier !== this.streakMultiplier) {
+      this.streakMultiplier = multiplier;
+      this._updateMultiplier();
+      this.ui.showBanner(`${this.streak} in a row! ${multiplier}\u00d7`, { gold: true, duration: 1100 });
+      this.audio.play('streak');
+    }
+  }
+
+  // A miss ends the streak. Returns how long the streak was.
+  _breakStreak() {
+    const lost = this.streak;
+    this.streak = 0;
+    this.ui.setStreak(0);
+    if (this.streakMultiplier !== 1) {
+      this.streakMultiplier = 1;
+      this._updateMultiplier();
+    }
+    return lost;
   }
 
   // Each landed latke lights one menorah candle; lighting the last one starts the bonus.
@@ -563,10 +709,14 @@ export class Game {
 
   _registerMiss(thrown, label = true) {
     this._resolve(thrown, LatkeState.MISS);
-    if (label && this.state === GameState.PLAYING) {
+    if (this.state !== GameState.PLAYING) return;
+    this.round.throws += 1;
+    const lost = this._breakStreak();
+    if (label) {
       _worldHit.copy(thrown.body.position);
       _worldHit.y += 0.4;
-      this._popupAt(_worldHit, 'OY!', 'miss');
+      const note = lost >= 3 ? '<small>Streak lost</small>' : '';
+      this._popupAt(_worldHit, `OY!${note}`, 'miss');
     }
   }
 
@@ -602,9 +752,10 @@ export class Game {
     this._popupAt(_candlePosition, 'Candle out!', 'miss');
   }
 
-  // Combines the menorah bonus with every active dreidel boost.
+  // Combines the menorah bonus, every active dreidel boost, the streak and the Final Fry.
   _updateMultiplier() {
-    this.multiplier = this.menorahMultiplier * DREIDEL.bonusMultiplier ** this.dreidelBoosts.length;
+    this.multiplier = this.menorahMultiplier * DREIDEL.bonusMultiplier ** this.dreidelBoosts.length
+      * this.streakMultiplier * (this.finalFry ? FINAL_FRY.multiplier : 1);
     this.ui.setMultiplier(this.multiplier);
   }
 
@@ -627,12 +778,14 @@ export class Game {
         while (this.dreidelBoosts.length > 0 && this.dreidelBoosts[0] <= this.roundElapsed) this.dreidelBoosts.shift();
         this._updateMultiplier();
       }
+      if (!this.finalFry && ROUND.durationSeconds - this.roundElapsed <= FINAL_FRY.seconds) this._startFinalFry();
       if (this.roundElapsed >= ROUND.durationSeconds) this._endRound();
     }
     // The pot keeps gliding during the brief game-over wind-down; the timer does not.
     this.simTime += h;
+    this.potTime += h * this._potRate();
     this.potPrevious.copy(this.potCurrent);
-    this.pot.positionAt(this.simTime, this.potCurrent);
+    this.pot.positionAt(this.potTime, this.potCurrent);
 
     const scoringOpen = this.state === GameState.PLAYING;
     for (const thrown of this.thrown) {
@@ -760,7 +913,7 @@ export class Game {
     this._flatten(body.quaternion, 9 * h);
 
     const material = thrown.mesh.userData.material;
-    material.color.copy(thrown.mesh.userData.baseColor).lerp(FRIED_COLOR, Math.min(1, thrown.timer / FRY_SECONDS) * 0.5);
+    material.color.copy(latkeBaseColor(thrown.mesh)).lerp(FRIED_COLOR, Math.min(1, thrown.timer / FRY_SECONDS) * 0.5);
 
     if (thrown.timer > FRY_SECONDS) {
       thrown.fade += h / FADE_SECONDS;
@@ -814,7 +967,7 @@ export class Game {
     }
 
     // Render the pot between physics steps for smooth motion at any refresh rate.
-    this.pot.setTime(this.simTime - h * (1 - alpha));
+    this.pot.setTime(this.potTime - h * this._potRate() * (1 - alpha));
     this.pot.update(dt);
     this.effects.update(dt);
     this.gelt.update(dt, this.pot.group.position);

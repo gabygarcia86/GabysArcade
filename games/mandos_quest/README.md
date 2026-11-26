@@ -56,6 +56,8 @@ Scores can be submitted on Game Over and after the credits. A finished run that 
 | Shield | Shift | Shield |
 | Pause | Escape | Pause button |
 
+**Options > Touch control size** makes the on-screen controls Normal, Large or Extra large. **Options > Arrange touch controls** opens an editor where you drag each control (or the movement arrows with Drop) to a new place, for both the ground and the space controls. Reset puts them back. The layout is saved with your settings as a share of the screen, so it also fits after rotating the device, and controls are always kept on screen.
+
 On phones and tablets, starting, restarting or retrying a level switches to full screen where the browser allows it. iPhone browsers don't, so the game runs in the normal window there. **Options > Toggle fullscreen** works on any browser that supports it.
 
 ## Campaign
@@ -78,6 +80,8 @@ On phones and tablets, starting, restarting or retrying a level switches to full
 
 On the ground there are five major bosses, in Levels 2, 5, 7, 9 and 13, and the Imperial Guardian is a mini-boss. Each space battle has a mini-boss along the way and a three-phase boss at the end.
 
+Every level is also scattered with **credit chips**, worth 25 points each before the difficulty multiplier. On the ground they sit in rows, jump arcs and stacks over every floor, ledge and slope, and some are only reachable with upgrades from later levels. The level panel shows how many you've collected out of the total. In the space battles, formations of chips stream in between the waves. `scatterCredits` in `js/levelBuilder.js` places the ground chips automatically from each level's layout, seeded by level number so the layout is the same on every attempt. Its settings are in `CREDITS` at the bottom of that file.
+
 Each of the ten ground levels hides three Bounty Pucks. Some need upgrades from later levels, so they're meant for replays. Clearing all ten worlds and finding all 30 pucks unlocks the Darksaber and its nine blade colors.
 
 ## Space battles
@@ -92,7 +96,7 @@ Each capsule moves the highlight one place along the upgrade bar. Install the hi
 | Twin Blaster | Two bolts, then three | 2 | Always |
 | Spread Shot | Angled bolts | 2 | After Level 4 |
 | Rear Shot | Fires backward, for ships that circle behind | 2 | Always |
-| Missile Launcher | Missiles that drop and seek targets on the surface | 2 | Always |
+| Missile Launcher | Missiles that drop to different heights, then fly ahead and seek targets near their height. Some go all the way down and seek targets on the surface | 2 | Always |
 | Energy Shield | Absorbs damage until it's used up | 1 | Always. Stronger after Level 8 |
 | Laser Cannon | A piercing beam | 2 | After Level 8 |
 
@@ -102,7 +106,7 @@ Losing a life costs upgrades by difficulty. Story keeps them all, Standard keeps
 
 ## Scoring
 
-- A level scores points for defeated enemies, bosses and objectives, plus completion, time and remaining-life bonuses.
+- A level scores points for defeated enemies, bosses, objectives and credit chips, plus completion, time and remaining-life bonuses.
 - Difficulty multiplies the level score: Story 75%, Standard 100%, Veteran 125%. It's fixed when the level starts.
 - The campaign score is the best score from each of the 13 levels, plus 1,500 for each Bounty Puck. A game over also counts that run's points if they beat the level's best.
 
@@ -151,7 +155,7 @@ mandos_quest/
     ├── projectile.js       Pooled projectiles
     ├── enemy.js            Enemy types, attacks and AI
     ├── boss.js             Boss fights
-    ├── collectibleManager.js  Bounty Pucks and pickups
+    ├── collectibleManager.js  Bounty Pucks, credit chips and pickups
     ├── collisionManager.js Platform, slope and wall collision
     ├── camera.js           Follow camera and arena framing
     ├── particleSystem.js   Pooled effects
@@ -162,6 +166,7 @@ mandos_quest/
     ├── audioConfig.js      ★ Your audio file paths
     ├── audioManager.js     Playback and generated audio
     ├── inputManager.js     Keyboard and multi-touch
+    ├── touchLayout.js      Touch control size, placement and the editor for them
     ├── leaderboard.js      Supabase requests
     ├── hud.js              In-game display
     ├── notices.js          Popup placement on touch and small screens
@@ -212,6 +217,3 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- fix spawn location of laser blast from  main character
-- Make flame thrower shoot farther 
-- Add pickups to gain additional points through out all the levels

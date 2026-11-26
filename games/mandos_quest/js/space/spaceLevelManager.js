@@ -43,7 +43,11 @@
       this.time = 0;
       this.scroll = 0;
       this.speed = this.targetSpeed = START_SPEED;
-      this.run = { time: 0, points: 0, kills: 0, lives: D.LIVES, multiplier: this.difficulty.score, capsules: 0, upgrades: 0 };
+      this.run = { time: 0, points: 0, kills: 0, lives: D.LIVES, multiplier: this.difficulty.score, capsules: 0, upgrades: 0, credits: 0 };
+      // Credit formations follow a seeded pattern, so every attempt at a stage gets the same ones.
+      this.creditRandom = MQ.U.rng(9311 + def.id * 7919);
+      this.creditTimer = 3;
+      this.creditCount = 0;
       this.boss = null;
       this.miniBoss = null;
       this.victory = false;
@@ -173,6 +177,23 @@
       }
     }
 
+    collectCredit(x, y) {
+      this.run.credits++;
+      this.addPoints(D.CREDIT_POINTS, x, y);
+      this.particles.sparks(x, y, "#5fe0ff", 8, 220);
+      this.sfx("credit");
+    }
+
+    // Sends in the next credit formation while the waves are running.
+    updateCredits(dt) {
+      this.creditTimer -= dt;
+      if (this.creditTimer > 0) return;
+      const random = this.creditRandom;
+      const [low, high] = S.CREDITS.every;
+      this.creditTimer = random.range(low, high);
+      this.powerUps.creditFormation(this.creditCount++ + Math.floor(random() * 5), random.range(190, 560));
+    }
+
     activateUpgrade() {
       const { player, particles } = this;
       const upgrade = player.weapons.activate();
@@ -287,7 +308,10 @@
       this.camera.trauma = max(0, this.camera.trauma - dt * 1.6);
 
       if (this.state === "bossIntro" && (input.held.jump || input.held.attack) && this.stateTime > 1.2) this.skipIntro();
-      if (this.state === "play") this.waves.update(dt);
+      if (this.state === "play") {
+        this.waves.update(dt);
+        this.updateCredits(dt);
+      }
 
       this.collision.gather();
       this.player.update(input, dt);

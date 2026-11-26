@@ -293,6 +293,19 @@
     ctx.restore();
   }
 
+  // A bounty credit chip: a small metal slip with a glowing data strip, turning in place.
+  function credit(ctx, x, y, time) {
+    ctx.save();
+    ctx.translate(x, y + sin(time * 3 + x * 0.05) * 3);
+    glow(ctx, 0, 0, 26, "#5fe0ff", 0.55);
+    ctx.rotate(-0.35);
+    ctx.scale(max(0.25, abs(cos(time * 2.4 + x * 0.01))), 1);
+    poly(ctx, [-12, -7, 9, -7, 12, -4, 12, 7, -12, 7], metal(ctx, "#c9d3dd", -7, 7), INK, 1.6);
+    box(ctx, -9, -3, 15, 4, 1.5, "#5fe0ff");
+    oval(ctx, 7, 3, 2, 2, "#ffd45c");
+    ctx.restore();
+  }
+
   function pickup(ctx, p, time) {
     const { x } = p;
     const y = p.y + sin(time * 3 + x) * 3;
@@ -407,6 +420,6 @@
 
   MQ.ObjectArt = {
     platform, falling, crate, cracked, rubble, boulder, mechanism, gate, arenaWall, bridge,
-    HAZARD, wind, puck, pickup, checkpoint, node, containment, exit, cover,
+    HAZARD, wind, puck, credit, pickup, checkpoint, node, containment, exit, cover,
   };
 })(window.MQ);

@@ -998,7 +998,7 @@
         case "grid":
           ctx.strokeStyle = "rgba(255,58,106,0.12)";
           ctx.lineWidth = 1;
-          for (let x = -((camX * 0.1) % 60); x < vw; x += 60) {
+          for (let x = -((((camX * 0.1) % 60) + 60) % 60); x < vw; x += 60) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, vh);

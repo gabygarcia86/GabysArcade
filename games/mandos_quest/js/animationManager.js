@@ -327,5 +327,31 @@
     ctx.restore();
   }
 
-  MQ.Anim = { createPose, human, ik, limb, bone, drawHumanoid };
+  /*
+   * Where a point held in the front hand ends up in body space, following the same steps
+   * as drawHumanoid: (wx, wy) is in the weapon's frame, x along the weapon from the grip.
+   */
+  function frontHandPoint(p, wx, wy, out) {
+    const j = ik(2, SHOULDER, 2 + p.hfx, SHOULDER + p.hfy, ARM, ARM, -1);
+    const cw = cos(p.weapon);
+    const sw = sin(p.weapon);
+    const tx = j.ex + wx * cw - wy * sw;
+    const ty = j.ey + wx * sw + wy * cw;
+    const cl = cos(p.lean);
+    const sl = sin(p.lean);
+    let x = tx * cl - ty * sl;
+    let y = tx * sl + ty * cl;
+    if (p.roll) {
+      const cr = cos(p.roll);
+      const sr = sin(p.roll);
+      const rx = x * cr - y * sr;
+      y = x * sr + y * cr;
+      x = rx;
+    }
+    out.x = x;
+    out.y = y + p.hip;
+    return out;
+  }
+
+  MQ.Anim = { createPose, human, ik, limb, bone, drawHumanoid, frontHandPoint };
 })(window.MQ);

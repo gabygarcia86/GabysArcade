@@ -18,6 +18,7 @@
       this.def = def;
       const b = (this.data = new MQ.LevelBuilder(def));
       def.build(b);
+      b.scatterCredits(def.id);
 
       this.width = def.width;
       this.height = def.height;

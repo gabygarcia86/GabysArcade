@@ -30,6 +30,7 @@
     TOTAL_PUCKS: 30,
     LIVES: 3,
     PUCK_POINTS: 1500,
+    CREDIT_POINTS: 25, // Each credit chip, before the difficulty multiplier.
 
     PHYSICS: {
       gravity: 2100,
@@ -82,8 +83,8 @@
       },
       {
         id: "flame", name: "Flamethrower", after: 7, color: "#ff8a2a",
-        damage: 11, cooldown: 0.07, range: 225, heat: 2.4,
-        info: "Short-range stream of fire for groups. Watch the heat.",
+        damage: 11, cooldown: 0.07, range: 560, heat: 2.4,
+        info: "Long stream of fire for groups. Watch the heat.",
       },
       {
         id: "rocket", name: "Wrist Rockets", after: 9, color: "#ffb347",

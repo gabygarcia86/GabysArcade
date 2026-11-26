@@ -50,6 +50,8 @@
       missileEvery: 0.72,
       missileDamage: 34,
       missileBlast: 62,
+      // How far below the ship each volley levels off, in turn. Infinity drops to the surface.
+      missileLanes: [70, 170, Infinity, 270, 120, Infinity],
       laserEvery: 0.6,
       laserTime: 0.17,
       laserDamage: [42, 64],
@@ -89,6 +91,14 @@
       magnet: 120,
       health: 35,
       fullBonus: 500, // For a capsule when every upgrade is maxed.
+    },
+
+    // Formations of credit chips that stream past between the waves.
+    CREDITS: {
+      every: [5, 8], // Seconds between formations.
+      speed: 230, // How fast they cross the screen.
+      reach: 18,
+      magnet: 90,
     },
 
     ENEMIES: {

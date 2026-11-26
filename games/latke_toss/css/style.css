@@ -159,6 +159,22 @@ body.can-grab #canvas-host canvas {
   font-size: 38px;
 }
 
+/* Streak tag ("N in a row") hanging under the score box. */
+.hud-streak {
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(8, 20, 66, 0.92);
+  border: 1px solid var(--gold);
+  color: #fff1b0;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .hud-time.low {
   border-color: var(--danger);
 }
@@ -271,6 +287,12 @@ body.can-grab #canvas-host canvas {
 .popup.double {
   font-size: 42px;
   color: #fff1b0;
+}
+
+.popup.golden {
+  font-size: 48px;
+  color: #ffe58a;
+  text-shadow: 0 2px 0 var(--gold-deep), 0 0 22px rgba(255, 215, 90, 1);
 }
 
 .popup.miss {
@@ -532,6 +554,61 @@ a.mid-btn {
 
 .final-meta b {
   color: var(--white);
+}
+
+/* Round stats on the game-over panel. */
+.final-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.final-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(217, 225, 242, 0.18);
+}
+
+.final-stat.record {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(255, 200, 80, 0.45);
+}
+
+.final-stat-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--silver);
+}
+
+.final-stat-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--white);
+}
+
+.final-stat-detail,
+.final-stat-best {
+  font-size: 11px;
+  color: var(--silver);
+}
+
+.final-stat.record .final-stat-best {
+  color: var(--gold);
+  font-weight: 800;
+}
+
+/* Final Fry: the time box glows hot for the last seconds. */
+.hud-time.final-fry {
+  border-color: #ff8a3d;
+  box-shadow: 0 0 18px rgba(255, 120, 40, 0.75);
 }
 
 .new-best {

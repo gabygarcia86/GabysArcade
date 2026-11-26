@@ -29,6 +29,7 @@ export class UI {
     this.popupLayer = $('popup-layer');
     this.pauseButton = $('btn-pause');
     this.multiplierBadge = $('hud-mult');
+    this.streakBadge = $('hud-streak');
     this.difficultyButtons = Array.from(document.querySelectorAll('.diff-btn'));
     this.muteButtons = Array.from(document.querySelectorAll('.mute-toggle'));
     this._lastTime = null;
@@ -118,6 +119,17 @@ export class UI {
     this.multiplierBadge.classList.toggle('hidden', multiplier <= 1);
   }
 
+  // Shows the current run of latkes landed in a row (hidden below 2).
+  setStreak(streak) {
+    this.streakBadge.textContent = `\u{1F525} ${streak} in a row`;
+    this.streakBadge.classList.toggle('hidden', streak < 2);
+  }
+
+  // Final Fry styling on the HUD for the last seconds of the round.
+  setFinalFry(active) {
+    this.timeBox.classList.toggle('final-fry', active);
+  }
+
   setBest(best) {
     this.bestValue.textContent = String(best);
   }
@@ -195,7 +207,8 @@ export class UI {
     this.popupLayer.replaceChildren();
   }
 
-  showGameOver({ score, difficulty, difficultyLabel, best, isNewBest }) {
+  showGameOver({ score, difficulty, difficultyLabel, best, isNewBest, stats }) {
+    this._renderStats(stats);
     $('final-score').textContent = String(score);
     $('final-difficulty').textContent = difficultyLabel;
     $('final-best').textContent = String(best);
@@ -207,6 +220,47 @@ export class UI {
     this.setScoreMessage('');
     this.showScreen('over');
     $('btn-play-again').focus({ preventScroll: true });
+  }
+
+  // Accuracy, best streak and clean shots for the round, each with the personal best.
+  _renderStats(stats) {
+    const host = $('final-stats');
+    host.replaceChildren();
+    if (!stats) return;
+    const accuracyValue = stats.throws > 0 ? `${stats.accuracy}%` : '\u2013';
+    const items = [
+      {
+        label: 'Accuracy',
+        value: accuracyValue,
+        detail: `${stats.hits} of ${stats.throws}`,
+        best: stats.best.accuracy ? `${stats.best.accuracy}%` : '\u2013',
+        record: stats.records.accuracy,
+      },
+      { label: 'Best streak', value: String(stats.bestStreak), best: String(stats.best.streak), record: stats.records.streak },
+      { label: 'Clean shots', value: String(stats.clean), best: String(stats.best.clean), record: stats.records.clean },
+    ];
+    for (const item of items) {
+      const cell = document.createElement('div');
+      cell.className = `final-stat${item.record ? ' record' : ''}`;
+      const label = document.createElement('span');
+      label.className = 'final-stat-label';
+      label.textContent = item.label;
+      const value = document.createElement('b');
+      value.className = 'final-stat-value';
+      value.textContent = item.value;
+      const best = document.createElement('span');
+      best.className = 'final-stat-best';
+      best.textContent = item.record ? 'New best!' : `Best ${item.best}`;
+      cell.append(label, value);
+      if (item.detail) {
+        const detail = document.createElement('span');
+        detail.className = 'final-stat-detail';
+        detail.textContent = item.detail;
+        cell.append(detail);
+      }
+      cell.append(best);
+      host.append(cell);
+    }
   }
 
   setScoreMessage(text, isError = false) {

@@ -36,6 +36,14 @@
         onChange: () => this.syncControls(),
       });
       this.input.onDeviceChange = () => this.syncControls();
+      this.touchLayout = new MQ.TouchLayout(
+        this.app,
+        { ground: this.touch, space: this.spaceTouch },
+        () => saveManager.data.settings,
+        (key, value) => this.states.changeSetting(key, value),
+      );
+      this.states.touchLayout = this.touchLayout;
+      this.app.addEventListener("touchlayoutchange", () => this.syncControls());
       this.bindEvents();
       this.bindMenuAntics();
     }
@@ -112,8 +120,9 @@
       const touchWanted = preference === "on" || (preference === "auto" && this.input.usingTouch);
 
       const inSpace = this.states.world?.mode === "space";
-      this.touch.hidden = !(playing && touchWanted && !inSpace);
-      this.spaceTouch.hidden = !(playing && touchWanted && inSpace);
+      const editing = this.touchLayout?.kind;
+      this.touch.hidden = editing ? editing !== "ground" : !(playing && touchWanted && !inSpace);
+      this.spaceTouch.hidden = editing ? editing !== "space" : !(playing && touchWanted && inSpace);
       this.pauseButton.hidden = !playing;
       this.cinematicControls.hidden = state !== STATE.CINEMATIC;
       this.app.dataset.state = state;
@@ -160,6 +169,9 @@
       hud.scale = clamp(0.8 / scale, 1, 1.5);
       const buttonReaches = top < 56;
       hud.rightInset = buttonReaches ? Math.max(12, (PAUSE_BUTTON_SPACE - left) / scale) : 12;
+
+      // Sized and moved before they're measured.
+      this.touchLayout.apply();
 
       // Measured after the stage moves, as the touch controls can overlap it.
       const stageLeft = safeLeft + left;

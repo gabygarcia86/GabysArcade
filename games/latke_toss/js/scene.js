@@ -259,6 +259,30 @@ const MENORAH_POSITION = new THREE.Vector3(-2.9, 0, -6.0);
 // Smaller than life so the candles stay below the HUD now that it sits nearer the center.
 const MENORAH_SCALE = 0.8;
 
+// Where dreidels may land when scattered at the start of each game (world space).
+const DREIDEL_AREA = {
+  zBack: -7.0,
+  zFront: 0.6, // stays behind the plate and the decorative gelt
+  maxHalfWidth: 5.6,
+  widthPerDepth: 0.6, // half-width allowed per unit of distance from the camera
+  gap: 0.7, // space kept between neighboring dreidels
+};
+// Everywhere the pot can be on any difficulty, padded for its rim and floating halo.
+const POT_KEEP_OUT = { x: 3.4, zMin: -5.9, zMax: -0.1 };
+// The menorah's footprint (its arms spread along x).
+const MENORAH_KEEP_OUT = { halfX: 1.5, halfZ: 0.5 };
+
+function isDreidelSpotFree(x, z, radius, placed) {
+  if (Math.abs(x) < POT_KEEP_OUT.x + radius && z > POT_KEEP_OUT.zMin - radius && z < POT_KEEP_OUT.zMax + radius) return false;
+  const mx = MENORAH_POSITION.x;
+  const mz = MENORAH_POSITION.z;
+  if (Math.abs(x - mx) < MENORAH_KEEP_OUT.halfX + radius && Math.abs(z - mz) < MENORAH_KEEP_OUT.halfZ + radius) return false;
+  for (const other of placed) {
+    if (Math.hypot(x - other.x, z - other.z) < radius + other.radius + DREIDEL_AREA.gap) return false;
+  }
+  return true;
+}
+
 function createMenorah() {
   const group = new THREE.Group();
   const gold = new THREE.MeshStandardMaterial({ color: 0xe8b84a, roughness: 0.28, metalness: 0.9 });
@@ -535,7 +559,7 @@ export class GameScene {
     this.scene.add(this.flameLight);
 
     // Every dreidel is a target: hitting one with a latke makes gelt rain down.
-    // The two larger ones sit in front of and behind the pot, within throwing range.
+    // These positions are only a fallback; each new game scatters them (placeDreidels).
     this.dreidels = [];
     const dreidelSpecs = [
       { color: '#2f62e6', letter: '#ffffff', position: [4.4, 0, -6.4], spin: 2.6, scale: 1 },
@@ -553,9 +577,11 @@ export class GameScene {
       dreidel.userData.hitRadius = DREIDEL.radius * spec.scale;
       dreidel.userData.hitHeight = DREIDEL.height * spec.scale;
       dreidel.userData.knock = 0; // 1 right after a hit, decaying to 0
+      dreidel.userData.home = dreidel.position.clone();
       this.scene.add(dreidel);
       this.dreidels.push(dreidel);
     }
+    this.placeDreidels();
 
     const geltSpots = [[3.2, 1.2, 0.3], [3.55, 1.0, 1.4], [3.0, 1.7, 2.2], [-3.4, 1.9, 0.9], [-3.8, 2.6, 2.4]];
     for (const [x, z, angle] of geltSpots) {
@@ -712,6 +738,30 @@ export class GameScene {
     for (const dreidel of this.dreidels) {
       dreidel.userData.knock = 0;
       dreidel.position.y = 0;
+    }
+    this.placeDreidels();
+  }
+
+  // Scatters the dreidels to new random spots on the table, all within throwing range and
+  // clear of the pot's path on every difficulty, the menorah, the plate and each other.
+  placeDreidels() {
+    const placed = [];
+    for (const dreidel of this.dreidels) {
+      const radius = dreidel.userData.hitRadius;
+      let spot = null;
+      for (let attempt = 0; attempt < 400 && !spot; attempt++) {
+        const z = THREE.MathUtils.randFloat(DREIDEL_AREA.zBack, DREIDEL_AREA.zFront);
+        // Narrower toward the front so dreidels stay on screen.
+        const halfWidth = Math.min(DREIDEL_AREA.maxHalfWidth, (CAMERA_POSITION.z - z) * DREIDEL_AREA.widthPerDepth);
+        const x = THREE.MathUtils.randFloat(-halfWidth, halfWidth);
+        if (isDreidelSpotFree(x, z, radius, placed)) spot = { x, z, radius };
+      }
+      if (!spot) {
+        const home = dreidel.userData.home;
+        spot = { x: home.x, z: home.z, radius };
+      }
+      placed.push(spot);
+      dreidel.position.set(spot.x, 0, spot.z);
     }
   }
 

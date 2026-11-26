@@ -61,6 +61,9 @@ export const DIFFICULTIES = {
     label: 'Easy',
     tagline: 'Stationary pot',
     center: { x: 0, y: 0, z: -2.8 },
+    // Each game the still pot sits at a random spot in this range (it never moves during
+    // play). Kept inside the area dreidels avoid, clear of the menorah and on screen.
+    randomCenter: { x: [-2.0, 2.0], z: [-4.4, -1.8] },
     amplitude: { x: 0, y: 0, z: 0 },
     speed: { x: 0, y: 0, z: 0 },
     phase: { x: 0, y: 0, z: 0 },
@@ -71,6 +74,9 @@ export const DIFFICULTIES = {
     label: 'Medium',
     tagline: 'Slides side to side',
     center: { x: 0, y: 0, z: -2.8 },
+    // Each game the pot's distance from the plate is random within this range (its side
+    // to side slide stays centered). Not much closer than the old -2.8, up to ~1.4 farther.
+    randomCenter: { x: [0, 0], z: [-4.2, -2.4] },
     amplitude: { x: 2.3, y: 0, z: 0 },
     speed: { x: 0.9, y: 0, z: 0 },
     phase: { x: 0, y: 0, z: 0 },
@@ -120,6 +126,53 @@ export const PARTICLES = {
   sparklePoolSize: 80,
   // Expanding ripple ring duration, seconds.
   rippleSeconds: 0.7,
+};
+
+// Points for a latke that lands in the pot, before any multipliers.
+export const SCORING = {
+  pointsPerLatke: 10,
+  // Extra points for a clean drop that never touches the rim or wall ("Mazal!").
+  cleanBonus: 5,
+  // Landing latkes in a row raises a streak multiplier; any miss resets it. Each tier
+  // applies from the latke that reaches its count (highest reached tier wins). From the
+  // 6th in a row on, every tier doubles the one before it.
+  streakTiers: [
+    { count: 3, multiplier: 1.5 },
+    { count: 6, multiplier: 2 },
+    { count: 10, multiplier: 4 },
+    { count: 15, multiplier: 8 },
+    { count: 20, multiplier: 16 },
+    { count: 25, multiplier: 32 },
+    { count: 30, multiplier: 64 },
+    { count: 40, multiplier: 128 },
+    { count: 50, multiplier: 256 },
+  ],
+};
+
+// Now and then the next latke on the plate is golden: worth `points` instead of
+// SCORING.pointsPerLatke if it lands, and simply gone if it misses.
+export const GOLDEN = {
+  points: 50,
+  // Chance that a new latke is golden (never the first latke of a round).
+  chance: 0.1,
+  // At least this many regular latkes come between two golden ones.
+  minGap: 6,
+};
+
+// Final Fry: the last stretch of every round. Points multiply, a moving pot speeds up,
+// and the music plays faster.
+export const FINAL_FRY = {
+  seconds: 10,
+  multiplier: 2,
+  // How much faster a moving pot travels (Easy's still pot stays still).
+  potSpeed: 1.35,
+  musicRate: 1.3,
+};
+
+// End-of-round stats. Accuracy only counts toward a personal best once a round has at
+// least this many resolved throws, so 1 for 1 isn't a permanent 100% record.
+export const STATS = {
+  minThrowsForAccuracy: 8,
 };
 
 // Menorah bonus: every latke landed in the pot lights one candle. Once all nine are lit,

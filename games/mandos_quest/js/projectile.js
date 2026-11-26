@@ -56,6 +56,22 @@
       return p;
     }
 
+    /*
+     * Carries a new shot from where it was fired to (x, y), colliding on the way. Shots
+     * leave from the muzzle but still hit a wall or enemy between the body and the barrel.
+     */
+    advance(p, x, y) {
+      const dx = x - p.x;
+      const dy = y - p.y;
+      const steps = ceil(hypot(dx, dy) / SUBSTEP) || 1;
+      for (let s = 0; s < steps && p.active; s++) {
+        p.x += dx / steps;
+        p.y += dy / steps;
+        this.collide(p);
+      }
+      return p;
+    }
+
     clear(team) {
       for (const p of this.items) {
         if (team === undefined || p.team === team) {

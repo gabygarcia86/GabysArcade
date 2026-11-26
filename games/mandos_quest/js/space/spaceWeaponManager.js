@@ -19,6 +19,7 @@
       this.cursor = -1;
       this.cooldown = 0;
       this.missileTime = 0;
+      this.missileLane = 0;
       this.laserTime = 0;
       this.beam = 0;
       this.rocketWait = 0;
@@ -150,9 +151,16 @@
     dropMissiles() {
       const { PLAYER, KIND } = MQ.SpaceProjectiles;
       this.missileTime = GUN.missileEvery;
+      const lanes = GUN.missileLanes;
       for (let i = 0; i < this.levels.missile; i++) {
-        const p = this.projectiles.fire(PLAYER, KIND.GROUND, this.player.x + 6 - i * 34, this.player.y + 22, 170 - i * 70, 340, GUN.missileDamage, "#ff9b4d", 8);
-        if (p) p.blast = GUN.missileBlast;
+        // Each missile takes the next lane, so volleys cover different heights.
+        const drop = lanes[this.missileLane++ % lanes.length];
+        const y = this.player.y + 22;
+        const p = this.projectiles.fire(PLAYER, KIND.GROUND, this.player.x + 6 - i * 34, y, 170 - i * 70, 340, GUN.missileDamage, "#ff9b4d", 8);
+        if (p) {
+          p.blast = GUN.missileBlast;
+          p.cruise = y + drop;
+        }
       }
       this.world.sfx("shipMissile");
     }

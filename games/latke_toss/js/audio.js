@@ -17,6 +17,9 @@ export const AUDIO_FILES = {
   coin: null,
   candle: null,
   miracle: null,
+  streak: null,
+  golden: null,
+  finalFry: null,
 };
 
 // Looping background music (paths relative to index.html). One gameplay track is picked at
@@ -104,7 +107,13 @@ class MusicPlayer {
     this.current = next;
     next.currentTime = 0;
     next.volume = 0;
+    next.playbackRate = 1;
     this._start(next);
+  }
+
+  /** Playback speed of the current track (1 = normal). Used for the Final Fry rush. */
+  setRate(rate) {
+    if (this.current) this.current.playbackRate = rate;
   }
 
   playMenu() {
@@ -354,8 +363,32 @@ export class AudioManager {
     }
   }
 
+  // Rising three-note chime when a streak reaches a new multiplier tier.
+  _streak(t) {
+    [784, 987.8, 1318.5].forEach((frequency, i) => {
+      this._tone(t + i * 0.07, { type: 'triangle', from: frequency, duration: 0.22, peak: 0.12 });
+    });
+  }
+
+  // Shimmering sparkle when a golden latke appears on the plate.
+  _golden(t) {
+    [1318.5, 1568, 1760, 2093, 2637].forEach((frequency, i) => {
+      this._tone(t + i * 0.05, { type: 'sine', from: frequency, duration: 0.3, peak: 0.08 });
+    });
+    this._tone(t, { type: 'triangle', from: 659.3, duration: 0.6, peak: 0.08 });
+  }
+
   _tick(t) {
     this._tone(t, { type: 'sine', from: 1000, duration: 0.06, peak: 0.14 });
+  }
+
+  // Sizzling rising sweep when the Final Fry begins.
+  _finalFry(t) {
+    this._noise(t, { duration: 0.6, peak: 0.12, filter: 'highpass', from: 1500, to: 5000, q: 0.7, attack: 0.05 });
+    [440, 554.4, 659.3, 880].forEach((frequency, i) => {
+      this._tone(t + i * 0.09, { type: 'square', from: frequency, duration: 0.16, peak: 0.07 });
+    });
+    this._tone(t + 0.36, { type: 'triangle', from: 880, to: 1760, duration: 0.35, peak: 0.12 });
   }
 
   _go(t) {

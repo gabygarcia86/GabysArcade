@@ -27,7 +27,7 @@
       this.next = 0;
       this.items = Array.from({ length: MAX }, () => ({
         active: false, team: PLAYER, kind: 0, x: 0, y: 0, vx: 0, vy: 0, r: 4, damage: 0, color: "#ffffff",
-        life: 0, age: 0, blast: 0, turn: 0, speed: 0, running: false, target: null,
+        life: 0, age: 0, blast: 0, turn: 0, speed: 0, running: false, target: null, cruise: Infinity,
       }));
     }
 
@@ -54,6 +54,7 @@
         p.turn = 0;
         p.running = false;
         p.target = null;
+        p.cruise = Infinity;
         return p;
       }
       return null; // The pool is full, so this shot is skipped.
@@ -151,17 +152,28 @@
       if (p.target) this.steer(p, p.target.x, p.target.y, 7 * dt);
     }
 
+    /*
+     * Missiles drop to their lane (p.cruise) and level off there, or at the surface if it's
+     * higher. A missile in the surface lane seeks surface targets; one at a height seeks
+     * whatever flies near its lane.
+     */
     hug(p, dt) {
       const { collision } = this.world;
-      const target = collision.groundTarget(p.x, p.y);
+      const surfaceLane = p.cruise === Infinity;
+      const target = surfaceLane ? collision.groundTarget(p.x, p.y) : collision.laneTarget(p.x, p.y);
       if (target) {
         p.speed = 470;
         this.steer(p, target.x, target.y, 9 * dt);
         return;
       }
-      const floor = collision.floorAt(p.x + 14, SURFACE_LINE);
-      if (p.y >= floor - 10) {
-        p.y = floor - 10;
+      const floor = collision.floorAt(p.x + 14, SURFACE_LINE) - 10;
+      const level = Math.min(p.cruise, floor);
+      if (p.running && level === p.cruise && p.y > level + 12) {
+        // Pulled below its lane by a target that's gone: climb back up.
+        p.vx = 470;
+        p.vy = -260;
+      } else if (p.y >= level) {
+        p.y = level;
         p.vx = 470;
         p.vy = 0;
         p.running = true;

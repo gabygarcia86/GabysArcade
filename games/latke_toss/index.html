@@ -50,6 +50,7 @@
           <span class="hud-value" id="hud-score">0</span>
           <span class="hud-mult hidden" id="hud-mult"
             aria-label="2 times points">2&times;</span>
+          <span class="hud-streak hidden" id="hud-streak" aria-live="polite"></span>
         </div>
         <div class="hud-box hud-time" id="hud-time-box">
           <span class="hud-label">Time</span>
@@ -166,6 +167,7 @@
           <p class="final-meta">Best: <b id="final-best">0</b></p>
           <p class="new-best hidden" id="final-new-best">&#10022; New best
             score! &#10022;</p>
+          <div class="final-stats" id="final-stats" aria-label="Round stats"></div>
           <form id="score-form" class="score-form hidden" novalidate>
             <label for="score-name">Your name</label>
             <input id="score-name" type="text" autocomplete="nickname"

@@ -41,6 +41,8 @@
         hints: true,
         effects: "high",
         touch: "auto",
+        touchSize: "normal",
+        touchLayout: {}, // Control id: [x, y] offset as a share of the screen.
       },
     };
   }
@@ -100,6 +102,14 @@
     s.difficulty = oneOf(from.difficulty, Object.keys(D.DIFFICULTY), s.difficulty);
     s.effects = oneOf(from.effects, ["high", "low"], s.effects);
     s.touch = oneOf(from.touch, ["auto", "on", "off"], s.touch);
+    s.touchSize = oneOf(from.touchSize, ["normal", "large", "huge"], s.touchSize);
+    const layout = from.touchLayout;
+    if (layout && typeof layout === "object") {
+      for (const id of ["move", "weapon", "force", "fire", "jump", "stick", "upgrade", "shield", "rockets", "spaceFire"]) {
+        const at = layout[id];
+        if (Array.isArray(at) && at.length === 2 && at.every(Number.isFinite)) s.touchLayout[id] = [clamp(at[0], -1, 1), clamp(at[1], -1, 1)];
+      }
+    }
 
     const pending = raw.pendingScore;
     if (pending && Number(pending.score) > 0) {

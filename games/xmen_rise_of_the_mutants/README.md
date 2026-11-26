@@ -100,7 +100,7 @@ xmen_rise_of_the_mutants/
     ├── input.js             Keyboard, gamepad, touch joystick and buttons
     ├── renderer.js          Shared drawing helpers
     ├── effects.js           Pooled particles, floating text, shake, flashes
-    ├── camera.js            Follow camera with arena locks
+    ├── camera.js            Follow camera that keeps the hero centered
     ├── physics.js           Tile collision, ledges, moving and crumbling platforms
     ├── collision.js         Hit queries
     ├── characters.js        The 12 heroes: stats, abilities, passives

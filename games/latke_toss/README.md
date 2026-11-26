@@ -7,20 +7,26 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 ## How to play
 
 1. Pick a difficulty on the title screen:
-   - **Easy**: the pot sits still.
-   - **Medium**: the pot slides side to side.
+   - **Easy**: the pot sits still, at a different random spot each game.
+   - **Medium**: the pot slides side to side, at a different random distance each game.
    - **Hard**: the pot floats and drifts left/right, up/down and toward/away from you. A glowing column and ring on the table show its height and position.
 2. Press **Start Game**. After a short "Ready? Go!" the 60-second clock starts.
 3. Press (or touch) the latke on the plate, **drag upward toward the pot** to aim, and **release** to toss.
    - The drag direction sets where the latke heads. The drag length sets how far it flies.
    - A dotted arc previews the throw. Medium and Hard show only part of the arc.
    - A tiny drag, or a drag pointing back toward you, cancels the throw.
-4. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, a **2x** badge appears on your score and every latke after that is worth **2 points** for the rest of the round. The candles go out again at the start of each round.
-5. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. One dreidel sits in front of the pot and one behind it. Each hit also doubles your points for **10 seconds**. This stacks with the menorah bonus and with other dreidel hits, so with all candles lit and one dreidel boost active, every latke is worth 4 points. The badge on your score shows the current total.
-6. A latke scores only if it drops **through the pot opening**. Hitting the rim or the outside wall does not count. A clean entry without touching the rim shows "Swish!".
-7. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
+4. A latke scores only if it drops **through the pot opening**. Hitting the rim or the outside wall does not count. Each latke is worth **10 points**, and a clean drop that never touches the rim shows "Mazal!" and earns **+5**.
+5. **Streaks:** land latkes in a row to build a streak, shown under your score. From the 3rd in a row your points are worth **1.5x** and from the 6th **2x**. After that the multiplier doubles at the 10th, 15th, 20th, 25th, 30th, 40th and 50th in a row: **4x, 8x, 16x, 32x, 64x, 128x** and **256x**. Any miss resets the streak, including a latke that hits a dreidel or the menorah and then lands on the table.
+6. **Golden latke:** now and then a shiny golden latke appears on the plate. It's worth **50 points** (plus the clean bonus and all multipliers) if you land it, and it's gone if you miss.
+7. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, your points are doubled for the rest of the round. The candles go out again at the start of each round.
+8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game. Each hit also doubles your points for **10 seconds**.
+9. **Final Fry:** in the last **10 seconds** every latke counts **double**, a moving pot speeds up and the music plays faster.
+10. All multipliers stack: the menorah, every active dreidel boost, your streak and the Final Fry. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
+11. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
 
-Best scores are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
+When time runs out, the game-over screen shows your **accuracy** (latkes landed out of throws), **best streak** and **clean shots**, each next to your personal best. A stat that beats your best is highlighted. Accuracy only counts toward a best once a round has at least 8 throws.
+
+Best scores and best stats are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
 
 ## Online leaderboard
 
@@ -145,4 +151,3 @@ A slightly wider ring counts as the rim and knocks the latke back out. Below the
 Works in current versions of Chrome, Edge, Firefox and Safari on desktop, Android and iOS. If WebGL is unavailable, or the scripts can't load, the page shows a message explaining why instead of a blank screen.
 
 ## TODO
-

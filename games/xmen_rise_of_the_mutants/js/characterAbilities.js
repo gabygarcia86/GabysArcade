@@ -9,7 +9,12 @@
   const A = XM.Art;
 
   // ---------- Helpers ----------
-  const front = (p, reach, h, yOff = 0.48) => ({ x: p.facing > 0 ? p.cx : p.cx - reach, y: p.y + p.h * yOff - h / 2, w: reach, h });
+  // Every melee hit reaches a little past the number given, so close-range heroes connect.
+  const MELEE_BONUS = 12;
+  const front = (p, reach, h, yOff = 0.48) => {
+    reach += MELEE_BONUS;
+    return { x: p.facing > 0 ? p.cx : p.cx - reach, y: p.y + p.h * yOff - h / 2, w: reach, h };
+  };
   const dmgB = (p, combo) => p.st.atk * (combo === 2 ? 1.45 : 1);
   const dmgS = (p, f) => p.st.atk * p.st.sp * f;
   const dmgU = (p, f) => p.st.atk * p.st.ult * f;
@@ -669,7 +674,7 @@
         p.act("attack", "punch", 0.34);
         XM.Audio.sfx("punch");
         w.later(0.12, () => {
-          const n = w.combat.melee(front(p, 56, 40), dmgB(p, c) * 1.05, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
+          const n = w.combat.melee(front(p, 56, 40), dmgB(p, c) * 1.3, { kb: c === 2 ? 420 : 280, dir: p.facing, heavy: true, color: "#e8eef6" });
           if (n) XM.FX.shake(c === 2 ? 4 : 2, 0.12);
         });
       },
@@ -757,8 +762,12 @@
       special(p, w, up) {
         p.act("special", "throw", 0.35);
         XM.Audio.sfx("psychic");
-        const h = hand(p, up);
-        w.later(0.08, () => w.combat.shoot({ kind: "psyknife", x: h.x, y: h.y, ...aim(p, up, 950), r: 9, dmg: dmgS(p, 1.45), life: 0.9, pierce: true, stun: 0.5, power: true, color: "#ff4fe0" }));
+        w.later(0.08, () => {
+          // Angles down at short enemies on the ground, like the other heroes' shots.
+          const h = hand(p, up);
+          const v = aimLow(w, p, up, 950, h.x, h.y, 9, 950 * 0.9);
+          w.combat.shoot({ kind: "psyknife", x: h.x, y: h.y, ...v, r: 9, dmg: dmgS(p, 1.45), life: 0.9, pierce: true, stun: 0.5, power: true, color: "#ff4fe0" });
+        });
       },
       ultimate(p, w) {
         p.act("ultimate", "spin", 1.6);
