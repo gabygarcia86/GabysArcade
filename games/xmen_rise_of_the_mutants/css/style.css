@@ -332,8 +332,8 @@ header.bar .sub { color: var(--muted); font-size: 13px; margin-left: auto; }
   background: rgba(40, 60, 140, 0.85); box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5); text-shadow: 1px 1px 0 var(--ink);
 }
 .t-btn.on { transform: translate(-50%, -50%) scale(0.92); filter: brightness(1.4); }
-.t-btn.jump { background: rgba(60, 170, 90, 0.85); width: calc(88px * var(--t-size)); height: calc(88px * var(--t-size)); }
-.t-btn.attack { background: rgba(200, 40, 40, 0.88); width: calc(92px * var(--t-size)); height: calc(92px * var(--t-size)); }
+.t-btn.jump { background: rgba(60, 170, 90, 0.85); width: calc(92px * var(--t-size)); height: calc(92px * var(--t-size)); }
+.t-btn.attack { background: rgba(200, 40, 40, 0.88); }
 .t-btn.special { background: rgba(40, 140, 230, 0.88); }
 .t-btn.ultimate { background: rgba(230, 170, 20, 0.92); color: var(--ink); text-shadow: none; }
 .t-btn.dodge { background: rgba(120, 80, 170, 0.85); font-size: calc(11px * var(--t-size)); }

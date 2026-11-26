@@ -24,11 +24,11 @@
   // Default touch layout: control centers as a share of the screen.
   const TOUCH_DEFAULTS = {
     stick: { x: 0.12, y: 0.72 },
-    jump: { x: 0.27, y: 0.86 },
-    attack: { x: 0.88, y: 0.8 },
-    special: { x: 0.76, y: 0.88 },
+    jump: { x: 0.88, y: 0.8 },
+    attack: { x: 0.76, y: 0.88 },
+    special: { x: 0.76, y: 0.66 },
     ultimate: { x: 0.9, y: 0.56 },
-    dodge: { x: 0.76, y: 0.66 },
+    dodge: { x: 0.27, y: 0.86 },
     interact: { x: 0.64, y: 0.86 },
   };
 
