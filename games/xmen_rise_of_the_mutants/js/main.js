@@ -73,7 +73,15 @@
         if (e.type === "keydown" && ["Tab", "Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
         this.start();
       };
-      window.addEventListener("pointerdown", startOnce);
+      // Browsers only allow full screen from a real user gesture. A mouse press counts on
+      // pointerdown, but a touch only counts once the finger lifts, so touches start the
+      // game on pointerup.
+      window.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "mouse") startOnce(e);
+      });
+      window.addEventListener("pointerup", (e) => {
+        if (e.pointerType !== "mouse") startOnce(e);
+      });
       window.addEventListener("keydown", startOnce);
       window.addEventListener("keydown", (e) => {
         if (XM.Input.captureCb) return;
@@ -117,6 +125,7 @@
       if (this.state !== "splash") return;
       XM.Audio.init();
       this.requestFullscreen();
+      this.startedAt = performance.now();
       this.toMenu();
     }
 
@@ -125,11 +134,23 @@
       if (document.fullscreenElement || document.webkitFullscreenElement) return;
       const req = root.requestFullscreen || root.webkitRequestFullscreen;
       if (!req) return;
-      Promise.resolve(req.call(root, { navigationUI: "hide" })).catch(() => {});
-      if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {});
+      // The orientation lock only works once the page is actually full screen.
+      Promise.resolve(req.call(root, { navigationUI: "hide" }))
+        .then(() => {
+          if (screen.orientation && screen.orientation.lock) return screen.orientation.lock("landscape");
+        })
+        .catch(() => {});
+    }
+
+    // On touch devices, menu taps re-enter full screen if it was refused or the player
+    // swiped out of it, unless they turned it off themselves in Settings.
+    ensureFullscreen() {
+      if (this.fullscreenOptOut || !window.matchMedia("(pointer: coarse)").matches) return;
+      this.requestFullscreen();
     }
 
     toggleFullscreen() {
+      this.fullscreenOptOut = !!document.fullscreenElement;
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       else this.requestFullscreen();
       setTimeout(() => this.menus.current === "settings" && this.menus.refresh(), 300);
@@ -385,6 +406,8 @@
 
     menuClick(clientX, clientY) {
       if (this.state !== "menu") return;
+      // A touch starts the game on pointerup, so its click lands on the fresh main menu.
+      if (performance.now() - (this.startedAt || 0) < 400) return;
       const slot = this.menuPoint(clientX, clientY);
       if (slot) this.antics.trigger(slot);
     }
