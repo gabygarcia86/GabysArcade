@@ -406,6 +406,33 @@ window.ARCADE_CATALOG = {
       ],
       added: "",
     },
+    {
+      folder: "xmen_rise_of_the_mutants",
+      title: "Coming Soon - X-Men: Rise of the Mutants",
+      description:
+        "Lead 12 X-Men through 20 story levels and 10 boss battles, with RPG upgrades, 120 outfits and hidden X symbols.",
+      categories: ["Arcade", "Platformer", "RPG"],
+      tags: [
+        "x-men",
+        "superhero",
+        "mutants",
+        "marvel",
+        "platformer",
+        "action",
+        "side-scroller",
+        "story",
+        "boss fights",
+        "customization",
+        "outfits",
+        "upgrades",
+        "collectibles",
+        "leaderboard",
+        "keyboard",
+        "gamepad",
+        "touch",
+      ],
+      added: "",
+    },
   ],
 
   apps: [
