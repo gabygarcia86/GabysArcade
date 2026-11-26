@@ -17,6 +17,8 @@ export const AUDIO_FILES = {
   coin: null,
   candle: null,
   miracle: null,
+  streak: null,
+  golden: null,
 };
 
 // Looping background music (paths relative to index.html). One gameplay track is picked at
@@ -352,6 +354,21 @@ export class AudioManager {
     for (let i = 0; i < 8; i++) {
       this._tone(t + 0.5 + i * 0.07, { type: 'sine', from: 2000 + Math.random() * 1500, duration: 0.12, peak: 0.04 });
     }
+  }
+
+  // Rising three-note chime when a streak reaches a new multiplier tier.
+  _streak(t) {
+    [784, 987.8, 1318.5].forEach((frequency, i) => {
+      this._tone(t + i * 0.07, { type: 'triangle', from: frequency, duration: 0.22, peak: 0.12 });
+    });
+  }
+
+  // Shimmering sparkle when a golden latke appears on the plate.
+  _golden(t) {
+    [1318.5, 1568, 1760, 2093, 2637].forEach((frequency, i) => {
+      this._tone(t + i * 0.05, { type: 'sine', from: frequency, duration: 0.3, peak: 0.08 });
+    });
+    this._tone(t, { type: 'triangle', from: 659.3, duration: 0.6, peak: 0.08 });
   }
 
   _tick(t) {

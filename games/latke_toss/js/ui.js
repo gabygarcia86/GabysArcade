@@ -29,6 +29,7 @@ export class UI {
     this.popupLayer = $('popup-layer');
     this.pauseButton = $('btn-pause');
     this.multiplierBadge = $('hud-mult');
+    this.streakBadge = $('hud-streak');
     this.difficultyButtons = Array.from(document.querySelectorAll('.diff-btn'));
     this.muteButtons = Array.from(document.querySelectorAll('.mute-toggle'));
     this._lastTime = null;
@@ -116,6 +117,12 @@ export class UI {
     this.multiplierBadge.textContent = `${multiplier}\u00d7`;
     this.multiplierBadge.setAttribute('aria-label', `${multiplier} times points`);
     this.multiplierBadge.classList.toggle('hidden', multiplier <= 1);
+  }
+
+  // Shows the current run of latkes landed in a row (hidden below 2).
+  setStreak(streak) {
+    this.streakBadge.textContent = `\u{1F525} ${streak} in a row`;
+    this.streakBadge.classList.toggle('hidden', streak < 2);
   }
 
   setBest(best) {

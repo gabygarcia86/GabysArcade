@@ -15,10 +15,13 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
    - The drag direction sets where the latke heads. The drag length sets how far it flies.
    - A dotted arc previews the throw. Medium and Hard show only part of the arc.
    - A tiny drag, or a drag pointing back toward you, cancels the throw.
-4. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, a **2x** badge appears on your score and every latke after that is worth **2 points** for the rest of the round. The candles go out again at the start of each round.
-5. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. One dreidel sits in front of the pot and one behind it. Each hit also doubles your points for **10 seconds**. This stacks with the menorah bonus and with other dreidel hits, so with all candles lit and one dreidel boost active, every latke is worth 4 points. The badge on your score shows the current total.
-6. A latke scores only if it drops **through the pot opening**. Hitting the rim or the outside wall does not count. A clean entry without touching the rim shows "Swish!".
-7. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
+4. A latke scores only if it drops **through the pot opening**. Hitting the rim or the outside wall does not count. Each latke is worth **10 points**, and a clean drop that never touches the rim shows "Mazal!" and earns **+5**.
+5. **Streaks:** land latkes in a row to build a streak, shown under your score. From the 3rd in a row your points are worth **1.5x**, and from the 6th **2x**. Any miss resets the streak, including a latke that hits a dreidel or the menorah and then lands on the table.
+6. **Golden latke:** now and then a shiny golden latke appears on the plate. It's worth **50 points** (plus the clean bonus and all multipliers) if you land it, and it's gone if you miss.
+7. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, your points are doubled for the rest of the round. The candles go out again at the start of each round.
+8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game. Each hit also doubles your points for **10 seconds**.
+9. All multipliers stack: the menorah, every active dreidel boost and your streak. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
+10. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
 
 Best scores are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
 
@@ -146,3 +149,17 @@ Works in current versions of Chrome, Edge, Firefox and Safari on desktop, Androi
 
 ## TODO
 
+Make it fair to compare
+4. Daily challenge with a seeded layout. The dreidels now move every game, so some layouts are luckier than others, and that's a little unfair for leaderboards. A daily mode would use the date to decide the dreidel spots, so everyone gets the same layout that day, with its own daily top 10. Normal games stay random. It also gives people a reason to come back every day.
+5. Basic cheat check. The README notes that scores can be faked. A Supabase rule that rejects scores above a realistic maximum for 60 seconds on each difficulty would keep the top 10 believable.
+
+Make the round more exciting
+6. Final Fry. In the last 10 seconds the music speeds up, the pot moves a bit faster, and every latke counts double, so rounds end on a climax instead of fizzling out.
+7. End-of-round stats. Show accuracy, best streak and clean shots on the game-over screen, and save personal bests for each. Players then have goals beyond the total score.
+
+Longer-term replay value
+8. Small challenges that unlock cosmetics, such as a sweet-potato latke or a silver pot. Examples: "Land 5 clean shots in one round" or "Hit 3 dreidels in one game".
+
+I'd start with 1, 2 and 7 together. They're small changes to the existing scoring and game-over screen, and they change how the game feels the most. 4 is the one to add once people are actually competing on the leaderboard.
+
+Want me to implement any of these?

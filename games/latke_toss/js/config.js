@@ -122,6 +122,29 @@ export const PARTICLES = {
   rippleSeconds: 0.7,
 };
 
+// Points for a latke that lands in the pot, before any multipliers.
+export const SCORING = {
+  pointsPerLatke: 10,
+  // Extra points for a clean drop that never touches the rim or wall ("Mazal!").
+  cleanBonus: 5,
+  // Landing latkes in a row raises a streak multiplier; any miss resets it. Each tier
+  // applies from the latke that reaches its count (highest reached tier wins).
+  streakTiers: [
+    { count: 3, multiplier: 1.5 },
+    { count: 6, multiplier: 2 },
+  ],
+};
+
+// Now and then the next latke on the plate is golden: worth `points` instead of
+// SCORING.pointsPerLatke if it lands, and simply gone if it misses.
+export const GOLDEN = {
+  points: 50,
+  // Chance that a new latke is golden (never the first latke of a round).
+  chance: 0.1,
+  // At least this many regular latkes come between two golden ones.
+  minGap: 6,
+};
+
 // Menorah bonus: every latke landed in the pot lights one candle. Once all nine are lit,
 // each further latke is worth `multiplier` points for the rest of the round.
 export const MENORAH = {

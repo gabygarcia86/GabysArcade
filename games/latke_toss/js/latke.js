@@ -329,6 +329,25 @@ export function createLatke(seed = Math.floor(Math.random() * 1e9)) {
   return group;
 }
 
+const GOLDEN_TINT = new THREE.Color(0xffd34d);
+const GOLDEN_GLOW = new THREE.Color(0x7a4c00);
+const NO_GLOW = new THREE.Color(0x000000);
+
+/** Turns a pooled latke into the shiny golden bonus latke, or back to a regular one. */
+export function setLatkeGolden(latke, golden) {
+  const material = latke.userData.material;
+  latke.userData.golden = golden;
+  material.color.copy(latkeBaseColor(latke));
+  material.emissive.copy(golden ? GOLDEN_GLOW : NO_GLOW);
+  material.metalness = golden ? 0.65 : 0;
+  material.roughness = golden ? 0.3 : 0.72;
+}
+
+/** The latke's unfried color tint (gold for a golden latke). */
+export function latkeBaseColor(latke) {
+  return latke.userData.golden ? GOLDEN_TINT : latke.userData.baseColor;
+}
+
 /**
  * Fixed pool of pre-built latkes. Successive throws pick a different variant and apply a
  * random scale and spin so every toss looks a little different without building new
@@ -361,7 +380,7 @@ export class LatkePool {
 
     const widthScale = 0.93 + Math.random() * 0.14;
     latke.scale.set(widthScale, 0.9 + Math.random() * 0.2, widthScale * (0.95 + Math.random() * 0.1));
-    latke.userData.material.color.copy(latke.userData.baseColor);
+    setLatkeGolden(latke, false);
     latke.userData.material.opacity = 1;
     latke.userData.material.transparent = false;
     latke.visible = true;

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { ROUND, PHYSICS, LAUNCH, LATKE, POT, DIFFICULTIES, MENORAH, DREIDEL } from './config.js';
+import { ROUND, PHYSICS, LAUNCH, LATKE, POT, DIFFICULTIES, MENORAH, DREIDEL, SCORING, GOLDEN } from './config.js';
 import { Pot } from './pot.js';
-import { LatkePool } from './latke.js';
+import { LatkePool, setLatkeGolden, latkeBaseColor } from './latke.js';
 import { SplashEffects } from './particles.js';
 import { GeltShower } from './gelt.js';
 import { AimController } from './controls.js';
@@ -177,6 +177,7 @@ class ThrownLatke {
     this.fade = 0; // 0..1 shrink-out progress before returning to the pool
     this.active = false;
     this.scored = false;
+    this.golden = false; // the rare bonus latke
     this.lastClank = -1;
     this.hitDreidels = new Set(); // each dreidel rains gelt once per latke
     this.hitMenorah = false; // each latke puts out at most one candle
@@ -216,7 +217,10 @@ export class Game {
     this.pausedFrom = null;
     this.difficultyKey = loadDifficulty();
     this.score = 0;
-    this.multiplier = 1; // points per latke: menorah bonus times every active dreidel boost
+    this.multiplier = 1; // menorah bonus x every active dreidel boost x streak bonus
+    this.streak = 0; // latkes landed in a row; any miss resets it
+    this.streakMultiplier = 1;
+    this.latkesSinceGolden = 0;
     this.menorahMultiplier = 1; // becomes MENORAH.multiplier once every candle is lit
     this.dreidelBoosts = []; // roundElapsed time at which each active dreidel boost expires
     this.simTime = 0; // drives pot motion; advances in fixed steps
@@ -396,6 +400,10 @@ export class Game {
     this.gameScene.resetCandles();
     this.menorahMultiplier = 1;
     this.dreidelBoosts.length = 0;
+    this.streak = 0;
+    this.streakMultiplier = 1;
+    this.latkesSinceGolden = 0;
+    this.ui.setStreak(0);
     this._updateMultiplier();
     this.pot.reset();
     this.aimVisuals.hide();
@@ -444,6 +452,16 @@ export class Game {
     thrown.lastClank = -1;
     thrown.hitDreidels.clear();
     thrown.hitMenorah = false;
+    // Now and then (never first in a round) the next latke is a golden bonus latke.
+    thrown.golden = this.state === GameState.PLAYING
+      && this.latkesSinceGolden >= GOLDEN.minGap
+      && Math.random() < GOLDEN.chance;
+    this.latkesSinceGolden = thrown.golden ? 0 : this.latkesSinceGolden + 1;
+    setLatkeGolden(mesh, thrown.golden);
+    if (thrown.golden) {
+      this.ui.showBanner('Golden Latke!', { gold: true, duration: 1100 });
+      this.audio.play('golden');
+    }
     // Random resting yaw shows a different side of the irregular outline each time.
     thrown.restQuaternion.setFromAxisAngle(_up, Math.random() * Math.PI * 2);
     thrown.body.reset(REST_POSITION, thrown.restQuaternion);
@@ -524,7 +542,10 @@ export class Game {
     thrown.scored = true;
     this._resolve(thrown, LatkeState.SUCCESS);
     this._startFrying(thrown, localHit);
-    const points = this.multiplier;
+    this._addToStreak();
+    const clean = !thrown.body.touchedPot;
+    const base = (thrown.golden ? GOLDEN.points : SCORING.pointsPerLatke) + (clean ? SCORING.cleanBonus : 0);
+    const points = Math.round(base * this.multiplier);
     this.score += points;
     this.ui.setScore(this.score, true);
 
@@ -533,10 +554,41 @@ export class Game {
     this.pot.splash(localHit.x, localHit.z);
     this.audio.play('splash');
 
-    const clean = !thrown.body.touchedPot;
     _worldHit.y += 0.6;
-    this._popupAt(_worldHit, `+${points}${clean ? '<small>Mazal!</small>' : ''}`, points > 1 ? 'double' : '');
+    const notes = [];
+    if (thrown.golden) notes.push('Golden!');
+    if (clean) notes.push(`Mazal! +${SCORING.cleanBonus}`);
+    if (this.streak >= 2) notes.push(`${this.streak} in a row`);
+    const style = thrown.golden ? 'golden' : this.multiplier > 1 ? 'double' : '';
+    this._popupAt(_worldHit, `+${points}${notes.length ? `<small>${notes.join(' \u00b7 ')}</small>` : ''}`, style);
+    if (thrown.golden) this.effects.sparkleBurst(_worldHit);
     this._lightCandle();
+  }
+
+  // A landed latke extends the streak and may reach a higher streak tier.
+  _addToStreak() {
+    this.streak += 1;
+    this.ui.setStreak(this.streak);
+    let multiplier = 1;
+    for (const tier of SCORING.streakTiers) if (this.streak >= tier.count) multiplier = tier.multiplier;
+    if (multiplier !== this.streakMultiplier) {
+      this.streakMultiplier = multiplier;
+      this._updateMultiplier();
+      this.ui.showBanner(`${this.streak} in a row! ${multiplier}\u00d7`, { gold: true, duration: 1100 });
+      this.audio.play('streak');
+    }
+  }
+
+  // A miss ends the streak. Returns how long the streak was.
+  _breakStreak() {
+    const lost = this.streak;
+    this.streak = 0;
+    this.ui.setStreak(0);
+    if (this.streakMultiplier !== 1) {
+      this.streakMultiplier = 1;
+      this._updateMultiplier();
+    }
+    return lost;
   }
 
   // Each landed latke lights one menorah candle; lighting the last one starts the bonus.
@@ -563,10 +615,13 @@ export class Game {
 
   _registerMiss(thrown, label = true) {
     this._resolve(thrown, LatkeState.MISS);
-    if (label && this.state === GameState.PLAYING) {
+    if (this.state !== GameState.PLAYING) return;
+    const lost = this._breakStreak();
+    if (label) {
       _worldHit.copy(thrown.body.position);
       _worldHit.y += 0.4;
-      this._popupAt(_worldHit, 'OY!', 'miss');
+      const note = lost >= 3 ? '<small>Streak lost</small>' : '';
+      this._popupAt(_worldHit, `OY!${note}`, 'miss');
     }
   }
 
@@ -602,9 +657,9 @@ export class Game {
     this._popupAt(_candlePosition, 'Candle out!', 'miss');
   }
 
-  // Combines the menorah bonus with every active dreidel boost.
+  // Combines the menorah bonus, every active dreidel boost and the streak bonus.
   _updateMultiplier() {
-    this.multiplier = this.menorahMultiplier * DREIDEL.bonusMultiplier ** this.dreidelBoosts.length;
+    this.multiplier = this.menorahMultiplier * DREIDEL.bonusMultiplier ** this.dreidelBoosts.length * this.streakMultiplier;
     this.ui.setMultiplier(this.multiplier);
   }
 
@@ -760,7 +815,7 @@ export class Game {
     this._flatten(body.quaternion, 9 * h);
 
     const material = thrown.mesh.userData.material;
-    material.color.copy(thrown.mesh.userData.baseColor).lerp(FRIED_COLOR, Math.min(1, thrown.timer / FRY_SECONDS) * 0.5);
+    material.color.copy(latkeBaseColor(thrown.mesh)).lerp(FRIED_COLOR, Math.min(1, thrown.timer / FRY_SECONDS) * 0.5);
 
     if (thrown.timer > FRY_SECONDS) {
       thrown.fade += h / FADE_SECONDS;
