@@ -76,6 +76,7 @@
       mechanism: null,
       puck: null,
       pickup: null,
+      credit: null,
       checkpoint: null,
       bossIntroMudhorn: null,
       bossIntroReptavians: null,

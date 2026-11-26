@@ -78,6 +78,8 @@ On phones and tablets, starting, restarting or retrying a level switches to full
 
 On the ground there are five major bosses, in Levels 2, 5, 7, 9 and 13, and the Imperial Guardian is a mini-boss. Each space battle has a mini-boss along the way and a three-phase boss at the end.
 
+Every level is also scattered with **credit chips**, worth 25 points each before the difficulty multiplier. On the ground they sit in rows, jump arcs and stacks over every floor, ledge and slope, and some are only reachable with upgrades from later levels. The level panel shows how many you've collected out of the total. In the space battles, formations of chips stream in between the waves. `scatterCredits` in `js/levelBuilder.js` places the ground chips automatically from each level's layout, seeded by level number so the layout is the same on every attempt. Its settings are in `CREDITS` at the bottom of that file.
+
 Each of the ten ground levels hides three Bounty Pucks. Some need upgrades from later levels, so they're meant for replays. Clearing all ten worlds and finding all 30 pucks unlocks the Darksaber and its nine blade colors.
 
 ## Space battles
@@ -102,7 +104,7 @@ Losing a life costs upgrades by difficulty. Story keeps them all, Standard keeps
 
 ## Scoring
 
-- A level scores points for defeated enemies, bosses and objectives, plus completion, time and remaining-life bonuses.
+- A level scores points for defeated enemies, bosses, objectives and credit chips, plus completion, time and remaining-life bonuses.
 - Difficulty multiplies the level score: Story 75%, Standard 100%, Veteran 125%. It's fixed when the level starts.
 - The campaign score is the best score from each of the 13 levels, plus 1,500 for each Bounty Puck. A game over also counts that run's points if they beat the level's best.
 
@@ -151,7 +153,7 @@ mandos_quest/
     ├── projectile.js       Pooled projectiles
     ├── enemy.js            Enemy types, attacks and AI
     ├── boss.js             Boss fights
-    ├── collectibleManager.js  Bounty Pucks and pickups
+    ├── collectibleManager.js  Bounty Pucks, credit chips and pickups
     ├── collisionManager.js Platform, slope and wall collision
     ├── camera.js           Follow camera and arena framing
     ├── particleSystem.js   Pooled effects
@@ -212,6 +214,4 @@ The game is Coming Soon while its `<title>` starts with those words. To publish 
 
 - Update with new music
 - Update credits to reflect new music and copyright warning
-- fix spawn location of laser blast from  main character
-- Make flame thrower shoot farther 
-- Add pickups to gain additional points through out all the levels
+- fix space missions missle upgrade, it just goes to the bottom, have it go at different hieghts

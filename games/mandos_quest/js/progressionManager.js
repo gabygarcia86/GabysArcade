@@ -189,6 +189,8 @@
         lives: run.lives,
         capsules: run.capsules,
         upgrades: run.upgrades,
+        credits: run.credits || 0,
+        creditTotal: run.creditTotal || 0,
         time: run.time,
         kills: run.kills,
         pucks: this.levelPucks(level.id),

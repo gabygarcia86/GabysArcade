@@ -1,7 +1,7 @@
 /* The player's arsenal: switching, ammunition, aiming and every attack. */
 (function (MQ) {
   const { clamp, rand, glow } = MQ.U;
-  const { cos, sin, atan2, hypot, abs } = Math;
+  const { cos, sin, atan2, hypot, abs, min } = Math;
   const D = MQ.DATA;
   const PLAYER = 0;
 
@@ -12,6 +12,11 @@
   const SABER_HITS = [1, 1.05, 1.35, 2.4];
   const SWING_VARIANT = [0, 1, 2, 3];
   const EXECUTE_BELOW = 0.35;
+  const MUZZLE_Y = -6; // The barrel's height in the weapon drawings.
+  const LAUNCHER = 12; // Wrist launchers fire from just past the hand.
+  const scratchArms = {};
+  const scratchPose = MQ.Anim.createPose();
+  const muzzle = { x: 0, y: 0 };
 
   class WeaponManager {
     constructor(world, player) {
@@ -196,11 +201,7 @@
       const s = sin(a);
       const ox = player.x + f * 4;
       const oy = player.y + SHOULDER_Y;
-      const reach = 24 + (MQ.WeaponArt.muzzle[id] || 12);
-      /*
-       * Shots start at the body, on the line of the barrel. Starting at the muzzle would
-       * skip thin walls and anything standing closer than the barrel is long.
-       */
+      // Shots are fired at the body, on the line of the barrel, then carried to the muzzle.
       const mx = ox + f * s * 6;
       const my = oy - c * 6;
 
@@ -211,20 +212,23 @@
 
       this.cooldown = id === "blaster" && stats.fastBlaster ? weapon.cooldown * 0.72 : weapon.cooldown;
       this.beginAttack(id === "disruptor" ? 0.3 : 0.16, id === "heavy" || id === "disruptor" ? 1 : 0);
+      const tip = this.muzzle(id);
+      const fire = (kind, x, y, dx, dy, amount, offset = 0) =>
+        projectiles.advance(projectiles.fire(PLAYER, kind, x, y + offset, dx, dy, amount, weapon.color, life), tip.x, tip.y + offset);
 
       switch (id) {
         case "blaster":
           if (stats.twinBlaster) {
-            for (const offset of [-4, 4]) projectiles.fire(PLAYER, "bolt", mx, my + offset, vx, vy, damage * 0.85, weapon.color, life);
+            for (const offset of [-4, 4]) fire("bolt", mx, my, vx, vy, damage * 0.85, offset);
           } else {
-            projectiles.fire(PLAYER, "bolt", mx, my, vx, vy, damage, weapon.color, life);
+            fire("bolt", mx, my, vx, vy, damage);
           }
           break;
         case "pulse":
-          projectiles.fire(PLAYER, "bolt", mx, my, vx, vy, damage, weapon.color, life);
+          fire("bolt", mx, my, vx, vy, damage);
           break;
         case "heavy": {
-          const p = projectiles.fire(PLAYER, "bolt", mx, my, vx, vy, damage, weapon.color, life);
+          const p = fire("bolt", mx, my, vx, vy, damage);
           p.r = 11;
           p.pierce = 2;
           p.knock = 280;
@@ -233,7 +237,7 @@
           break;
         }
         case "disruptor": {
-          const p = projectiles.fire(PLAYER, "lance", mx, my, vx, vy, damage, weapon.color, life);
+          const p = fire("lance", mx, my, vx, vy, damage);
           p.r = 10;
           p.pierce = 6;
           p.knock = 220;
@@ -244,11 +248,11 @@
         case "birds":
           for (let i = 0; i < 4; i++) {
             const spread = a + (i - 1.5) * 0.36;
-            projectiles.fire(PLAYER, "bird", mx, my, f * cos(spread) * weapon.speed, sin(spread) * weapon.speed, damage, weapon.color, life);
+            fire("bird", mx, my, f * cos(spread) * weapon.speed, sin(spread) * weapon.speed, damage);
           }
           break;
         case "rocket": {
-          const p = projectiles.fire(PLAYER, "rocket", mx, my, vx, vy, damage, weapon.color, life);
+          const p = fire("rocket", mx, my, vx, vy, damage);
           p.blast = weapon.blast;
           p.r = 9;
           break;
@@ -256,7 +260,23 @@
       }
 
       world.sfx(id);
-      particles.flash(mx + f * c * reach, my + s * reach, id === "heavy" || id === "disruptor" ? 64 : 34, weapon.color);
+      particles.flash(tip.x, tip.y, id === "heavy" || id === "disruptor" ? 64 : 34, weapon.color);
+    }
+
+    /*
+     * The world position of the current weapon's muzzle in the pose the player is about to
+     * be drawn in, worked out with the same arm and weapon transforms as the drawing.
+     */
+    muzzle(id) {
+      const { player } = this;
+      this.pose(scratchArms);
+      MQ.Anim.human(scratchPose, player.anim, player.time, player.phase, player.animTime,
+        scratchArms.action, scratchArms.k, scratchArms.variant, scratchArms.angle);
+      const length = MQ.WeaponArt.muzzle[id] ?? LAUNCHER;
+      MQ.Anim.frontHandPoint(scratchPose, length, MUZZLE_Y, muzzle);
+      muzzle.x = player.x + player.facing * muzzle.x;
+      muzzle.y += player.y;
+      return muzzle;
     }
 
     burn(dt) {
@@ -275,15 +295,16 @@
       const a = this.aim(weapon.range + 60, 200);
       const c = cos(a);
       const s = sin(a);
-      const ox = player.x + f * 24;
       const oy = player.y + SHOULDER_Y;
-      for (let i = 0; i < 3; i++) {
-        const speed = rand(500, 720);
-        world.particles.flame(ox + f * c * 28, oy + s * 28, f * cos(a + rand(-0.13, 0.13)) * speed, sin(a + rand(-0.13, 0.13)) * speed, rand(8, 15), 0.36);
+      const nozzle = this.muzzle("flame");
+      // Fast enough to carry to the end of the range against the particles' drag.
+      for (let i = 0; i < 5; i++) {
+        const speed = rand(1150, 1650);
+        world.particles.flame(nozzle.x, nozzle.y, f * cos(a + rand(-0.1, 0.1)) * speed, sin(a + rand(-0.1, 0.1)) * speed, rand(9, 17), 0.55);
       }
       world.sfx("flame");
 
-      // A widening cone, sampled as a row of circles.
+      // A cone that widens over the first stretch, sampled as a row of circles.
       const damage = weapon.damage * world.stats.damage;
       const stamp = world.step;
       for (let d = 12; d <= weapon.range; d += 24) {
@@ -294,7 +315,7 @@
         for (let i = 0; i < targets.length; i++) {
           const t = targets[i];
           const owner = t.owner || t;
-          if (!t.hittable || owner.burned === stamp || !MQ.nearBody(t, x, y, 14 + d * 0.16)) continue;
+          if (!t.hittable || owner.burned === stamp || !MQ.nearBody(t, x, y, 14 + min(d, 225) * 0.16)) continue;
           owner.burned = stamp;
           t.hurt(damage, player.x, 20, "flame");
         }

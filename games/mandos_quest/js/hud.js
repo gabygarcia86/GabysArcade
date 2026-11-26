@@ -318,7 +318,7 @@
       const width = 270;
       ctx.font = `600 13px ${MQ.FONT}`;
       const lines = wrap(ctx, level.objectiveText, width - 24);
-      const height = 86 + lines.length * 16;
+      const height = 102 + lines.length * 16;
       box(ctx, -width, 12, width, height, 10, INK, EDGE, 1.5);
       text(ctx, `${def.id}. ${def.title.toUpperCase()}`, -width + 12, 32, 13, "#ffffff", "left", 800);
 
@@ -334,9 +334,11 @@
       text(ctx, `${progression.totalPucks()}/30`, -width + 92, 56, 13, "#b8c6d6");
       text(ctx, formatTime(run.time) === "--:--" ? "0:00" : formatTime(run.time), -12, 48, 13, "#b8c6d6", "right");
       text(ctx, world.scoreSoFar.toLocaleString(), -12, 64, 13, GOLD, "right");
+      MQ.ObjectArt.credit(ctx, -width + 22, 72, 0);
+      text(ctx, `${run.credits}/${run.creditTotal}`, -width + 40, 77, 13, "#8fe6ff");
 
-      text(ctx, "OBJECTIVE", -width + 12, 81, 11, "#8fdcff", "left", 800);
-      for (let i = 0; i < lines.length; i++) text(ctx, lines[i], -width + 12, 97 + i * 16, 13, "#e6edf5", "left", 600);
+      text(ctx, "OBJECTIVE", -width + 12, 97, 11, "#8fdcff", "left", 800);
+      for (let i = 0; i < lines.length; i++) text(ctx, lines[i], -width + 12, 113 + i * 16, 13, "#e6edf5", "left", 600);
     }
 
     drawBossBar(ctx, boss) {

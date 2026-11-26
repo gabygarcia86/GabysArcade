@@ -1,4 +1,4 @@
-/* Bounty Pucks and supply pickups. */
+/* Bounty Pucks, credit chips and supply pickups. */
 (function (MQ) {
   const { hypot } = Math;
   const PUCK_RADIUS = 26;
@@ -9,6 +9,9 @@
       const owned = world.save.pucks[world.def.id - 1];
       this.pucks = pucks.map((p, index) => ({ x: p.x, y: p.y, index, owned: owned[index], taken: false }));
       this.pickups = pickups.map((p) => ({ x: p.x, y: p.y, kind: p.kind, taken: false, life: Infinity }));
+      this.creditTotal = this.pickups.filter((p) => p.kind === "credit").length;
+      world.run.credits = 0;
+      world.run.creditTotal = this.creditTotal;
     }
 
     drop(kind, x, y) {
@@ -40,7 +43,9 @@
         if (p.taken) continue;
         p.life -= dt;
         if (p.life <= 0) p.taken = true;
-        else if (MQ.nearBody(player, p.x, p.y - 14, 20)) this.collectPickup(p);
+        else if (p.kind === "credit") {
+          if (MQ.nearBody(player, p.x, p.y, 22)) this.collectCredit(p);
+        } else if (MQ.nearBody(player, p.x, p.y - 14, 20)) this.collectPickup(p);
       }
     }
 
@@ -63,6 +68,15 @@
       const saberUnlocked = progression.collectPuck(def.id, puck.index);
       world.toast("BOUNTY PUCK COLLECTED", `${progression.levelPucks(def.id)} of 3 in this level  ·  ${progression.totalPucks()} of 30 overall`);
       if (saberUnlocked) world.darksaberUnlocked();
+    }
+
+    collectCredit(item) {
+      const { world } = this;
+      item.taken = true;
+      world.run.credits++;
+      world.addPoints(MQ.DATA.CREDIT_POINTS, item.x, item.y);
+      world.particles.sparks(item.x, item.y, "#5fe0ff", 8, 220);
+      world.sfx("credit");
     }
 
     collectPickup(item) {
@@ -88,7 +102,8 @@
         const p = this.pickups[i];
         if (p.taken || !camera.sees(p.x, p.y, 60)) continue;
         if (p.life < 3 && time % 0.3 < 0.12) continue;
-        MQ.ObjectArt.pickup(ctx, p, time);
+        if (p.kind === "credit") MQ.ObjectArt.credit(ctx, p.x, p.y, time);
+        else MQ.ObjectArt.pickup(ctx, p, time);
       }
       for (let i = 0; i < this.pucks.length; i++) {
         const p = this.pucks[i];

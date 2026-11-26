@@ -474,6 +474,7 @@
               ${stat("Time taken", `${formatTime(Math.max(1, result.time))}${result.newBestTime ? ' <em class="best">Best</em>' : ""}`)}
               ${stat("Enemies defeated", result.kills)}
               ${stat("Bounty Pucks", `${puckDots(app.save.pucks[result.level.id - 1])} ${result.pucks}/3`)}
+              ${stat("Credit chips", `${result.credits}/${result.creditTotal}`)}
               ${stat("Score", result.score.toLocaleString())}
               ${stat("Experience", `+${result.xp.toLocaleString()} XP`)}
               ${stat("New weapons", weapons.length ? weapons.join(", ") : "None")}
@@ -502,6 +503,7 @@
               ${stat("Mission time", `${formatTime(Math.max(1, result.time))}${result.newBestTime ? ' <em class="best">Best</em>' : ""}`)}
               ${stat("Ships destroyed", result.kills)}
               ${stat("Capsules collected", result.capsules)}
+              ${stat("Credit chips", result.credits)}
               ${stat("Upgrades installed", result.upgrades)}
               ${stat("Lives remaining", `${result.lives}/${D.LIVES}`)}
               ${stat("Score", result.score.toLocaleString())}

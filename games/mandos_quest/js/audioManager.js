@@ -49,6 +49,7 @@
     door: (a) => { a.t("sawtooth", 75, 150, 0.55, 0.1); a.n("bandpass", 350, 900, 0.5, 0.15); },
     mechanism: (a) => { [330, 415, 494, 659].forEach((f, i) => a.t("triangle", f, f, 0.45, 0.12, i * 0.08)); },
     puck: (a) => { [784, 988, 1175, 1568, 1976].forEach((f, i) => a.t("sine", f, f, 0.3, 0.16, i * 0.065)); },
+    credit: (a) => { a.t("triangle", 1568, 1568, 0.05, 0.08); a.t("triangle", 2093, 2093, 0.08, 0.07, 0.04); },
     pickup: (a) => { a.t("sine", 520, 780, 0.12, 0.14); a.t("sine", 780, 1040, 0.12, 0.1, 0.08); },
     checkpoint: (a) => { [523, 659, 784].forEach((f, i) => a.t("triangle", f, f, 0.22, 0.13, i * 0.09)); },
     bossIntroMudhorn: (a) => { a.t("sawtooth", 70, 160, 0.5, 0.3); a.t("sawtooth", 160, 45, 1.2, 0.3, 0.45); a.n("lowpass", 900, 120, 1.4, 0.5, 0.3); },

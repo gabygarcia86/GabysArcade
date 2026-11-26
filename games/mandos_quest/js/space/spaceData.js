@@ -91,6 +91,14 @@
       fullBonus: 500, // For a capsule when every upgrade is maxed.
     },
 
+    // Formations of credit chips that stream past between the waves.
+    CREDITS: {
+      every: [5, 8], // Seconds between formations.
+      speed: 230, // How fast they cross the screen.
+      reach: 18,
+      magnet: 90,
+    },
+
     ENEMIES: {
       fighter: enemy("Imperial Fighter", "fighter", 27, 22, 20, 215, 100, { fire: "aim" }),
       interceptor: enemy("Interceptor", "interceptor", 28, 17, 14, 330, 120, { fire: "aim", every: 2.5, shot: 360, damage: 9 }),

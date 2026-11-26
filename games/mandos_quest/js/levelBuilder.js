@@ -225,7 +225,113 @@
     exit(x, y) {
       this.exitDef = { x, y };
     }
+
+    /* ---------- Credit chips ---------- */
+
+    /*
+     * Scatters credit chips over every floor, ledge and slope once the level is built:
+     * rows, jump arcs and stacks, skipping anything solid, dangerous or already there.
+     * Seeded by the level id, so a level's chips are the same on every attempt.
+     */
+    scatterCredits(levelId) {
+      const C = CREDITS;
+      const random = MQ.U.rng(C.seed + levelId * 7919);
+      const blockers = this.creditBlockers();
+      const placed = [];
+
+      const free = (x, y) => {
+        if (x < 30 || x > this.width - 30 || y < 40 || y > this.height - 20) return false;
+        const r = C.radius;
+        for (const b of blockers) {
+          if (x + r > b.x && x - r < b.x + b.w && y + r > b.y && y - r < b.y + b.h) return false;
+        }
+        for (const p of placed) if (Math.hypot(p.x - x, p.y - y) < C.spacing * 0.8) return false;
+        return true;
+      };
+      // Room to stand there: nothing solid between the floor and head height.
+      const standable = (x, floor) => {
+        if (floor - C.headroom < 0) return false; // On the level's ceiling.
+        for (const b of blockers) {
+          if (x + 14 > b.x && x - 14 < b.x + b.w && floor - 2 > b.y && floor - C.headroom < b.y + b.h) return false;
+        }
+        return true;
+      };
+
+      const surfaces = [];
+      for (const t of this.terrain) {
+        if (t.w >= 60) surfaces.push({ x0: t.x, x1: t.x + t.w, at: () => t.y });
+      }
+      for (const s of this.slopes) {
+        surfaces.push({ x0: s.x0, x1: s.x1, at: (x) => s.y0 + ((x - s.x0) / (s.x1 - s.x0)) * (s.y1 - s.y0) });
+      }
+
+      for (const surface of surfaces) {
+        let x = surface.x0 + random.range(40, 220);
+        while (x < surface.x1 - 30) {
+          const pattern = random.pick(C.patterns);
+          let width = 0;
+          const group = [];
+          for (const [dx, lift] of pattern) {
+            const cx = x + dx;
+            if (cx > surface.x1 - 20) break;
+            const floor = surface.at(cx);
+            group.push({ x: cx, y: floor - lift, floor });
+            width = dx;
+          }
+          const good = group.filter((c) => standable(c.x, c.floor) && free(c.x, c.y));
+          if (good.length >= Math.min(2, group.length)) {
+            for (const c of good) {
+              placed.push(c);
+              this.pickups.push({ kind: "credit", x: Math.round(c.x), y: Math.round(c.y) });
+            }
+          }
+          x += width + random.range(C.gap[0], C.gap[1]);
+        }
+      }
+    }
+
+    // Everything a chip shouldn't overlap, as rectangles.
+    creditBlockers() {
+      const list = [];
+      const add = (x, y, w, h, pad = 0) => list.push({ x: x - pad, y: y - pad, w: w + pad * 2, h: h + pad * 2 });
+      for (const t of this.terrain) add(t.x, t.y, t.w, t.h);
+      for (const o of [...this.crates, ...this.walls, ...this.rubble, ...this.bridges]) add(o.x, o.y, o.w, o.h, 6);
+      for (const o of this.boulders) {
+        add(Math.min(o.x, o.x + o.dx), Math.min(o.y, o.y + o.dy), o.w + Math.abs(o.dx), o.h + Math.abs(o.dy), 6);
+      }
+      for (const m of [...this.movers, ...this.falls]) {
+        const dx = m.dx || 0;
+        const dy = m.dy || 0;
+        add(Math.min(m.x, m.x + dx), Math.min(m.y, m.y + dy), m.w + Math.abs(dx), m.h + Math.abs(dy), 10);
+      }
+      for (const g of this.gates) add(g.x, g.seal, g.w, g.bottom - g.seal, 20);
+      for (const h of this.hazards) add(h.x, h.y, h.w, h.h, 45);
+      for (const w of this.winds) add(w.x, w.y, w.w, w.h);
+      for (const n of this.nodes) add(n.x - n.w / 2, n.y - n.h, n.w, n.h, 20);
+      for (const m of this.mechanisms) add(m.x - 30, m.y - 95, 60, 95);
+      if (this.cell) add(this.cell.x - 80, this.cell.y - 180, 160, 180);
+      for (const p of this.pucks) add(p.x, p.y, 0, 0, 60);
+      for (const p of this.pickups) add(p.x, p.y - 30, 0, 0, 45);
+      for (const c of this.checkpoints) add(c.x - 20, c.y - 90, 40, 90, 20);
+      if (this.exitDef) add(this.exitDef.x - 120, this.exitDef.y - 200, 240, 200);
+      return list;
+    }
   }
+
+  // Credit chips: [dx, height above the floor] for each chip in a pattern.
+  const CREDITS = {
+    seed: 4242,
+    radius: 16,
+    spacing: 44,
+    headroom: 90,
+    gap: [300, 620], // Between groups along a surface.
+    patterns: [
+      [[0, 38], [46, 38], [92, 38]],
+      [[0, 38], [46, 38], [92, 38], [138, 38], [184, 38]],
+      [[0, 40], [48, 92], [96, 124], [144, 92], [192, 40]],
+      [[0, 38], [0, 88], [0, 138]],
+    ],
+  };
 
   MQ.LevelBuilder = LevelBuilder;
 })(window.MQ);
