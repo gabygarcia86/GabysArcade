@@ -20,10 +20,13 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 6. **Golden latke:** now and then a shiny golden latke appears on the plate. It's worth **50 points** (plus the clean bonus and all multipliers) if you land it, and it's gone if you miss.
 7. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, your points are doubled for the rest of the round. The candles go out again at the start of each round.
 8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game. Each hit also doubles your points for **10 seconds**.
-9. All multipliers stack: the menorah, every active dreidel boost and your streak. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
-10. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
+9. **Final Fry:** in the last **10 seconds** every latke counts **double**, a moving pot speeds up and the music plays faster.
+10. All multipliers stack: the menorah, every active dreidel boost, your streak and the Final Fry. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
+11. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
 
-Best scores are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
+When time runs out, the game-over screen shows your **accuracy** (latkes landed out of throws), **best streak** and **clean shots**, each next to your personal best. A stat that beats your best is highlighted. Accuracy only counts toward a best once a round has at least 8 throws.
+
+Best scores and best stats are saved separately for each difficulty in `localStorage`. If storage is blocked, they last for the current session only.
 
 ## Online leaderboard
 

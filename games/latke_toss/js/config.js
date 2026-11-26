@@ -151,6 +151,22 @@ export const GOLDEN = {
   minGap: 6,
 };
 
+// Final Fry: the last stretch of every round. Points multiply, a moving pot speeds up,
+// and the music plays faster.
+export const FINAL_FRY = {
+  seconds: 10,
+  multiplier: 2,
+  // How much faster a moving pot travels (Easy's still pot stays still).
+  potSpeed: 1.35,
+  musicRate: 1.3,
+};
+
+// End-of-round stats. Accuracy only counts toward a personal best once a round has at
+// least this many resolved throws, so 1 for 1 isn't a permanent 100% record.
+export const STATS = {
+  minThrowsForAccuracy: 8,
+};
+
 // Menorah bonus: every latke landed in the pot lights one candle. Once all nine are lit,
 // each further latke is worth `multiplier` points for the rest of the round.
 export const MENORAH = {
