@@ -62,8 +62,6 @@ python -m http.server 8000
 # then open http://localhost:8000/games/turkey_toss/
 ```
 
-**The game is Coming Soon**, so `assets/js/coming-soon-guard.js` sends direct visitors back to the arcade. To see it locally, use the arcade's Coming Soon PIN first, or follow "Move a game from Coming Soon to the public library" in the root README to publish it.
-
 **Internet access is required.** Three.js and cannon-es load from pinned CDN builds through the import map in `index.html`.
 
 ## Tests
