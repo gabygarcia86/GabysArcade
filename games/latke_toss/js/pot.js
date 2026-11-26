@@ -205,6 +205,7 @@ export class Pot {
     this.group = new THREE.Group();
     this.group.name = 'pot';
     this.difficulty = DIFFICULTIES.easy;
+    this.center = { ...this.difficulty.center }; // this game's center of motion
     this.effectsTime = 0;
     this.previousPosition = new THREE.Vector3();
 
@@ -403,6 +404,16 @@ export class Pot {
 
   setDifficulty(key) {
     this.difficulty = DIFFICULTIES[key] || DIFFICULTIES.easy;
+    this.center = { ...this.difficulty.center };
+  }
+
+  /** Picks this game's spot: a difficulty with `randomCenter` gets a new random one. */
+  randomizePlacement() {
+    const d = this.difficulty;
+    const range = d.randomCenter;
+    this.center = range
+      ? { x: THREE.MathUtils.randFloat(...range.x), y: d.center.y, z: THREE.MathUtils.randFloat(...range.z) }
+      : { ...d.center };
   }
 
   /**
@@ -411,10 +422,11 @@ export class Pot {
    */
   positionAt(time, out) {
     const d = this.difficulty;
+    const c = this.center;
     out.set(
-      d.center.x + d.amplitude.x * Math.sin(d.speed.x * time + d.phase.x),
-      d.center.y + d.amplitude.y * Math.sin(d.speed.y * time + d.phase.y),
-      d.center.z + d.amplitude.z * Math.sin(d.speed.z * time + d.phase.z),
+      c.x + d.amplitude.x * Math.sin(d.speed.x * time + d.phase.x),
+      c.y + d.amplitude.y * Math.sin(d.speed.y * time + d.phase.y),
+      c.z + d.amplitude.z * Math.sin(d.speed.z * time + d.phase.z),
     );
     out.y = Math.max(0, out.y);
     return out;

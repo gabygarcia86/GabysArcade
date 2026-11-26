@@ -405,6 +405,7 @@ export class Game {
     this.latkesSinceGolden = 0;
     this.ui.setStreak(0);
     this._updateMultiplier();
+    this.pot.randomizePlacement();
     this.pot.reset();
     this.aimVisuals.hide();
     this.score = 0;

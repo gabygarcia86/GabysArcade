@@ -61,6 +61,9 @@ export const DIFFICULTIES = {
     label: 'Easy',
     tagline: 'Stationary pot',
     center: { x: 0, y: 0, z: -2.8 },
+    // Each game the still pot sits at a random spot in this range (it never moves during
+    // play). Kept inside the area dreidels avoid, clear of the menorah and on screen.
+    randomCenter: { x: [-2.0, 2.0], z: [-4.4, -1.8] },
     amplitude: { x: 0, y: 0, z: 0 },
     speed: { x: 0, y: 0, z: 0 },
     phase: { x: 0, y: 0, z: 0 },
