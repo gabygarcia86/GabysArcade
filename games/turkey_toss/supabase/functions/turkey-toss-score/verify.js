@@ -31,10 +31,10 @@ export const LIMITS = {
   // on the round clock, so the check allows some slack.
   minThrowGapSeconds: 0.2,
   // No more than this many throws in any 10 seconds, the length of a bowl bonus. That's one
-  // every 0.45 s, faster than a person can grab, drag and release. Without this, a script
-  // could stack every bowl hit in the round into one 10 second window.
+  // every 0.4 s, faster than a person can grab, drag and release, with room for a slow device
+  // whose clock runs behind. Without this, a script could stack every bowl hit in the round into one 10 second window.
   throwWindowSeconds: 10,
-  maxThrowsPerWindow: 22,
+  maxThrowsPerWindow: 25,
   // Nothing moves faster across the table than the hardest throw, so a leg can't reach a
   // target sooner than distance / LAUNCH.maxSpeed. The margin keeps the check generous.
   targetMarginWorldUnits: 0.5,

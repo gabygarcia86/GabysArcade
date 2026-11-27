@@ -52,7 +52,7 @@ Visitors can read the board but can't write to it. Scores only arrive through th
 
 1. When a round starts, the game asks the function for a single-use ticket.
 2. During the round, the game logs every throw, bowl hit, cornucopia hit, bounce, landing, floor drop and flying turkey hit, with the round clock time.
-3. On submit, the function replays the log with exact copies of the game's own `config.js`, `multipliers.js` and `scoring.js`. It rejects the round if the replayed score doesn't match, or the log breaks the game's rules. For example, more than 60 legs, a leg reaching a target faster than the hardest throw could, or more than 22 throws inside 10 seconds.
+3. On submit, the function replays the log with exact copies of the game's own `config.js`, `multipliers.js` and `scoring.js`. It rejects the round if the replayed score doesn't match, or the log breaks the game's rules. For example, more than 60 legs, a leg reaching a target faster than the hardest throw could, or more than 25 throws inside 10 seconds.
 4. It also rejects the round if the ticket is used, expired or younger than the round's own length, then saves the score.
 
 This stops anyone from posting a number by hand or replaying a request. Someone who studies the code could still script a believable fake round, but they'd have to play by the game's rules and wait out a full round each time. The limits are in `LIMITS` at the top of [`verify.js`](supabase/functions/turkey-toss-score/verify.js).

@@ -1,0 +1,8 @@
+# Supabase CLI settings for the Latke Toss leaderboard function. Only used when deploying.
+
+project_id = "latke_toss"
+
+[functions.latke-toss-score]
+# The game calls the function with no signed-in user, so there's no JWT to check.
+# The function does its own checks instead.
+verify_jwt = false

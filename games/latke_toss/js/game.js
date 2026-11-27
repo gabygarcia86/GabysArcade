@@ -7,6 +7,8 @@ import { LatkePool, setLatkeGolden, latkeBaseColor } from './latke.js';
 import { SplashEffects } from './particles.js';
 import { GeltShower } from './gelt.js';
 import { AimController } from './controls.js';
+import { RoundScore } from './scoring.js';
+import { leaderboard } from './leaderboard.js';
 import {
   LatkeBody, LatkeState, CollisionResult, stepBody, simulateTrajectory, collideWithPot, collideWithTable,
   collideWithDreidel, collideWithMenorah,
@@ -266,17 +268,14 @@ export class Game {
     this.state = GameState.MENU;
     this.pausedFrom = null;
     this.difficultyKey = loadDifficulty();
-    this.score = 0;
-    this.multiplier = 1; // menorah bonus x every active dreidel boost x streak bonus
-    this.streak = 0; // latkes landed in a row; any miss resets it
-    this.finalFry = false; // the last FINAL_FRY.seconds of the round
+    this.scoring = new RoundScore(); // score, streak, menorah, dreidel boosts, Final Fry
     this.potTime = 0; // drives pot motion; runs faster during the Final Fry
     this.round = { throws: 0, hits: 0, clean: 0, bestStreak: 0 }; // this round's stats
     this.roundStats = null; // filled in at the buzzer for the game-over screen
-    this.streakMultiplier = 1;
     this.latkesSinceGolden = 0;
-    this.menorahMultiplier = 1; // becomes MENORAH.multiplier once every candle is lit
-    this.dreidelBoosts = []; // roundElapsed time at which each active dreidel boost expires
+    this.log = []; // everything that changed the score, for the leaderboard to replay
+    this.throwCount = 0;
+    this.ticket = null; // the leaderboard's ticket for this round (a promise)
     this.simTime = 0; // fixed-step simulation clock (idle bob, rim-clank spacing)
     this.roundElapsed = 0; // drives the countdown; only advances while PLAYING
     this.accumulator = 0;
@@ -325,6 +324,22 @@ export class Game {
     this.audio.music.playMenu();
   }
 
+  get score() {
+    return this.scoring.score;
+  }
+
+  get multiplier() {
+    return this.scoring.multiplier;
+  }
+
+  get streak() {
+    return this.scoring.streak;
+  }
+
+  get finalFry() {
+    return this.scoring.finalFry;
+  }
+
   // UI click sounds for every button.
   _bindClicks() {
     for (const button of document.querySelectorAll('button')) {
@@ -361,6 +376,8 @@ export class Game {
   startRound() {
     this.audio.unlock();
     this._resetRound();
+    // The leaderboard only accepts a round that asked for a ticket when it started.
+    this.ticket = leaderboard.startRound(this.difficultyKey);
     this.state = GameState.READY;
     this.readyTimer = ROUND.readySeconds;
     this.ui.showScreen(null);
@@ -428,7 +445,6 @@ export class Game {
 
   // The last stretch of the round: double points, a faster pot and faster music.
   _startFinalFry() {
-    this.finalFry = true;
     this._updateMultiplier();
     this.ui.setFinalFry(true);
     this.ui.showBanner(`Final Fry! ${FINAL_FRY.multiplier}\u00d7`, { gold: true, duration: 1300 });
@@ -465,6 +481,7 @@ export class Game {
       best: this.scores.get(this.difficultyKey),
       isNewBest: this.isNewBest,
       stats: this.roundStats,
+      round: { ticket: this.ticket, events: this.log },
     });
     this.audio.play('gameOver');
     this.audio.music.playMenu();
@@ -481,13 +498,12 @@ export class Game {
     this.gelt.clear();
     this.gameScene.resetDreidels();
     this.gameScene.resetCandles();
-    this.menorahMultiplier = 1;
-    this.dreidelBoosts.length = 0;
-    this.streak = 0;
-    this.streakMultiplier = 1;
+    this.scoring.reset();
+    // A new array each round, because the game-over screen keeps the old one until it's submitted.
+    this.log = [];
+    this.throwCount = 0;
     this.latkesSinceGolden = 0;
     this.ui.setStreak(0);
-    this.finalFry = false;
     this.potTime = 0;
     this.round = { throws: 0, hits: 0, clean: 0, bestStreak: 0 };
     this.roundStats = null;
@@ -497,7 +513,6 @@ export class Game {
     this.pot.randomizePlacement();
     this.pot.reset();
     this.aimVisuals.hide();
-    this.score = 0;
     this.simTime = 0;
     this.roundElapsed = 0;
     this.accumulator = 0;
@@ -604,6 +619,9 @@ export class Game {
     body.reset(LAUNCH_POSITION, thrown.mesh.quaternion);
     body.velocity.copy(aim.velocity);
     body.state = LatkeState.AIRBORNE;
+    thrown.throwIndex = this.throwCount;
+    this.throwCount += 1;
+    this._record('throw', thrown, thrown.golden ? 'golden' : undefined);
 
     // Dominant tumble around the horizontal axis perpendicular to the heading, plus a
     // random spin around vertical and a little wobble, so each toss flips differently.
@@ -628,18 +646,25 @@ export class Game {
     thrown.timer = 0;
   }
 
+  /** Adds to the round log. See supabase/functions/latke-toss-score/verify.js for the format. */
+  _record(type, thrown, detail) {
+    const entry = [this.roundElapsed, type, thrown.throwIndex];
+    if (detail !== undefined) entry.push(detail);
+    this.log.push(entry);
+  }
+
   _registerHit(thrown, localHit) {
     thrown.scored = true;
     this._resolve(thrown, LatkeState.SUCCESS);
     this._startFrying(thrown, localHit);
-    this._addToStreak();
     const clean = !thrown.body.touchedPot;
+    this._record('hit', thrown, clean ? 'clean' : undefined);
+    const landed = this.scoring.landLatke({ golden: thrown.golden, clean });
+    this._showStreak(landed.newTier);
     this.round.throws += 1;
     this.round.hits += 1;
     if (clean) this.round.clean += 1;
-    const base = (thrown.golden ? GOLDEN.points : SCORING.pointsPerLatke) + (clean ? SCORING.cleanBonus : 0);
-    const points = Math.round(base * this.multiplier);
-    this.score += points;
+    const { points } = landed;
     this.ui.setScore(this.score, true);
 
     _worldHit.set(localHit.x, POT.oilHeight, localHit.z).add(this.potCurrent);
@@ -652,47 +677,39 @@ export class Game {
     if (thrown.golden) notes.push('Golden!');
     if (clean) notes.push(`Mazal! +${SCORING.cleanBonus}`);
     if (this.streak >= 2) notes.push(`${this.streak} in a row`);
-    const style = thrown.golden ? 'golden' : this.multiplier > 1 ? 'double' : '';
+    // The multiplier this latke scored with, not the menorah bonus its candle may start.
+    const style = thrown.golden ? 'golden' : landed.multiplier > 1 ? 'double' : '';
     this._popupAt(_worldHit, `+${points}${notes.length ? `<small>${notes.join(' \u00b7 ')}</small>` : ''}`, style);
     if (thrown.golden) this.effects.sparkleBurst(_worldHit);
-    this._lightCandle();
+    this._lightCandle(landed.menorahLit);
   }
 
-  // A landed latke extends the streak and may reach a higher streak tier.
-  _addToStreak() {
-    this.streak += 1;
+  // A landed latke has extended the streak and may have reached a higher streak tier.
+  _showStreak(newTier) {
     this.round.bestStreak = Math.max(this.round.bestStreak, this.streak);
     this.ui.setStreak(this.streak);
-    let multiplier = 1;
-    for (const tier of SCORING.streakTiers) if (this.streak >= tier.count) multiplier = tier.multiplier;
-    if (multiplier !== this.streakMultiplier) {
-      this.streakMultiplier = multiplier;
+    if (newTier) {
       this._updateMultiplier();
-      this.ui.showBanner(`${this.streak} in a row! ${multiplier}\u00d7`, { gold: true, duration: 1100 });
+      this.ui.showBanner(`${this.streak} in a row! ${this.scoring.streakMultiplier}\u00d7`, { gold: true, duration: 1100 });
       this.audio.play('streak');
     }
   }
 
   // A miss ends the streak. Returns how long the streak was.
   _breakStreak() {
-    const lost = this.streak;
-    this.streak = 0;
+    const { lost, tierLost } = this.scoring.missLatke();
     this.ui.setStreak(0);
-    if (this.streakMultiplier !== 1) {
-      this.streakMultiplier = 1;
-      this._updateMultiplier();
-    }
+    if (tierLost) this._updateMultiplier();
     return lost;
   }
 
   // Each landed latke lights one menorah candle; lighting the last one starts the bonus.
-  _lightCandle() {
+  _lightCandle(menorahLit) {
     const lit = this.gameScene.lightNextCandle(_candlePosition);
     if (lit === 0) return;
     this.effects.sparkleBurst(_candlePosition);
     this.audio.play('candle', lit);
-    if (lit >= MENORAH.candles && this.menorahMultiplier === 1) {
-      this.menorahMultiplier = MENORAH.multiplier;
+    if (menorahLit) {
       this.gameScene.setMiracle(true);
       this._updateMultiplier();
       this.ui.showBanner(`${MENORAH.multiplier}\u00d7 Points!`, { gold: true, duration: 1800 });
@@ -710,6 +727,7 @@ export class Game {
   _registerMiss(thrown, label = true) {
     this._resolve(thrown, LatkeState.MISS);
     if (this.state !== GameState.PLAYING) return;
+    this._record('miss', thrown);
     this.round.throws += 1;
     const lost = this._breakStreak();
     if (label) {
@@ -720,7 +738,7 @@ export class Game {
     }
   }
 
-  _registerDreidelHit(dreidel) {
+  _registerDreidelHit(thrown, dreidel) {
     this.gameScene.knockDreidel(dreidel);
     this.gelt.rain();
     _worldHit.copy(dreidel.position);
@@ -732,19 +750,22 @@ export class Game {
       this._popupAt(_worldHit, 'Gelt!', 'gelt');
       return;
     }
-    this.dreidelBoosts.push(this.roundElapsed + DREIDEL.bonusSeconds);
+    this._record('dreidel', thrown, this.gameScene.dreidels.indexOf(dreidel));
+    this.scoring.hitDreidel(this.roundElapsed);
     this._updateMultiplier();
     this._popupAt(_worldHit, `Gelt!<small>${DREIDEL.bonusMultiplier}\u00d7 for ${DREIDEL.bonusSeconds}s</small>`, 'gelt');
   }
 
   // Knocking the menorah shakes it and puts out the most recently lit candle.
-  _registerMenorahHit() {
+  _registerMenorahHit(thrown) {
     this.gameScene.knockMenorah();
     this.audio.play('rim');
-    if (this.state !== GameState.PLAYING || !this.gameScene.extinguishCandle(_candlePosition)) return;
-    if (this.menorahMultiplier !== 1) {
+    if (this.state !== GameState.PLAYING) return;
+    this._record('menorah', thrown);
+    const { bonusLost } = this.scoring.hitMenorah();
+    if (!this.gameScene.extinguishCandle(_candlePosition)) return;
+    if (bonusLost) {
       // The bonus needs every candle lit, so losing one ends it until they are all lit again.
-      this.menorahMultiplier = 1;
       this.gameScene.setMiracle(false);
       this._updateMultiplier();
     }
@@ -752,10 +773,8 @@ export class Game {
     this._popupAt(_candlePosition, 'Candle out!', 'miss');
   }
 
-  // Combines the menorah bonus, every active dreidel boost, the streak and the Final Fry.
+  // Shows the combined menorah, dreidel, streak and Final Fry multiplier.
   _updateMultiplier() {
-    this.multiplier = this.menorahMultiplier * DREIDEL.bonusMultiplier ** this.dreidelBoosts.length
-      * this.streakMultiplier * (this.finalFry ? FINAL_FRY.multiplier : 1);
     this.ui.setMultiplier(this.multiplier);
   }
 
@@ -773,12 +792,8 @@ export class Game {
   _step(h) {
     if (this.state === GameState.PLAYING) {
       this.roundElapsed += h;
-      if (this.dreidelBoosts.length > 0 && this.dreidelBoosts[0] <= this.roundElapsed) {
-        // Boosts are pushed in hit order, so expired ones are always at the front.
-        while (this.dreidelBoosts.length > 0 && this.dreidelBoosts[0] <= this.roundElapsed) this.dreidelBoosts.shift();
-        this._updateMultiplier();
-      }
-      if (!this.finalFry && ROUND.durationSeconds - this.roundElapsed <= FINAL_FRY.seconds) this._startFinalFry();
+      if (this.scoring.expireBoosts(this.roundElapsed)) this._updateMultiplier();
+      if (this.scoring.checkFinalFry(this.roundElapsed)) this._startFinalFry();
       if (this.roundElapsed >= ROUND.durationSeconds) this._endRound();
     }
     // The pot keeps gliding during the brief game-over wind-down; the timer does not.
@@ -833,12 +848,12 @@ export class Game {
     for (const dreidel of this.gameScene.dreidels) {
       if (collideWithDreidel(body, dreidel) && !thrown.hitDreidels.has(dreidel)) {
         thrown.hitDreidels.add(dreidel);
-        this._registerDreidelHit(dreidel);
+        this._registerDreidelHit(thrown, dreidel);
       }
     }
     if (collideWithMenorah(body, this.gameScene.menorah) && !thrown.hitMenorah) {
       thrown.hitMenorah = true;
-      this._registerMenorahHit();
+      this._registerMenorahHit(thrown);
     }
 
     const tableHit = collideWithTable(body, h);

@@ -207,13 +207,14 @@ export class UI {
     this.popupLayer.replaceChildren();
   }
 
-  showGameOver({ score, difficulty, difficultyLabel, best, isNewBest, stats }) {
+  showGameOver({ score, difficulty, difficultyLabel, best, isNewBest, stats, round }) {
     this._renderStats(stats);
     $('final-score').textContent = String(score);
     $('final-difficulty').textContent = difficultyLabel;
     $('final-best').textContent = String(best);
     $('final-new-best').classList.toggle('hidden', !isNewBest);
-    this.pendingScore = score > 0 ? { difficulty, score } : null;
+    // `round` ({ ticket, events }) is what the leaderboard checks before accepting the score.
+    this.pendingScore = score > 0 ? { difficulty, score, round } : null;
     this.overRun += 1;
     $('score-form').classList.toggle('hidden', !this.pendingScore);
     $('score-name').value = loadName();
@@ -282,7 +283,7 @@ export class UI {
       return;
     }
 
-    const { difficulty, score } = this.pendingScore;
+    const { difficulty, score, round } = this.pendingScore;
     const run = this.overRun;
     const button = $('score-form').querySelector('button');
     const label = button.textContent;
@@ -292,11 +293,12 @@ export class UI {
     this.setScoreMessage('');
     saveName(name);
 
-    let sent = true;
+    let failure = null;
     try {
-      await leaderboard.submit(difficulty, name, score);
-    } catch {
-      sent = false;
+      await leaderboard.submit(difficulty, name, score, round);
+    } catch (error) {
+      // The server explains rejections. Anything else is most likely the connection.
+      failure = error?.fromServer ? error.message : 'Score not sent. Check your connection and try again.';
     }
 
     this.submitting = false;
@@ -304,8 +306,8 @@ export class UI {
     button.textContent = label;
     if (run !== this.overRun) return;
 
-    if (!sent) {
-      this.setScoreMessage('Score not sent. Check your connection and try again.', true);
+    if (failure) {
+      this.setScoreMessage(failure, true);
       return;
     }
     this.pendingScore = null;
