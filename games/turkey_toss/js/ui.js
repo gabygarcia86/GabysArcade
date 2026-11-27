@@ -56,6 +56,7 @@ export class UI {
     this.boardReturn = 'menu';
     this.boardRequest = 0;
     this.pendingScore = null;
+    this.pendingRound = null; // { ticket, events } for the leaderboard
     this.overRun = 0;
     this.submitting = false;
   }
@@ -279,6 +280,7 @@ export class UI {
     $('stat-flying').textContent = result.flyingHit ? 'Hit!' : 'Missed';
 
     this.pendingScore = score > 0 ? score : null;
+    this.pendingRound = result.round;
     this.overRun += 1;
     $('score-form').classList.toggle('hidden', !this.pendingScore);
     $('score-name').value = loadName();
@@ -307,6 +309,7 @@ export class UI {
     }
 
     const score = this.pendingScore;
+    const round = this.pendingRound;
     const run = this.overRun;
     const button = $('score-form').querySelector('button');
     const label = button.textContent;
@@ -316,11 +319,12 @@ export class UI {
     this.setScoreMessage('');
     saveName(name);
 
-    let sent = true;
+    let failure = null;
     try {
-      await leaderboard.submit(name, score);
-    } catch {
-      sent = false;
+      await leaderboard.submit(name, score, round);
+    } catch (error) {
+      // The server explains rejections. Anything else is most likely the connection.
+      failure = error?.fromServer ? error.message : 'Score not sent. Check your connection and try again.';
     }
 
     this.submitting = false;
@@ -328,11 +332,12 @@ export class UI {
     button.textContent = label;
     if (run !== this.overRun) return;
 
-    if (!sent) {
-      this.setScoreMessage('Score not sent. Check your connection and try again.', true);
+    if (failure) {
+      this.setScoreMessage(failure, true);
       return;
     }
     this.pendingScore = null;
+    this.pendingRound = null;
     $('score-form').classList.add('hidden');
     this.setScoreMessage('Score submitted');
     if (this.currentScreen === 'over') this.openLeaderboard('over', { name, score });

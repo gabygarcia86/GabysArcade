@@ -19,7 +19,7 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 5. **Streaks:** land latkes in a row to build a streak, shown under your score. From the 3rd in a row your points are worth **1.5x** and from the 6th **2x**. After that the multiplier doubles at the 10th, 15th, 20th, 25th, 30th, 40th and 50th in a row: **4x, 8x, 16x, 32x, 64x, 128x** and **256x**. Any miss resets the streak, including a latke that hits a dreidel or the menorah and then lands on the table.
 6. **Golden latke:** now and then a shiny golden latke appears on the plate. It's worth **50 points** (plus the clean bonus and all multipliers) if you land it, and it's gone if you miss.
 7. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, your points are doubled for the rest of the round. The candles go out again at the start of each round.
-8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game. Each hit also doubles your points for **10 seconds**.
+8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game, always somewhere a throw can reach and the screen shows. Each hit also doubles your points for **10 seconds**.
 9. **Final Fry:** in the last **10 seconds** every latke counts **double**, a moving pot speeds up and the music plays faster.
 10. All multipliers stack: the menorah, every active dreidel boost, your streak and the Final Fry. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
 11. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
@@ -34,11 +34,45 @@ Each difficulty has its own top 10, stored in Supabase, because scores on Easy a
 
 After a round with a score above zero, the game-over screen lets the player enter a name and submit. Each round can be submitted once.
 
-**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `latke_toss_scores` table and its access rules. The project address and publishable key are at the top of `js/leaderboard.js`.
+### How scores are checked
 
-The publishable key is public by design. Visitors can read the boards and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+Visitors can read the boards but can't write to them. Scores only arrive through the `latke-toss-score` Edge Function in [`supabase/functions/`](supabase/functions/latke-toss-score/):
 
-If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+1. When a round starts, the game asks the function for a single-use ticket for that difficulty.
+2. During the round, the game logs every throw (and whether it's golden), landing, miss, dreidel hit and menorah hit, with the round clock time.
+3. On submit, the function replays the log with exact copies of the game's own `config.js` and `scoring.js`. It rejects the round if the replayed score doesn't match, or the log breaks the game's rules. For example, golden latkes more often than the game makes them, a latke reaching the pot faster than the hardest throw could, or more than 25 throws inside 10 seconds.
+4. It also rejects the round if the ticket is used, expired, for another difficulty, or younger than a full round, then saves the score.
+
+This stops anyone from posting a number by hand or replaying a request. Someone who studies the code could still script a believable fake round, but they'd have to play by the game's rules and wait out a full round each time. The limits are in `LIMITS` at the top of [`verify.js`](supabase/functions/latke-toss-score/verify.js).
+
+**Changing the scoring rules:** after editing `js/config.js` or `js/scoring.js`, copy them into `supabase/functions/latke-toss-score/game/` and deploy the function again. Otherwise the server scores rounds differently and rejects real ones. The tests fail until the copies match.
+
+### Setup
+
+1. Run `leaderboard.sql` in the Supabase SQL Editor. It creates the `latke_toss_scores` and `latke_toss_rounds` tables and their access rules, and upgrades older versions. It's safe to run again.
+2. Deploy the function with JWT verification off, because players aren't signed in. With the [Supabase CLI](https://supabase.com/docs/guides/cli) (`npx` downloads it if needed), from this folder:
+
+   ```bash
+   cd games/latke_toss
+   npx supabase login
+   npx supabase functions deploy latke-toss-score --remote=rhlwushiprnnivtksvlu --no-verify-jwt --use-api
+   ```
+
+   In Windows PowerShell, type `npx.cmd` instead of `npx` if you get a "running scripts is disabled" error. If the browser login doesn't work, create an access token under **Account > Access Tokens** in the Supabase dashboard and run `npx supabase login --token <your token>` instead.
+
+   Or in the dashboard: **Edge Functions > Deploy a new function > Via Editor**, name it `latke-toss-score`, add `index.ts`, `verify.js` and the two files in `game/` with the same folder layout, deploy, then turn off **Enforce JWT verification** in the function's settings.
+
+Supabase gives the function its own secret key, so nothing secret is stored in this repository. The project address and publishable key are at the top of `js/leaderboard.js`. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error. A round that couldn't get a ticket when it started can't be submitted.
+
+## Tests
+
+The scoring rules, the leaderboard's round checks and the dreidel placement run in Node with no browser:
+
+```bash
+node --test games/latke_toss/tests/leaderboard-server.test.mjs games/latke_toss/tests/dreidels.test.mjs
+```
 
 ## Running locally
 
@@ -94,7 +128,8 @@ All gameplay numbers live in [`js/config.js`](js/config.js).
 | Particle pools | `PARTICLES.dropletPoolSize`, `sparklePoolSize` | Upper limit on live particles. When a pool is full, the oldest particles are reused. |
 | Menorah bonus | `MENORAH.candles`, `MENORAH.multiplier` | Candles needed and the points per latke once they're all lit. The menorah's position and size are `MENORAH_POSITION` and `MENORAH_SCALE` in `js/scene.js`. |
 | Gelt shower | `GELT.coinsPerHit`, `spreadSeconds`, `lingerSeconds`, `poolSize` | Coins per dreidel hit, how spread out the shower is, how long coins stay on the table, and the most coins on screen at once. |
-| Dreidel hit size | `DREIDEL.radius`, `DREIDEL.height` | Collision cylinder before each dreidel's scale. Dreidel positions and sizes are in `dreidelSpecs` in `js/scene.js`. |
+| Dreidel hit size | `DREIDEL.radius`, `DREIDEL.height` | Collision cylinder before each dreidel's scale. Dreidel sizes are in `dreidelSpecs` in `js/scene.js`. |
+| Where dreidels can land | `DREIDEL_AREA` in `js/dreidels.js` | Each game they land at random within reach of a throw (the aim limit and the shortest and longest throws), fully on screen even on a narrow phone, and clear of the pot's path, the menorah and each other. |
 | Dreidel bonus | `DREIDEL.bonusMultiplier`, `DREIDEL.bonusSeconds` | Points multiplier from each dreidel hit and how long it lasts. |
 
 Pot motion is a pure function of round time: `x(t) = center.x + amplitude.x · sin(speed.x · t + phase.x)`, and the same for y and z. That makes it smooth, deterministic and independent of frame rate. Restarting resets `t` to 0.
@@ -122,6 +157,9 @@ Files load after the first click or tap, because browsers only allow audio after
 ```
 LatkeToss/
 ├── index.html        Page, HUD, menus, import map
+├── leaderboard.sql   Supabase tables and access rules
+├── supabase/         Edge Function that checks and saves scores (verify.js has the checks)
+├── tests/            Scoring and leaderboard tests
 ├── css/style.css     Layout, HUD and responsive rules
 ├── js/
 │   ├── main.js       Bootstraps renderer, scene, game; animation loop
@@ -132,10 +170,12 @@ LatkeToss/
 │   ├── physics.js    Latke rigid-body state, integrator, trajectory prediction, collisions
 │   ├── particles.js  Pooled point-particle systems for oil splashes and sparkles
 │   ├── gelt.js       Gelt coin model and the pooled coin shower from dreidel hits
+│   ├── dreidels.js   The dreidels' play area and random placement (also tested in Node)
 │   ├── controls.js   Pointer Events drag-to-aim and perspective-correct launch mapping
-│   ├── game.js       State machine (MENU/READY/PLAYING/PAUSED/GAME_OVER), scoring, round flow
+│   ├── game.js       State machine (MENU/READY/PLAYING/PAUSED/GAME_OVER), round flow
+│   ├── scoring.js    Points, streak, menorah, dreidel boosts and Final Fry (also used by the server)
 │   ├── ui.js         DOM overlay helpers
-│   ├── leaderboard.js Online top 10 per difficulty (Supabase REST API)
+│   ├── leaderboard.js Online top 10 per difficulty: reads from Supabase, submits through the Edge Function
 │   └── audio.js      Web Audio synth effects, mute, optional sample loading
 └── README.md
 ```

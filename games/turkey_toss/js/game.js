@@ -11,6 +11,7 @@ import { FruitShower } from './fruit.js';
 import { AimController, AimVisuals } from './throwing.js';
 import { Multipliers } from './multipliers.js';
 import { scoreLanding, addScore, formatNumber, resultMessage } from './scoring.js';
+import { leaderboard } from './leaderboard.js';
 
 export const GameState = Object.freeze({
   MENU: 'MENU',
@@ -219,6 +220,8 @@ export class Game {
   startRound() {
     this.audio.unlock();
     this._resetRound();
+    // The leaderboard only accepts a round that asked for a ticket when it started.
+    this.ticket = leaderboard.startRound();
     this.state = GameState.READY;
     this.readyTimer = ROUND.readySeconds;
     this.pausedFrom = null;
@@ -276,6 +279,7 @@ export class Game {
     this.aimController.cancel();
     this.aimVisuals.hide();
     this.respawnTimer = -1;
+    this.log.push([this.roundElapsed, 'end', reason]);
     this.ui.setTime(Math.max(0, ROUND.durationSeconds - this.roundElapsed));
     this.ui.showBanner(reason === 'time' ? "Time's Up!" : 'Out of Turkey!', { gold: true, duration: 1300 });
     this.ui.fadeHint();
@@ -310,6 +314,7 @@ export class Game {
       bounces: this.stats.bounces,
       floorDrops: this.stats.floorDrops,
       flyingHit: this.flyingTurkey.phase === FlightPhase.HIT,
+      round: { ticket: this.ticket, events: this.log },
     });
     this.audio.play('gameOver');
     this.audio.music.playMenu();
@@ -332,6 +337,9 @@ export class Game {
     this.multipliers.reset();
 
     this.score = 0;
+    // Everything that changed the score, for the leaderboard to replay. A new array each
+    // round, because the game-over screen keeps the old one until it's submitted.
+    this.log = [];
     this.slicesLeft = ROUND.slices;
     this.stats = { bounces: 0, floorDrops: 0, highestMultiplier: 1 };
     this.simTime = 0;
@@ -443,6 +451,8 @@ export class Game {
     // Launch from the exact point the preview used, with the same velocity.
     this.physics.launch(slice.physics, LAUNCH_POSITION, slice.mesh.quaternion, aim.velocity, _angular);
     slice.state = SliceState.FLYING;
+    slice.throwIndex = ROUND.slices - this.slicesLeft;
+    this._record('throw', slice);
 
     this.slicesLeft -= 1;
     this.ui.setSlices(this.slicesLeft);
@@ -465,6 +475,13 @@ export class Game {
   }
 
   // ---------- Scoring events ----------
+
+  /** Adds to the round log. See supabase/functions/turkey-toss-score/verify.js for the format. */
+  _record(type, slice, detail) {
+    const entry = [this.roundElapsed, type, slice.throwIndex];
+    if (detail !== undefined) entry.push(detail);
+    this.log.push(entry);
+  }
 
   _refreshMultipliers() {
     const { multipliers, stats } = this;
@@ -510,6 +527,7 @@ export class Game {
     plate.land();
 
     const bounced = slice.bounces > 0;
+    this._record('plate', slice, plate.id);
     const result = scoreLanding(plate.points, this.multipliers, { bounced });
     this.score = addScore(this.score, result.points);
     this.stats.highestMultiplier = Math.max(this.stats.highestMultiplier, result.multiplier);
@@ -564,6 +582,7 @@ export class Game {
     layFlat(quaternion, 1);
     slice.targetQuaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
 
+    this._record('bowl', slice, bowl.kind);
     this.multipliers.addBowlHit(bowl.kind, this.roundElapsed);
     this._refreshMultipliers();
     bowl.splash();
@@ -585,6 +604,7 @@ export class Game {
     slice.bounces += 1;
     slice.lastBounce = this.simTime;
     slice.flightTime = 0;
+    this._record('bounce', slice);
     this.stats.bounces += 1;
 
     const { velocity, angularVelocity, position } = slice.physics;
@@ -602,6 +622,7 @@ export class Game {
 
   _hitCornucopia(slice) {
     slice.hitCornucopia = true;
+    this._record('cornucopia', slice);
     this.multipliers.addCornucopiaHit(this.roundElapsed);
     this._refreshMultipliers();
     this.gameScene.knockCornucopia();
@@ -623,6 +644,7 @@ export class Game {
     this.audio.play('floor');
     if (this.state === GameState.PLAYING || this.state === GameState.WIND_DOWN) {
       this.stats.floorDrops += 1;
+      this._record('floor', slice);
       this.score = addScore(this.score, -FLOOR.penalty);
       this.ui.setScore(this.score, true);
       this.ui.flashPenalty();
@@ -635,6 +657,7 @@ export class Game {
   _hitFlyingTurkey(slice) {
     const turkey = this.flyingTurkey;
     turkey.markHit();
+    this._record('flyer', slice);
     this.ui.setFlyingStatus(turkey.phase);
     this.score = addScore(this.score, FLYING_TURKEY.bonusPoints);
     this.ui.setScore(this.score, true);
