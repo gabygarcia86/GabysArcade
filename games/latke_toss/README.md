@@ -19,7 +19,7 @@ Built with plain HTML, CSS, JavaScript ES modules and [Three.js](https://threejs
 5. **Streaks:** land latkes in a row to build a streak, shown under your score. From the 3rd in a row your points are worth **1.5x** and from the 6th **2x**. After that the multiplier doubles at the 10th, 15th, 20th, 25th, 30th, 40th and 50th in a row: **4x, 8x, 16x, 32x, 64x, 128x** and **256x**. Any miss resets the streak, including a latke that hits a dreidel or the menorah and then lands on the table.
 6. **Golden latke:** now and then a shiny golden latke appears on the plate. It's worth **50 points** (plus the clean bonus and all multipliers) if you land it, and it's gone if you miss.
 7. Every latke you land lights one candle on the **menorah**. The shamash (center) lights first, then the candles from right to left. When all nine are lit, your points are doubled for the rest of the round. The candles go out again at the start of each round.
-8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game. Each hit also doubles your points for **10 seconds**.
+8. Hit any **dreidel** with a latke to knock it spinning and make about 10 gold coins (gelt) rain down onto the table. The five dreidels land in new random spots at the start of every game, always somewhere a throw can reach and the screen shows. Each hit also doubles your points for **10 seconds**.
 9. **Final Fry:** in the last **10 seconds** every latke counts **double**, a moving pot speeds up and the music plays faster.
 10. All multipliers stack: the menorah, every active dreidel boost, your streak and the Final Fry. For example, with all candles lit, one dreidel boost and a 6+ streak, a regular latke is worth 10 x 2 x 2 x 2 = 80 points. The badge on your score shows the current total multiplier.
 11. **Pause** with the ⏸ button, `Esc` or `P`. ↻ restarts the round and 🔊 toggles sound.
@@ -68,10 +68,10 @@ If Supabase can't be reached, the game still plays and the leaderboard screens s
 
 ## Tests
 
-The scoring rules and the leaderboard's round checks run in Node with no browser:
+The scoring rules, the leaderboard's round checks and the dreidel placement run in Node with no browser:
 
 ```bash
-node --test games/latke_toss/tests/leaderboard-server.test.mjs
+node --test games/latke_toss/tests/leaderboard-server.test.mjs games/latke_toss/tests/dreidels.test.mjs
 ```
 
 ## Running locally
@@ -128,7 +128,8 @@ All gameplay numbers live in [`js/config.js`](js/config.js).
 | Particle pools | `PARTICLES.dropletPoolSize`, `sparklePoolSize` | Upper limit on live particles. When a pool is full, the oldest particles are reused. |
 | Menorah bonus | `MENORAH.candles`, `MENORAH.multiplier` | Candles needed and the points per latke once they're all lit. The menorah's position and size are `MENORAH_POSITION` and `MENORAH_SCALE` in `js/scene.js`. |
 | Gelt shower | `GELT.coinsPerHit`, `spreadSeconds`, `lingerSeconds`, `poolSize` | Coins per dreidel hit, how spread out the shower is, how long coins stay on the table, and the most coins on screen at once. |
-| Dreidel hit size | `DREIDEL.radius`, `DREIDEL.height` | Collision cylinder before each dreidel's scale. Dreidel positions and sizes are in `dreidelSpecs` in `js/scene.js`. |
+| Dreidel hit size | `DREIDEL.radius`, `DREIDEL.height` | Collision cylinder before each dreidel's scale. Dreidel sizes are in `dreidelSpecs` in `js/scene.js`. |
+| Where dreidels can land | `DREIDEL_AREA` in `js/dreidels.js` | Each game they land at random within reach of a throw (the aim limit and the shortest and longest throws), fully on screen even on a narrow phone, and clear of the pot's path, the menorah and each other. |
 | Dreidel bonus | `DREIDEL.bonusMultiplier`, `DREIDEL.bonusSeconds` | Points multiplier from each dreidel hit and how long it lasts. |
 
 Pot motion is a pure function of round time: `x(t) = center.x + amplitude.x · sin(speed.x · t + phase.x)`, and the same for y and z. That makes it smooth, deterministic and independent of frame rate. Restarting resets `t` to 0.
@@ -169,6 +170,7 @@ LatkeToss/
 │   ├── physics.js    Latke rigid-body state, integrator, trajectory prediction, collisions
 │   ├── particles.js  Pooled point-particle systems for oil splashes and sparkles
 │   ├── gelt.js       Gelt coin model and the pooled coin shower from dreidel hits
+│   ├── dreidels.js   The dreidels' play area and random placement (also tested in Node)
 │   ├── controls.js   Pointer Events drag-to-aim and perspective-correct launch mapping
 │   ├── game.js       State machine (MENU/READY/PLAYING/PAUSED/GAME_OVER), round flow
 │   ├── scoring.js    Points, streak, menorah, dreidel boosts and Final Fry (also used by the server)
