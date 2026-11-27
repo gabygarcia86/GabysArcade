@@ -46,11 +46,37 @@ There is one top 10, stored in Supabase. Open it from **Leaderboard** on the mai
 
 After a round with a score above zero, the game-over screen lets the player enter a name and submit. Each round can be submitted once.
 
-**Setup:** run `leaderboard.sql` once in the Supabase SQL Editor. It creates the `turkey_toss_scores` table and its access rules, and upgrades the table if an older version already exists. It's safe to run again. The project address and publishable key are at the top of `js/leaderboard.js`.
+### How scores are checked
 
-The publishable key is public by design. Visitors can read the board and add scores, but can't edit or delete them. Scores are sent from the browser, so someone determined could still post a fake one. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+Visitors can read the board but can't write to it. Scores only arrive through the `turkey-toss-score` Edge Function in [`supabase/functions/`](supabase/functions/turkey-toss-score/):
 
-If Supabase can't be reached, the game still plays and the leaderboard screens show an error.
+1. When a round starts, the game asks the function for a single-use ticket.
+2. During the round, the game logs every throw, bowl hit, cornucopia hit, bounce, landing, floor drop and flying turkey hit, with the round clock time.
+3. On submit, the function replays the log with exact copies of the game's own `config.js`, `multipliers.js` and `scoring.js`. It rejects the round if the replayed score doesn't match, or the log breaks the game's rules. For example, more than 60 legs, a leg reaching a target faster than the hardest throw could, or more than 22 throws inside 10 seconds.
+4. It also rejects the round if the ticket is used, expired or younger than the round's own length, then saves the score.
+
+This stops anyone from posting a number by hand or replaying a request. Someone who studies the code could still script a believable fake round, but they'd have to play by the game's rules and wait out a full round each time. The limits are in `LIMITS` at the top of [`verify.js`](supabase/functions/turkey-toss-score/verify.js).
+
+**Changing the scoring rules:** after editing `js/config.js`, `js/multipliers.js` or `js/scoring.js`, copy them into `supabase/functions/turkey-toss-score/game/` and deploy the function again. Otherwise the server scores rounds differently and rejects real ones. The tests fail until the copies match.
+
+### Setup
+
+1. Run `leaderboard.sql` in the Supabase SQL Editor. It creates the `turkey_toss_scores` and `turkey_toss_rounds` tables and their access rules, and upgrades older versions. It's safe to run again.
+2. Deploy the function with JWT verification off, because players aren't signed in. With the [Supabase CLI](https://supabase.com/docs/guides/cli) (`npx` downloads it if needed), from this folder:
+
+   ```bash
+   cd games/turkey_toss
+   npx supabase login
+   npx supabase functions deploy turkey-toss-score --remote=rhlwushiprnnivtksvlu --no-verify-jwt --use-api
+   ```
+
+   In Windows PowerShell, type `npx.cmd` instead of `npx` if you get a "running scripts is disabled" error. If the browser login doesn't work, create an access token under **Account > Access Tokens** in the Supabase dashboard and run `npx supabase login --token <your token>` instead.
+
+   Or in the dashboard: **Edge Functions > Deploy a new function > Via Editor**, name it `turkey-toss-score`, add `index.ts`, `verify.js` and the three files in `game/` with the same folder layout, deploy, then turn off **Enforce JWT verification** in the function's settings.
+
+Supabase gives the function its own secret key, so nothing secret is stored in this repository. The project address and publishable key are at the top of `js/leaderboard.js`. `leaderboard.sql` ends with commented examples for reviewing and removing entries.
+
+If Supabase can't be reached, the game still plays and the leaderboard screens show an error. A round that couldn't get a ticket when it started can't be submitted.
 
 ## Running locally
 
@@ -66,10 +92,10 @@ python -m http.server 8000
 
 ## Tests
 
-The scoring rules run in Node with no browser:
+The scoring rules and the leaderboard's round checks run in Node with no browser:
 
 ```bash
-node --test games/turkey_toss/tests/scoring.test.mjs
+node --test games/turkey_toss/tests/scoring.test.mjs games/turkey_toss/tests/leaderboard-server.test.mjs
 ```
 
 ## Tuning
@@ -111,10 +137,11 @@ Everything plays through the Web Audio API from [`js/audio.js`](js/audio.js). Th
 ```
 turkey_toss/
 ├── index.html         Page, HUD, menus, import map
-├── leaderboard.sql    Supabase table and access rules
+├── leaderboard.sql    Supabase tables and access rules
+├── supabase/          Edge Function that checks and saves scores (verify.js has the checks)
 ├── css/style.css      Layout, HUD and responsive rules
 ├── assets/fonts/      Fredoka, and its license
-├── tests/             Scoring tests
+├── tests/             Scoring and leaderboard tests
 └── js/
     ├── main.js        Bootstraps renderer, scene, game; animation loop
     ├── config.js      Every tunable number
@@ -129,7 +156,7 @@ turkey_toss/
     ├── effects.js     Pooled particles: splashes, sparkles, feathers, leaf confetti
     ├── fruit.js       The pooled fruit shower from cornucopia hits
     ├── ui.js          DOM overlay helpers
-    ├── leaderboard.js Online top 10 (Supabase REST API)
+    ├── leaderboard.js Online top 10: reads from Supabase, submits through the Edge Function
     └── audio.js       Synthesized effects and music, volumes, mute
 ```
 
